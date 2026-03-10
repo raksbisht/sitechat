@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SiteChat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1B5E3B;
+            --primary-dark: #145230;
+            --primary-light: #2D7A4E;
+            --primary-lighter: #E8F5EE;
+            --accent: #10b981;
+            --gray-50: #F8FAF9;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --danger: #ef4444;
+            --white: #ffffff;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --shadow-lg: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: var(--gray-50);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Left Panel - Branding */
+        .login-branding {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, #0d3320 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-branding::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .branding-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .branding-logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .branding-logo svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .branding-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .branding-subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 48px;
+        }
+
+        .branding-features {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            text-align: left;
+        }
+
+        .branding-feature {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 15px;
+        }
+
+        .branding-feature-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .branding-feature-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--accent);
+        }
+
+        /* Right Panel - Login Form */
+        .login-form-panel {
+            width: 520px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            background: var(--white);
+        }
+
+        .login-form-container {
+            max-width: 360px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .login-header p {
+            color: var(--gray-500);
+            font-size: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--gray-400);
+            pointer-events: none;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px 14px 46px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: var(--white);
+        }
+
+        .form-group input:hover {
+            border-color: var(--gray-300);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-lighter);
+        }
+
+        .form-group input::placeholder {
+            color: var(--gray-400);
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--gray-300);
+            border-radius: 4px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-wrapper span {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .forgot-link:hover {
+            color: var(--primary-dark);
+        }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert.show {
+            display: flex;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-error svg {
+            flex-shrink: 0;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(27, 94, 59, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-spinner {
+            display: none;
+        }
+
+        .btn.loading .btn-text { display: none; }
+        .btn.loading .btn-spinner { display: flex; align-items: center; gap: 8px; }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .login-footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-100);
+            text-align: center;
+        }
+
+        .login-footer p {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .login-footer code {
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--gray-700);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .login-branding {
+                display: none;
+            }
+
+            .login-form-panel {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-form-panel {
+                padding: 40px 24px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .form-options {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+        }
+
+        /* Animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-form-container {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Decorative elements */
+        .decoration-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .decoration-circle.c1 {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            right: -100px;
+        }
+
+        .decoration-circle.c2 {
+            width: 200px;
+            height: 200px;
+            bottom: -50px;
+            left: -50px;
+        }
+
+        .decoration-circle.c3 {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 10%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Branding Panel -->
+    <div class="login-branding">
+        <div class="decoration-circle c1"></div>
+        <div class="decoration-circle c2"></div>
+        <div class="decoration-circle c3"></div>
+        
+        <div class="branding-content">
+            <div class="branding-logo" id="branding-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+            </div>
+            <h1 class="branding-title" id="branding-title">SiteChat</h1>
+            <p class="branding-subtitle" id="branding-subtitle">AI-Powered Customer Support Platform</p>
+            
+            <div class="branding-features">
+                <div class="branding-feature">
+                    <div class="branding-feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <span>Intelligent RAG-powered responses</span>
+                </div>
+                <div class="branding-feature">
+                    <div class="branding-feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <span>Real-time analytics dashboard</span>
+                </div>
+                <div class="branding-feature">
+                    <div class="branding-feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </div>
+                    <span>Seamless human handoff</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Login Form Panel -->
+    <div class="login-form-panel">
+        <div class="login-form-container">
+            <div class="login-header">
+                <h1>Welcome back</h1>
+                <p>Sign in to access your dashboard</p>
+            </div>
+
+            <form id="login-form">
+                <div class="alert alert-error" id="login-error">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span id="error-message"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-email">Email address</label>
+                    <div class="input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        <input type="email" id="login-email" placeholder="Enter your email" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password">
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="remember-me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link" onclick="alert('Please contact your administrator to reset your password.'); return false;">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    <span class="btn-text">Sign in</span>
+                    <span class="btn-spinner">
+                        <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"/>
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                        Signing in...
+                    </span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Demo credentials: <code>admin@sitechat.com</code> / <code>Admin123!</code></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+
+        // Check if already logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+            window.location.href = '/';
+        }
+
+        // Load platform white-label settings
+        async function loadBranding() {
+            try {
+                const response = await fetch(`${API_BASE}/platform/whitelabel`);
+                if (response.ok) {
+                    const config = await response.json();
+                    
+                    // Update branding elements
+                    if (config.app_name) {
+                        document.getElementById('branding-title').textContent = config.app_name;
+                        document.title = `Login - ${config.app_name}`;
+                    }
+                    if (config.login_title) {
+                        document.getElementById('branding-title').textContent = config.login_title;
+                    }
+                    if (config.login_subtitle) {
+                        document.getElementById('branding-subtitle').textContent = config.login_subtitle;
+                    }
+                    if (config.logo_url) {
+                        const logoEl = document.getElementById('branding-logo');
+                        logoEl.innerHTML = `<img src="${config.logo_url}" alt="Logo" style="max-width: 50px; max-height: 50px;">`;
+                    }
+                    if (config.primary_color) {
+                        document.documentElement.style.setProperty('--primary', config.primary_color);
+                    }
+                    if (config.favicon_url) {
+                        let favicon = document.querySelector("link[rel='icon']");
+                        if (!favicon) {
+                            favicon = document.createElement('link');
+                            favicon.rel = 'icon';
+                            document.head.appendChild(favicon);
+                        }
+                        favicon.href = config.favicon_url;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load branding:', e);
+            }
+        }
+
+        loadBranding();
+
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const errorEl = document.getElementById('login-error');
+            const errorMsg = document.getElementById('error-message');
+            
+            btn.classList.add('loading');
+            btn.disabled = true;
+            errorEl.classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('login-email').value,
+                        password: document.getElementById('login-password').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Invalid email or password');
+                }
+
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                // Handle remember me
+                if (document.getElementById('remember-me').checked) {
+                    localStorage.setItem('remember_email', document.getElementById('login-email').value);
+                } else {
+                    localStorage.removeItem('remember_email');
+                }
+
+                window.location.href = '/';
+
+            } catch (error) {
+                errorMsg.textContent = error.message;
+                errorEl.classList.add('show');
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        });
+
+        // Restore remembered email
+        const rememberedEmail = localStorage.getItem('remember_email');
+        if (rememberedEmail) {
+            document.getElementById('login-email').value = rememberedEmail;
+            document.getElementById('remember-me').checked = true;
+        }
+    </script>
+</body>
+</html>

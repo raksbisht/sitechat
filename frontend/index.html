@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiteChat - AI Chatbots for Your Website</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+                <span class="brand-name">SiteChat</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <div class="menu-label">Menu</div>
+                <a href="#" class="menu-item active" data-view="sites">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    <span>Sites</span>
+                </a>
+                <a href="#" class="menu-item" data-view="admin">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="menu-item" data-view="conversations">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <line x1="2" y1="10" x2="22" y2="10"/>
+                    </svg>
+                    <span>Conversations</span>
+                </a>
+                <a href="#" class="menu-item" data-view="handoffs">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Handoffs</span>
+                    <span class="menu-badge" id="handoff-badge" style="display: none;">0</span>
+                </a>
+                
+                <div class="menu-label">General</div>
+                <a href="#" class="menu-item" data-view="settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                    <span>Settings</span>
+                </a>
+                <a href="#" class="menu-item" data-view="help">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span>Help</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-menu">
+                    <div class="user-avatar" id="user-avatar">A</div>
+                    <div class="user-info">
+                        <span class="user-name" id="user-name">Admin</span>
+                        <span class="user-role" id="user-role">admin</span>
+                    </div>
+                    <button class="logout-btn" id="logout-btn" title="Logout">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Sites View - Master-Detail Layout -->
+            <div class="view active" id="sites-view">
+                <div class="master-detail-layout">
+                    <!-- Master Panel: Sites List -->
+                    <div class="master-panel" id="sites-master-panel">
+                        <div class="master-header">
+                            <h2>Sites</h2>
+                            <button class="btn btn-primary btn-sm" id="add-site-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Add
+                            </button>
+                        </div>
+                        <div class="sites-list" id="sites-list">
+                            <div class="empty-state-compact" id="empty-state">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="3" y1="9" x2="21" y2="9"/>
+                                    <line x1="9" y1="21" x2="9" y2="9"/>
+                                </svg>
+                                <p>No sites yet</p>
+                                <button class="btn btn-primary btn-sm" id="empty-add-btn">Add Site</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detail Panel: Site Details -->
+                    <div class="detail-panel" id="sites-detail-panel">
+                        <!-- Empty State -->
+                        <div class="detail-empty-state" id="detail-empty-state">
+                            <div class="detail-empty-icon">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="3" y1="9" x2="21" y2="9"/>
+                                    <line x1="9" y1="21" x2="9" y2="9"/>
+                                </svg>
+                            </div>
+                            <h3>Select a site</h3>
+                            <p>Choose a site from the list to view and manage its settings</p>
+                        </div>
+                        
+                        <!-- Site Details Content (hidden by default) -->
+                        <div class="detail-content" id="detail-content" style="display: none;">
+                            <!-- Site Header -->
+                            <div class="detail-header">
+                                <div class="detail-header-info">
+                                    <div class="detail-site-icon" id="detail-icon">S</div>
+                                    <div>
+                                        <h2 id="detail-site-name">Site Name</h2>
+                                        <a class="detail-site-url" id="detail-url-small" href="#" target="_blank">-</a>
+                                    </div>
+                                </div>
+                                <div class="detail-header-actions">
+                                    <a href="/demo" target="_blank" class="btn btn-secondary btn-sm" id="preview-site">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                            <circle cx="12" cy="12" r="3"/>
+                                        </svg>
+                                        Preview
+                                    </a>
+                                    <button class="btn btn-danger btn-sm" id="delete-site">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Stats Row -->
+                            <div class="detail-stats-row">
+                                <div class="detail-stat">
+                                    <span class="detail-stat-value" id="detail-status">-</span>
+                                    <span class="detail-stat-label">Status</span>
+                                </div>
+                                <div class="detail-stat">
+                                    <span class="detail-stat-value" id="detail-pages">0</span>
+                                    <span class="detail-stat-label">Pages</span>
+                                </div>
+                                <div class="detail-stat">
+                                    <span class="detail-stat-value" id="detail-indexed">0</span>
+                                    <span class="detail-stat-label">Indexed</span>
+                                </div>
+                                <div class="detail-stat">
+                                    <span class="detail-stat-value" id="detail-docs-count">0</span>
+                                    <span class="detail-stat-label">Documents</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Actions -->
+                            <div class="detail-quick-actions">
+                                <button class="detail-action-btn" id="recrawl-site">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="23 4 23 10 17 10"/>
+                                        <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                                    </svg>
+                                    Re-crawl
+                                </button>
+                                <button class="detail-action-btn" id="add-documents-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="12" y1="18" x2="12" y2="12"/>
+                                        <line x1="9" y1="15" x2="15" y2="15"/>
+                                    </svg>
+                                    Add Docs
+                                </button>
+                            </div>
+                            
+                            <!-- Tabs Navigation -->
+                            <div class="detail-tabs">
+                                <button type="button" class="detail-tab active" data-tab="appearance">Appearance</button>
+                                <button type="button" class="detail-tab" data-tab="behavior">Behavior</button>
+                                <button type="button" class="detail-tab" data-tab="quick-prompts">Quick Prompts</button>
+                                <button type="button" class="detail-tab" data-tab="triggers">Triggers</button>
+                                <button type="button" class="detail-tab" data-tab="training">Training</button>
+                                <button type="button" class="detail-tab" data-tab="handoff">Handoff</button>
+                                <button type="button" class="detail-tab" data-tab="leads">Leads</button>
+                                <button type="button" class="detail-tab" data-tab="security">Security</button>
+                                <button type="button" class="detail-tab" data-tab="crawling">Crawling</button>
+                                <button type="button" class="detail-tab" data-tab="embed">Embed</button>
+                            </div>
+                            
+                            <!-- Tab Content Container -->
+                            <div class="detail-tab-content" id="detail-tab-content">
+                                <!-- Tab contents will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analytics View -->
+            <div class="view" id="admin-view">
+                <div class="page-container">
+                    <header class="page-header">
+                        <div>
+                            <h1 class="page-title">Analytics</h1>
+                            <p class="page-subtitle">Monitor your chatbot performance and usage</p>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary" id="refresh-stats">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="23 4 23 10 17 10"/>
+                                    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </header>
+                    
+                    <div class="stats-row">
+                        <div class="stat-card primary">
+                            <div class="stat-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="2" y1="12" x2="22" y2="12"/>
+                                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stat-sites">0</span>
+                                <span class="stat-label">Total Sites</span>
+                                <span class="stat-change">
+                                    <span class="stat-change-dot"></span>
+                                    Active chatbots
+                                </span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stat-pages">0</span>
+                                <span class="stat-label">Pages Indexed</span>
+                                <span class="stat-change">
+                                    <span class="stat-change-dot"></span>
+                                    Crawled content
+                                </span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="3" y1="9" x2="21" y2="9"/>
+                                    <line x1="9" y1="21" x2="9" y2="9"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stat-chunks">0</span>
+                                <span class="stat-label">Total Chunks</span>
+                                <span class="stat-change">
+                                    <span class="stat-change-dot"></span>
+                                    Vector embeddings
+                                </span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="stat-chats">0</span>
+                                <span class="stat-label">Conversations</span>
+                                <span class="stat-change">
+                                    <span class="stat-change-dot"></span>
+                                    Total sessions
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analytics Charts Row -->
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <div class="analytics-card-header">
+                                <h3>Conversation Trends</h3>
+                                <div class="analytics-period-select">
+                                    <button class="period-btn active" data-period="7d">7 Days</button>
+                                    <button class="period-btn" data-period="30d">30 Days</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="conversationsChart"></canvas>
+                            </div>
+                            <div class="analytics-summary" id="trend-summary">
+                                <span class="summary-item"><strong id="trend-total">0</strong> conversations</span>
+                                <span class="summary-item trend-up" id="trend-change">+0% from last period</span>
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-card">
+                            <div class="analytics-card-header">
+                                <h3>Popular Questions</h3>
+                            </div>
+                            <div class="popular-questions-list" id="popular-questions">
+                                <div class="empty-analytics">No data yet</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <div class="analytics-card-header">
+                                <h3>Top Sources</h3>
+                            </div>
+                            <div class="chart-container chart-sm">
+                                <canvas id="sourcesChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-card">
+                            <div class="analytics-card-header">
+                                <h3>Recent Conversations</h3>
+                            </div>
+                            <div class="recent-conversations-list" id="recent-conversations">
+                                <div class="empty-analytics">No conversations yet</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <section class="settings-section">
+                        <h3 class="section-title">System Health</h3>
+                        <div class="health-list">
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">MongoDB Database</span>
+                                    <span class="health-desc">Primary data storage</span>
+                                </div>
+                                <span class="health-badge loading" id="health-mongodb">Checking</span>
+                            </div>
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">Vector Store (FAISS)</span>
+                                    <span class="health-desc">Semantic search index</span>
+                                </div>
+                                <span class="health-badge loading" id="health-vector">Checking</span>
+                            </div>
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">Ollama LLM (llama3.1:8b)</span>
+                                    <span class="health-desc">AI response generation</span>
+                                </div>
+                                <span class="health-badge loading" id="health-ollama">Checking</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="refresh-health">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                            </svg>
+                            Refresh Status
+                        </button>
+                    </section>
+                </div>
+            </div>
+            
+            <!-- Conversations View -->
+            <div class="view" id="conversations-view">
+                <div class="conversations-layout">
+                    <!-- Left: Conversation List -->
+                    <div class="conversations-list-panel">
+                        <div class="conversations-header">
+                            <h2>Conversations</h2>
+                            <div class="conversations-count" id="conversations-count">0 total</div>
+                        </div>
+                        
+                        <div class="conversations-toolbar">
+                            <div class="search-box">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                                <input type="text" id="conv-search-input" placeholder="Search conversations...">
+                            </div>
+                            <div class="conversations-filters">
+                                <select id="conv-site-filter" class="filter-select">
+                                    <option value="">All Sites</option>
+                                </select>
+                                <select id="conv-sort-select" class="filter-select">
+                                    <option value="updated_at-desc">Recent First</option>
+                                    <option value="updated_at-asc">Oldest First</option>
+                                    <option value="created_at-desc">Created (Recent)</option>
+                                    <option value="created_at-asc">Created (Oldest)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="conversations-bulk-actions" id="bulk-actions-bar" style="display: none;">
+                            <div class="bulk-info">
+                                <input type="checkbox" id="select-all-convs" class="bulk-checkbox">
+                                <span id="selected-count">0 selected</span>
+                            </div>
+                            <div class="bulk-buttons">
+                                <button class="btn btn-sm btn-secondary" id="export-selected">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    Export
+                                </button>
+                                <button class="btn btn-sm btn-danger" id="delete-selected">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                    </svg>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="conversations-list" id="conversations-list">
+                            <div class="conversations-loading">
+                                <div class="spinner"></div>
+                                <span>Loading conversations...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="conversations-pagination" id="conversations-pagination">
+                            <button class="pagination-btn" id="prev-page" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="15 18 9 12 15 6"/>
+                                </svg>
+                            </button>
+                            <span class="pagination-info" id="pagination-info">Page 1 of 1</span>
+                            <button class="pagination-btn" id="next-page" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Conversation Detail / Transcript -->
+                    <div class="conversation-detail-panel" id="conversation-detail-panel">
+                        <div class="conversation-detail-empty">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+                            </svg>
+                            <h3>Select a conversation</h3>
+                            <p>Choose a conversation from the list to view its transcript</p>
+                        </div>
+                        
+                        <div class="conversation-detail-content" id="conversation-detail-content" style="display: none;">
+                            <div class="conversation-detail-header">
+                                <div class="conversation-info">
+                                    <h3 id="detail-conv-title">Conversation</h3>
+                                    <span class="conversation-meta" id="detail-conv-meta"></span>
+                                </div>
+                                <div class="conversation-actions">
+                                    <button class="btn btn-sm btn-secondary" id="export-conv">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                            <polyline points="7 10 12 15 17 10"/>
+                                            <line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                        Export
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" id="delete-conv">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"/>
+                                            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                        </svg>
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="conversation-stats-bar" id="conversation-stats-bar">
+                                <div class="conv-stat">
+                                    <span class="conv-stat-value" id="stat-messages">0</span>
+                                    <span class="conv-stat-label">Messages</span>
+                                </div>
+                                <div class="conv-stat">
+                                    <span class="conv-stat-value" id="stat-response-time">-</span>
+                                    <span class="conv-stat-label">Avg Response</span>
+                                </div>
+                                <div class="conv-stat positive">
+                                    <span class="conv-stat-value" id="stat-positive">0</span>
+                                    <span class="conv-stat-label">Positive</span>
+                                </div>
+                                <div class="conv-stat negative">
+                                    <span class="conv-stat-value" id="stat-negative">0</span>
+                                    <span class="conv-stat-label">Negative</span>
+                                </div>
+                            </div>
+                            
+                            <div class="conversation-transcript" id="conversation-transcript">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Handoffs View -->
+            <div class="view" id="handoffs-view">
+                <div class="handoffs-layout">
+                    <!-- Left: Handoff Queue -->
+                    <div class="handoffs-queue-panel">
+                        <div class="handoffs-header">
+                            <h2>Handoff Queue</h2>
+                            <div class="handoffs-filters">
+                                <select id="handoff-site-filter" class="filter-select">
+                                    <option value="">All Sites</option>
+                                </select>
+                                <select id="handoff-status-filter" class="filter-select">
+                                    <option value="">Pending & Active</option>
+                                    <option value="pending">Pending Only</option>
+                                    <option value="active">Active Only</option>
+                                    <option value="resolved">Resolved</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="handoffs-stats">
+                            <div class="handoff-stat pending">
+                                <span class="stat-value" id="pending-count">0</span>
+                                <span class="stat-label">Pending</span>
+                            </div>
+                            <div class="handoff-stat active">
+                                <span class="stat-value" id="active-count">0</span>
+                                <span class="stat-label">Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="handoffs-list" id="handoffs-list">
+                            <div class="handoffs-empty">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                                <p>No handoff requests</p>
+                                <span>Handoff requests from visitors will appear here</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Handoff Detail / Agent Chat -->
+                    <div class="handoff-detail-panel" id="handoff-detail-panel">
+                        <div class="handoff-detail-empty">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+                            </svg>
+                            <p>Select a handoff to view details</p>
+                        </div>
+                        
+                        <div class="handoff-detail-content hidden" id="handoff-detail-content">
+                            <div class="handoff-detail-header">
+                                <div class="handoff-visitor-info">
+                                    <div class="visitor-avatar">V</div>
+                                    <div>
+                                        <h3 id="handoff-visitor-name">Visitor</h3>
+                                        <span id="handoff-visitor-email" class="visitor-email"></span>
+                                    </div>
+                                </div>
+                                <div class="handoff-actions">
+                                    <button class="btn btn-primary btn-sm" id="claim-handoff-btn">Claim</button>
+                                    <button class="btn btn-success btn-sm hidden" id="resolve-handoff-btn">Resolve</button>
+                                </div>
+                            </div>
+                            
+                            <div class="handoff-meta">
+                                <span class="handoff-meta-item">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                    <span id="handoff-wait-time">0m waiting</span>
+                                </span>
+                                <span class="handoff-meta-item">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                                        <circle cx="12" cy="10" r="3"/>
+                                    </svg>
+                                    <span id="handoff-site-name">Site</span>
+                                </span>
+                                <span class="handoff-status-badge" id="handoff-status-badge">pending</span>
+                            </div>
+                            
+                            <div class="handoff-ai-summary" id="handoff-ai-summary">
+                                <h4>AI Conversation Summary</h4>
+                                <div class="ai-summary-content"></div>
+                            </div>
+                            
+                            <div class="handoff-messages" id="handoff-messages">
+                            </div>
+                            
+                            <div class="handoff-input-wrapper" id="handoff-input-wrapper">
+                                <form class="handoff-input-form" id="handoff-input-form">
+                                    <input type="text" class="handoff-input" id="handoff-input" placeholder="Type your message...">
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings View -->
+            <div class="view" id="settings-view">
+                <div class="page-container">
+                    <header class="page-header">
+                        <div>
+                            <h1 class="page-title">Settings</h1>
+                            <p class="page-subtitle">Configure your chatbot preferences</p>
+                        </div>
+                    </header>
+                    
+                    <section class="settings-section">
+                        <h3 class="section-title">General Settings</h3>
+                        <div class="health-list">
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">API Endpoint</span>
+                                    <span class="health-desc">http://127.0.0.1:8000</span>
+                                </div>
+                                <span class="health-badge healthy">Connected</span>
+                            </div>
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">Auto-refresh</span>
+                                    <span class="health-desc">Automatically refresh site status</span>
+                                </div>
+                                <span class="health-badge healthy">Enabled</span>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- White-label Settings -->
+                    <section class="settings-section" id="whitelabel-section">
+                        <h3 class="section-title">White-label Settings</h3>
+                        <p class="section-desc">Customize the branding of your dashboard and widget.</p>
+                        
+                        <form id="whitelabel-form" class="settings-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Application Name</label>
+                                    <input type="text" class="form-input" id="wl-app-name" placeholder="SiteChat">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Primary Color</label>
+                                    <div class="color-input-wrapper">
+                                        <input type="color" class="color-input" id="wl-primary-color" value="#1B5E3B">
+                                        <input type="text" class="form-input color-text" id="wl-primary-color-text" placeholder="#1B5E3B">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Logo URL</label>
+                                    <input type="url" class="form-input" id="wl-logo-url" placeholder="https://example.com/logo.png">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Favicon URL</label>
+                                    <input type="url" class="form-input" id="wl-favicon-url" placeholder="https://example.com/favicon.ico">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Login Page Title</label>
+                                    <input type="text" class="form-input" id="wl-login-title" placeholder="SiteChat">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Login Page Subtitle</label>
+                                    <input type="text" class="form-input" id="wl-login-subtitle" placeholder="AI-Powered Customer Support">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Support Email</label>
+                                    <input type="email" class="form-input" id="wl-support-email" placeholder="support@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Footer Text</label>
+                                    <input type="text" class="form-input" id="wl-footer-text" placeholder="© 2024 Your Company">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="toggle-label">
+                                    <input type="checkbox" id="wl-hide-branding">
+                                    <span class="toggle-switch"></span>
+                                    <span>Hide all SiteChat branding</span>
+                                </label>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="wl-reset-btn">Reset to Defaults</button>
+                                <button type="submit" class="btn btn-primary" id="wl-save-btn">Save Changes</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+            
+            <!-- Help View -->
+            <div class="view" id="help-view">
+                <div class="page-container">
+                    <header class="page-header">
+                        <div>
+                            <h1 class="page-title">Help & Documentation</h1>
+                            <p class="page-subtitle">Learn how to use SiteChat effectively</p>
+                        </div>
+                    </header>
+                    
+                    <section class="settings-section">
+                        <h3 class="section-title">Getting Started</h3>
+                        <div class="health-list">
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">1. Add a Site</span>
+                                    <span class="health-desc">Click "Add Site" to crawl a website or upload documents</span>
+                                </div>
+                            </div>
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">2. Wait for Indexing</span>
+                                    <span class="health-desc">The system will crawl and index your content automatically</span>
+                                </div>
+                            </div>
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">3. Test Your Chatbot</span>
+                                    <span class="health-desc">Use the Interactive Preview in Appearance settings</span>
+                                </div>
+                            </div>
+                            <div class="health-row">
+                                <div class="health-info">
+                                    <span class="health-name">4. Embed on Your Site</span>
+                                    <span class="health-desc">Copy the embed code and add it to your website</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Add Site Modal - Multi-step -->
+    <div class="modal-backdrop" id="add-site-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Knowledge Source</h2>
+                <button class="modal-close" id="close-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Step 1: Choose Source Type -->
+            <div class="modal-step active" id="step-source-type">
+                <p class="step-description">How would you like to add knowledge to your chatbot?</p>
+                
+                <div class="source-type-grid">
+                    <button type="button" class="source-type-card" data-type="website">
+                        <div class="source-type-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                            </svg>
+                        </div>
+                        <h4>Crawl Website</h4>
+                        <p>Automatically scan and index content from a website URL</p>
+                    </button>
+                    
+                    <button type="button" class="source-type-card" data-type="documents">
+                        <div class="source-type-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                        </div>
+                        <h4>Upload Documents</h4>
+                        <p>Upload PDFs, Word docs, text files, and more</p>
+                    </button>
+                    
+                    <button type="button" class="source-type-card" data-type="both">
+                        <div class="source-type-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                            </svg>
+                        </div>
+                        <h4>Both</h4>
+                        <p>Combine website crawling with document uploads</p>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Website Configuration -->
+            <div class="modal-step" id="step-website">
+                <form id="website-form" class="modal-form">
+                    <div class="form-field">
+                        <label for="site-url">Website URL</label>
+                        <input type="url" id="site-url" placeholder="https://example.com" required>
+                        <span class="field-hint">Enter the full URL of your website</span>
+                    </div>
+                    <div class="form-field">
+                        <label for="site-name">Display Name <span class="optional">(optional)</span></label>
+                        <input type="text" id="site-name" placeholder="My Website">
+                    </div>
+                    <div class="form-field">
+                        <label for="max-pages">Pages to Crawl</label>
+                        <input type="number" id="max-pages" value="50" min="1" max="500">
+                        <span class="field-hint">Maximum pages to index (1-500)</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="back-to-source">Back</button>
+                        <button type="submit" class="btn btn-primary" id="submit-website">
+                            <span class="btn-label">Create Chatbot</span>
+                            <span class="btn-spinner hidden">
+                                <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+                                    <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                                </svg>
+                                Creating...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Step 2: Document Upload -->
+            <div class="modal-step" id="step-documents">
+                <form id="documents-form" class="modal-form">
+                    <div class="form-field">
+                        <label for="doc-site-name">Knowledge Base Name</label>
+                        <input type="text" id="doc-site-name" placeholder="My Knowledge Base" required>
+                        <span class="field-hint">A name to identify this collection of documents</span>
+                    </div>
+                    
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <h4>Drag & drop files here</h4>
+                        <p>or click to browse</p>
+                        <span class="upload-hint">PDF, DOCX, TXT, MD, CSV, PPTX, XLSX (max 50MB each)</span>
+                        <input type="file" id="file-input" multiple accept=".pdf,.docx,.doc,.txt,.md,.csv,.pptx,.xlsx,.html,.htm" hidden>
+                    </div>
+                    
+                    <div class="file-list" id="file-list"></div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="back-to-source-docs">Back</button>
+                        <button type="submit" class="btn btn-primary" id="submit-documents" disabled>
+                            <span class="btn-label">Create Chatbot</span>
+                            <span class="btn-spinner hidden">
+                                <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+                                    <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                                </svg>
+                                Uploading...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Step 2: Both (Website + Documents) -->
+            <div class="modal-step" id="step-both">
+                <form id="both-form" class="modal-form">
+                    <div class="form-tabs">
+                        <button type="button" class="form-tab active" data-tab="both-website">Website</button>
+                        <button type="button" class="form-tab" data-tab="both-documents">Documents</button>
+                    </div>
+                    
+                    <div class="form-tab-content active" id="both-website">
+                        <div class="form-field">
+                            <label for="both-site-url">Website URL</label>
+                            <input type="url" id="both-site-url" placeholder="https://example.com" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="both-site-name">Display Name</label>
+                            <input type="text" id="both-site-name" placeholder="My Website" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="both-max-pages">Pages to Crawl</label>
+                            <input type="number" id="both-max-pages" value="50" min="1" max="500">
+                        </div>
+                    </div>
+                    
+                    <div class="form-tab-content" id="both-documents">
+                        <div class="upload-zone" id="upload-zone-both">
+                            <div class="upload-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                            </div>
+                            <h4>Drag & drop files here</h4>
+                            <p>or click to browse</p>
+                            <span class="upload-hint">Add documents to supplement website content</span>
+                            <input type="file" id="file-input-both" multiple accept=".pdf,.docx,.doc,.txt,.md,.csv,.pptx,.xlsx,.html,.htm" hidden>
+                        </div>
+                        <div class="file-list" id="file-list-both"></div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="back-to-source-both">Back</button>
+                        <button type="submit" class="btn btn-primary" id="submit-both">
+                            <span class="btn-label">Create Chatbot</span>
+                            <span class="btn-spinner hidden">
+                                <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+                                    <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                                </svg>
+                                Creating...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Site Details Side Panel (deprecated - using master-detail layout now) -->
+    <div class="side-panel-overlay" id="side-panel-overlay" style="display: none;"></div>
+    <aside class="side-panel" id="site-details-panel" style="display: none;">
+        <div class="side-panel-header">
+            <div class="side-panel-title">
+                <div class="side-panel-icon" id="detail-icon">S</div>
+                <div>
+                    <h2 id="detail-site-name">Site Details</h2>
+                    <span class="side-panel-url" id="detail-url-small">-</span>
+                </div>
+            </div>
+            <button class="side-panel-close" id="close-details-panel">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="side-panel-content">
+            <!-- Status & Stats -->
+            <div class="panel-section">
+                <div class="panel-stats-grid">
+                    <div class="panel-stat">
+                        <span class="panel-stat-value" id="detail-status">-</span>
+                        <span class="panel-stat-label">Status</span>
+                    </div>
+                    <div class="panel-stat">
+                        <span class="panel-stat-value" id="detail-pages">0</span>
+                        <span class="panel-stat-label">Pages</span>
+                    </div>
+                    <div class="panel-stat">
+                        <span class="panel-stat-value" id="detail-indexed">0</span>
+                        <span class="panel-stat-label">Indexed</span>
+                    </div>
+                    <div class="panel-stat">
+                        <span class="panel-stat-value" id="detail-docs-count">0</span>
+                        <span class="panel-stat-label">Documents</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="panel-section">
+                <h4 class="panel-section-title">Quick Actions</h4>
+                <div class="panel-actions">
+                    <button class="panel-action-btn" id="recrawl-site">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                        </svg>
+                        <span>Re-crawl Site</span>
+                    </button>
+                    <a href="/demo" target="_blank" class="panel-action-btn" id="preview-site">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span>Preview Chatbot</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Documents Section -->
+            <div class="panel-section">
+                <div class="panel-section-header">
+                    <h4 class="panel-section-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Documents
+                    </h4>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-documents-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add
+                    </button>
+                </div>
+                <div class="documents-list" id="documents-list">
+                    <div class="empty-docs">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <p>No documents yet</p>
+                        <span>Upload PDFs, docs, and more</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customization Section -->
+            <div class="panel-section">
+                <div class="panel-section-header">
+                    <h4 class="panel-section-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                        </svg>
+                        Customize Widget
+                    </h4>
+                </div>
+                
+                <div class="customize-tabs">
+                    <button type="button" class="customize-tab active" data-tab="appearance">Appearance</button>
+                    <button type="button" class="customize-tab" data-tab="behavior">Behavior</button>
+                    <button type="button" class="customize-tab" data-tab="triggers">Triggers</button>
+                    <button type="button" class="customize-tab" data-tab="handoff">Handoff</button>
+                    <button type="button" class="customize-tab" data-tab="security">Security</button>
+                    <button type="button" class="customize-tab" data-tab="crawling">Crawling</button>
+                </div>
+                
+                <div class="customize-content" id="customize-appearance">
+                    <div class="appearance-layout">
+                        <div class="appearance-settings">
+                            <div class="form-group">
+                                <label for="config-color">Primary Color</label>
+                                <div class="color-input-wrapper">
+                                    <input type="color" id="config-color" value="#1B5E3B" class="color-input">
+                                    <input type="text" id="config-color-text" value="#1B5E3B" class="color-text-input">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="config-title">Chat Title</label>
+                                <input type="text" id="config-title" placeholder="Chat with us" class="form-input">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="config-welcome">Welcome Message</label>
+                                <textarea id="config-welcome" placeholder="Hi! How can I help you today?" class="form-textarea" rows="2"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="config-position">Widget Position</label>
+                                <select id="config-position" class="form-select">
+                                    <option value="bottom-right">Bottom Right</option>
+                                    <option value="bottom-left">Bottom Left</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-divider"></div>
+                            <h4 class="form-section-title">White-label Options</h4>
+                            
+                            <div class="form-group form-checkbox">
+                                <input type="checkbox" id="config-hide-branding">
+                                <label for="config-hide-branding">Enable White-label</label>
+                            </div>
+                            
+                            <div class="form-group whitelabel-fields" id="custom-branding-group">
+                                <label for="config-custom-branding">Your Branding Text</label>
+                                <input type="text" id="config-custom-branding" placeholder="Powered by Your Company" class="form-input">
+                                <small class="form-help">Leave empty to hide branding completely</small>
+                            </div>
+                            
+                            <div class="form-group whitelabel-fields">
+                                <label for="config-custom-branding-url">Branding Link URL (optional)</label>
+                                <input type="url" id="config-custom-branding-url" placeholder="https://yourcompany.com" class="form-input">
+                            </div>
+                        </div>
+                        
+                        <div class="appearance-preview">
+                            <div class="preview-card">
+                                <div class="preview-card-header">
+                                    <span class="preview-card-title">Live Preview</span>
+                                    <label class="preview-mode-toggle">
+                                        <input type="checkbox" id="appearance-preview-mode">
+                                        <span class="toggle-text">Interactive</span>
+                                    </label>
+                                </div>
+                                <div class="preview-device">
+                                    <div class="preview-device-screen">
+                                        <div class="widget-preview-mini" id="appearance-widget-preview">
+                                            <div class="preview-header" id="appearance-preview-header">
+                                                <div class="preview-header-icon">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                                        <path d="M2 17l10 5 10-5"/>
+                                                        <path d="M2 12l10 5 10-5"/>
+                                                    </svg>
+                                                </div>
+                                                <div class="preview-header-text">
+                                                    <span class="preview-title" id="appearance-preview-title">Chat with us</span>
+                                                    <span class="preview-subtitle">Powered by AI</span>
+                                                </div>
+                                            </div>
+                                            <div class="preview-messages">
+                                                <div class="preview-message bot">
+                                                    <div class="preview-avatar" id="appearance-preview-avatar">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div class="preview-bubble" id="appearance-preview-welcome">Hi! How can I help you today?</div>
+                                                </div>
+                                            </div>
+                                            <div class="preview-input">
+                                                <input type="text" placeholder="Type your message..." disabled>
+                                                <button class="preview-send" id="appearance-preview-send">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <line x1="22" y1="2" x2="11" y2="13"/>
+                                                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <div class="preview-branding" id="appearance-preview-branding">
+                                                <a href="https://sitechat.ai" target="_blank">Powered by <strong>SiteChat</strong></a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="appearance-embed-section">
+                            <div class="embed-card">
+                                <div class="embed-card-header">
+                                    <div class="embed-card-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="16 18 22 12 16 6"/>
+                                            <polyline points="8 6 2 12 8 18"/>
+                                        </svg>
+                                    </div>
+                                    <div class="embed-card-title-wrapper">
+                                        <h4 class="embed-card-title">Embed Code</h4>
+                                        <p class="embed-card-desc">Add this script to your website before <code>&lt;/body&gt;</code></p>
+                                    </div>
+                                </div>
+                                <div class="embed-code-block">
+                                    <pre><code id="appearance-embed-code"></code></pre>
+                                    <button type="button" class="embed-copy-btn" id="copy-appearance-embed">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                        </svg>
+                                        <span>Copy</span>
+                                    </button>
+                                </div>
+                                <div class="embed-options">
+                                    <button type="button" class="embed-option-btn" id="show-advanced-embed">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="12" cy="12" r="3"/>
+                                            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                                        </svg>
+                                        Advanced Options
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="customize-content hidden" id="customize-behavior">
+                    <div class="form-group">
+                        <label for="config-prompt">System Prompt</label>
+                        <textarea id="config-prompt" placeholder="You are a helpful assistant..." class="form-textarea" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="config-temperature">Temperature: <span id="temp-value">0.7</span></label>
+                        <input type="range" id="config-temperature" min="0" max="2" step="0.1" value="0.7" class="form-range">
+                        <div class="range-labels">
+                            <span>Precise</span>
+                            <span>Creative</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="config-max-tokens">Max Response Length</label>
+                        <input type="number" id="config-max-tokens" value="500" min="50" max="4000" class="form-input">
+                    </div>
+                    
+                    <div class="form-group form-checkbox">
+                        <input type="checkbox" id="config-show-sources" checked>
+                        <label for="config-show-sources">Show source citations</label>
+                    </div>
+                </div>
+                
+                <div class="customize-content hidden" id="customize-triggers">
+                    <div class="triggers-header">
+                        <p class="triggers-description">Automatically engage visitors based on their behavior</p>
+                        <button type="button" class="btn btn-sm btn-primary" id="add-trigger-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add Trigger
+                        </button>
+                    </div>
+                    
+                    <div class="triggers-list" id="triggers-list">
+                        <div class="triggers-loading">
+                            <div class="spinner-sm"></div>
+                            <span>Loading triggers...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="triggers-empty hidden" id="triggers-empty">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                        <p>No triggers configured</p>
+                        <span>Create triggers to proactively engage visitors</span>
+                        <button type="button" class="btn btn-sm btn-primary" id="add-trigger-empty-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add First Trigger
+                        </button>
+                    </div>
+                    
+                    <div class="triggers-settings">
+                        <div class="form-group">
+                            <label for="global-cooldown">Cooldown between triggers</label>
+                            <select id="global-cooldown" class="form-select">
+                                <option value="10000">10 seconds</option>
+                                <option value="30000" selected>30 seconds</option>
+                                <option value="60000">1 minute</option>
+                                <option value="300000">5 minutes</option>
+                            </select>
+                            <span class="form-hint">Minimum time between showing different triggers</span>
+                        </div>
+                    </div>
+                    
+                    <div class="triggers-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" id="create-default-triggers">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                            </svg>
+                            Create Default Triggers
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="customize-content hidden" id="customize-handoff">
+                    <div class="handoff-settings-header">
+                        <h4>Human Handoff Settings</h4>
+                        <p>Configure when and how visitors can connect with human agents</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="handoff-enabled" checked>
+                            <span class="toggle-switch"></span>
+                            Enable Human Handoff
+                        </label>
+                        <span class="form-hint">Allow visitors to request a human agent</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confidence-threshold">AI Confidence Threshold</label>
+                        <div class="range-wrapper">
+                            <input type="range" id="confidence-threshold" min="0" max="100" value="30" class="range-input">
+                            <span class="range-value" id="confidence-threshold-value">30%</span>
+                        </div>
+                        <span class="form-hint">Suggest handoff when AI confidence is below this level</span>
+                    </div>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="business-hours-enabled">
+                            <span class="toggle-switch"></span>
+                            Enable Business Hours
+                        </label>
+                        <span class="form-hint">Only allow handoffs during specific hours</span>
+                    </div>
+                    
+                    <div class="business-hours-config hidden" id="business-hours-config">
+                        <div class="form-group">
+                            <label for="business-timezone">Timezone</label>
+                            <select id="business-timezone" class="form-select">
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">Eastern Time (ET)</option>
+                                <option value="America/Chicago">Central Time (CT)</option>
+                                <option value="America/Denver">Mountain Time (MT)</option>
+                                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                                <option value="Europe/London">London (GMT)</option>
+                                <option value="Europe/Paris">Central European (CET)</option>
+                                <option value="Asia/Tokyo">Japan (JST)</option>
+                                <option value="Australia/Sydney">Sydney (AEST)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="business-hours-schedule" id="business-hours-schedule">
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="mon" checked>
+                                    <span>Mon</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="mon" value="09:00">
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="mon" value="17:00">
+                            </div>
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="tue" checked>
+                                    <span>Tue</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="tue" value="09:00">
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="tue" value="17:00">
+                            </div>
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="wed" checked>
+                                    <span>Wed</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="wed" value="09:00">
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="wed" value="17:00">
+                            </div>
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="thu" checked>
+                                    <span>Thu</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="thu" value="09:00">
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="thu" value="17:00">
+                            </div>
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="fri" checked>
+                                    <span>Fri</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="fri" value="09:00">
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="fri" value="17:00">
+                            </div>
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="sat">
+                                    <span>Sat</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="sat" value="09:00" disabled>
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="sat" value="17:00" disabled>
+                            </div>
+                            <div class="schedule-row">
+                                <label class="day-toggle">
+                                    <input type="checkbox" data-day="sun">
+                                    <span>Sun</span>
+                                </label>
+                                <input type="time" class="schedule-start" data-day="sun" value="09:00" disabled>
+                                <span class="schedule-to">to</span>
+                                <input type="time" class="schedule-end" data-day="sun" value="17:00" disabled>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="offline-message">Offline Message</label>
+                            <textarea id="offline-message" class="form-textarea" rows="2">We're currently offline. Leave your email and we'll get back to you.</textarea>
+                            <span class="form-hint">Shown when outside business hours</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" id="save-handoff-config">Save Handoff Settings</button>
+                    </div>
+                </div>
+                
+                <div class="customize-content hidden" id="customize-security">
+                    <div class="security-settings-header">
+                        <h4>Widget Security Settings</h4>
+                        <p>Configure domain restrictions and security options for your widget</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="security-enforce-domain">
+                            <span class="toggle-switch"></span>
+                            Enforce Domain Validation
+                        </label>
+                        <span class="form-hint">Only allow widget to load on whitelisted domains</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="security-allowed-domains">Allowed Domains</label>
+                        <div class="domain-list-container">
+                            <div class="domain-input-wrapper">
+                                <input type="text" id="security-new-domain" placeholder="example.com or *.example.com" class="form-input">
+                                <button type="button" class="btn btn-secondary btn-sm" id="security-add-domain">Add</button>
+                            </div>
+                            <div class="domain-list" id="security-domain-list">
+                                <!-- Domains will be populated dynamically -->
+                            </div>
+                        </div>
+                        <span class="form-hint">Use * as wildcard (e.g., *.example.com). Leave empty to allow all domains.</span>
+                    </div>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <div class="form-group">
+                        <label class="toggle-label">
+                            <input type="checkbox" id="security-require-referrer">
+                            <span class="toggle-switch"></span>
+                            Require Referrer Header
+                        </label>
+                        <span class="form-hint">Reject API requests without a valid Referer header</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="security-rate-limit">Rate Limit (requests/minute)</label>
+                        <div class="range-wrapper">
+                            <input type="range" id="security-rate-limit" min="10" max="200" value="60" class="range-input">
+                            <span class="range-value" id="security-rate-limit-value">60</span>
+                        </div>
+                        <span class="form-hint">Maximum API requests per session per minute</span>
+                    </div>
+                    
+                    <div class="form-divider"></div>
+                    
+                    <div class="security-info-section">
+                        <h5>Embed Code with Security</h5>
+                        <p>Use this secure embed code with Subresource Integrity (SRI) hash:</p>
+                        <div class="embed-code-container">
+                            <pre id="security-embed-code" class="embed-code-preview">Loading...</pre>
+                            <button type="button" class="btn btn-secondary btn-sm copy-embed-btn" id="copy-secure-embed">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                        <div class="security-sri-info">
+                            <span class="sri-label">SRI Hash:</span>
+                            <code id="security-sri-hash">Loading...</code>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" id="save-security-config">Save Security Settings</button>
+                    </div>
+                </div>
+                
+                <!-- Crawling Tab Content -->
+                <div class="customize-content hidden" id="customize-crawling">
+                    <div class="crawling-settings-header">
+                        <h4>Scheduled Re-crawling</h4>
+                        <p>Configure automatic re-crawling to keep your knowledge base up-to-date</p>
+                    </div>
+                    
+                    <!-- Crawl Status Banner -->
+                    <div class="crawl-status-banner" id="crawl-status-banner" style="display: none;">
+                        <div class="crawl-status-icon">
+                            <svg class="spinner" width="20" height="20" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+                                <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="crawl-status-text">
+                            <span class="crawl-status-title">Crawling in progress...</span>
+                            <span class="crawl-status-detail" id="crawl-status-pages">0 pages crawled</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="crawl-quick-actions">
+                        <button type="button" class="btn btn-secondary" id="crawl-now-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                            </svg>
+                            Crawl Now
+                        </button>
+                        <div class="crawl-info">
+                            <span class="crawl-info-label">Last Crawl:</span>
+                            <span class="crawl-info-value" id="last-crawl-time">Never</span>
+                        </div>
+                        <div class="crawl-info">
+                            <span class="crawl-info-label">Next Scheduled:</span>
+                            <span class="crawl-info-value" id="next-crawl-time">Not scheduled</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Schedule Configuration -->
+                    <div class="form-section">
+                        <h5>Schedule Configuration</h5>
+                        
+                        <label class="toggle-row">
+                            <input type="checkbox" id="crawl-schedule-enabled">
+                            <span class="toggle-switch"></span>
+                            Enable Scheduled Crawling
+                        </label>
+                        <span class="form-hint">Automatically re-crawl your website on a schedule</span>
+                        
+                        <div class="crawl-schedule-options" id="crawl-schedule-options">
+                            <div class="form-group">
+                                <label for="crawl-frequency">Frequency</label>
+                                <select id="crawl-frequency" class="form-select">
+                                    <option value="daily">Daily (at 2:00 AM UTC)</option>
+                                    <option value="weekly" selected>Weekly (Sundays at 2:00 AM UTC)</option>
+                                    <option value="monthly">Monthly (1st day at 2:00 AM UTC)</option>
+                                    <option value="custom">Custom (Cron Expression)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group" id="custom-cron-group" style="display: none;">
+                                <label for="crawl-custom-cron">Cron Expression</label>
+                                <input type="text" id="crawl-custom-cron" placeholder="0 2 * * 0" class="form-input">
+                                <span class="form-hint">Standard cron format: minute hour day month weekday</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="crawl-max-pages">Max Pages</label>
+                                <input type="number" id="crawl-max-pages" value="50" min="1" max="1000" class="form-input">
+                                <span class="form-hint">Maximum pages to crawl (1-1000)</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="crawl-include-patterns">Include URL Patterns</label>
+                                <textarea id="crawl-include-patterns" class="form-textarea" rows="2" placeholder="/blog/*&#10;/docs/*"></textarea>
+                                <span class="form-hint">One pattern per line. Leave empty to include all.</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="crawl-exclude-patterns">Exclude URL Patterns</label>
+                                <textarea id="crawl-exclude-patterns" class="form-textarea" rows="2" placeholder="/admin/*&#10;/private/*"></textarea>
+                                <span class="form-hint">One pattern per line. URLs matching these will be skipped.</span>
+                            </div>
+                            
+                            <label class="toggle-row">
+                                <input type="checkbox" id="crawl-notify" checked>
+                                <span class="toggle-switch"></span>
+                                Notify on completion
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Crawl History -->
+                    <div class="form-section">
+                        <h5>Crawl History</h5>
+                        <div class="crawl-history-table" id="crawl-history-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Trigger</th>
+                                        <th>Pages</th>
+                                        <th>Status</th>
+                                        <th>Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="crawl-history-tbody">
+                                    <tr class="empty-row">
+                                        <td colspan="5">No crawl history available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" id="save-crawl-schedule">Save Crawl Settings</button>
+                    </div>
+                </div>
+                
+                <!-- Live Preview -->
+                <div class="widget-preview-container">
+                    <label class="preview-label">Live Preview</label>
+                    <div class="widget-preview" id="widget-preview">
+                        <div class="preview-header" id="preview-header">
+                            <div class="preview-header-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    <path d="M2 17l10 5 10-5"/>
+                                    <path d="M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <div class="preview-header-text">
+                                <span class="preview-title" id="preview-title">Chat with us</span>
+                                <span class="preview-subtitle">Powered by AI</span>
+                            </div>
+                        </div>
+                        <div class="preview-messages">
+                            <div class="preview-message bot">
+                                <div class="preview-avatar" id="preview-avatar">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                                    </svg>
+                                </div>
+                                <div class="preview-bubble" id="preview-welcome">Hi! How can I help you today?</div>
+                            </div>
+                        </div>
+                        <div class="preview-input">
+                            <input type="text" placeholder="Type your message..." disabled>
+                            <button class="preview-send" id="preview-send">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="preview-branding" id="preview-branding">
+                            <a href="https://sitechat.ai" target="_blank">Powered by <strong>SiteChat</strong></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="customize-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="reset-config">Reset to Default</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="save-config">Save Changes</button>
+                </div>
+            </div>
+            
+            <!-- Embed Code Section -->
+            <div class="panel-section">
+                <h4 class="panel-section-title">Embed Code</h4>
+                <p class="panel-hint">Add this to your website before <code>&lt;/body&gt;</code></p>
+                <div class="code-block">
+                    <pre><code id="detail-embed-code"></code></pre>
+                    <button type="button" class="code-copy" id="copy-detail-embed">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel Footer -->
+        <div class="side-panel-footer">
+            <button class="btn btn-danger btn-sm" id="delete-site">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                </svg>
+                Delete Site
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Upload Documents Modal (for existing sites) -->
+    <div class="modal-backdrop" id="upload-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Upload Documents</h2>
+                <button class="modal-close" id="close-upload-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="upload-form" class="modal-form">
+                <div class="upload-zone" id="upload-zone-existing">
+                    <div class="upload-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <h4>Drag & drop files here</h4>
+                    <p>or click to browse</p>
+                    <span class="upload-hint">PDF, DOCX, TXT, MD, CSV, PPTX, XLSX (max 50MB each)</span>
+                    <input type="file" id="file-input-existing" multiple accept=".pdf,.docx,.doc,.txt,.md,.csv,.pptx,.xlsx,.html,.htm" hidden>
+                </div>
+                <div class="file-list" id="file-list-existing"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-upload-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submit-upload" disabled>
+                        <span class="btn-label">Upload</span>
+                        <span class="btn-spinner hidden">
+                            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+                                <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            </svg>
+                            Uploading...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Export Format Modal -->
+    <div class="modal-backdrop" id="export-modal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Export Conversations</h2>
+                <button class="modal-close" id="close-export-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Choose export format:</p>
+                <div class="export-options">
+                    <button class="export-option" data-format="json">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <span>JSON</span>
+                    </button>
+                    <button class="export-option" data-format="csv">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="8" y1="13" x2="16" y2="13"/>
+                            <line x1="8" y1="17" x2="16" y2="17"/>
+                        </svg>
+                        <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-backdrop" id="delete-confirm-modal">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>Confirm Delete</h2>
+                <button class="modal-close" id="close-delete-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-confirm-message">Are you sure you want to delete this conversation? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-delete">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trigger Editor Modal -->
+    <div class="modal-backdrop" id="trigger-editor-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="trigger-modal-title">Create Trigger</h2>
+                <button class="modal-close" id="close-trigger-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="trigger-form" class="modal-form">
+                <input type="hidden" id="trigger-id" value="">
+                
+                <div class="form-field">
+                    <label for="trigger-name">Trigger Name</label>
+                    <input type="text" id="trigger-name" placeholder="e.g., Welcome Message" required>
+                </div>
+                
+                <div class="form-field">
+                    <label>Conditions <span class="hint">(all must match)</span></label>
+                    <div class="conditions-list" id="conditions-list">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary" id="add-condition-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Condition
+                    </button>
+                </div>
+                
+                <div class="form-field">
+                    <label for="trigger-message">Message to Display</label>
+                    <textarea id="trigger-message" placeholder="Have questions? I'm here to help!" rows="2" required></textarea>
+                    <span class="field-hint">This message will appear as a nudge bubble near the chat toggle</span>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-field">
+                        <label for="trigger-delay">Delay (ms)</label>
+                        <input type="number" id="trigger-delay" value="0" min="0" max="60000" step="500">
+                        <span class="field-hint">Wait time after conditions are met</span>
+                    </div>
+                    <div class="form-field">
+                        <label for="trigger-priority">Priority</label>
+                        <input type="number" id="trigger-priority" value="0" min="0" max="100">
+                        <span class="field-hint">Higher = checked first</span>
+                    </div>
+                </div>
+                
+                <div class="form-field">
+                    <label>Show Limits</label>
+                    <div class="checkbox-group">
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="trigger-once-session" checked>
+                            <label for="trigger-once-session">Show once per session</label>
+                        </div>
+                        <div class="form-checkbox">
+                            <input type="checkbox" id="trigger-once-visitor">
+                            <label for="trigger-once-visitor">Show once per visitor (uses cookies)</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-field">
+                    <div class="form-checkbox">
+                        <input type="checkbox" id="trigger-enabled" checked>
+                        <label for="trigger-enabled">Trigger is enabled</label>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-trigger">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-trigger">
+                        <span class="btn-label">Save Trigger</span>
+                        <span class="btn-spinner hidden">
+                            <svg class="spinner" width="16" height="16" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"/>
+                                <path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            </svg>
+                            Saving...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Condition Builder Template (hidden) -->
+    <template id="condition-template">
+        <div class="condition-row" data-index="">
+            <select class="condition-type" name="type">
+                <option value="time">Time on page</option>
+                <option value="scroll">Scroll depth</option>
+                <option value="exit_intent">Exit intent</option>
+                <option value="url">URL pattern</option>
+                <option value="visit_count">Visit count</option>
+            </select>
+            <select class="condition-operator" name="operator">
+                <option value="gte">≥ (greater or equal)</option>
+                <option value="lte">≤ (less or equal)</option>
+                <option value="eq">= (equals)</option>
+                <option value="gt">> (greater)</option>
+                <option value="lt">< (less)</option>
+                <option value="contains">contains</option>
+                <option value="matches">matches pattern</option>
+            </select>
+            <input type="text" class="condition-value" name="value" placeholder="Value">
+            <span class="condition-unit">seconds</span>
+            <button type="button" class="btn btn-icon btn-danger-ghost remove-condition" title="Remove">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    </template>
+    
+    <!-- Q&A Training Modal -->
+    <div class="modal-backdrop" id="qa-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 id="qa-modal-title">Create Q&A Pair</h2>
+                <button class="modal-close" id="close-qa-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="qa-modal-content">
+                <form id="qa-form">
+                    <div class="qa-form-group">
+                        <label for="qa-question">Question</label>
+                        <textarea id="qa-question" class="question" placeholder="Enter the user's question..." maxlength="1000" required></textarea>
+                        <div class="qa-char-count"><span id="qa-question-count">0</span>/1000</div>
+                    </div>
+                    <div class="qa-form-group">
+                        <label for="qa-answer">Approved Answer</label>
+                        <textarea id="qa-answer" class="answer" placeholder="Enter the approved answer that the chatbot should provide..." maxlength="4000" required></textarea>
+                        <div class="qa-char-count"><span id="qa-answer-count">0</span>/4000</div>
+                    </div>
+                    <input type="hidden" id="qa-id" value="">
+                    <input type="hidden" id="qa-source-session" value="">
+                    <input type="hidden" id="qa-source-index" value="">
+                    <div class="qa-modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-qa">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="save-qa">Save Q&A Pair</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Q&A From Conversation Modal -->
+    <div class="modal-backdrop" id="qa-from-conv-modal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>Create Q&A from Conversation</h2>
+                <button class="modal-close" id="close-qa-conv-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="qa-modal-content">
+                <form id="qa-conv-form">
+                    <div class="qa-form-group">
+                        <label>Original Question</label>
+                        <div id="qa-conv-question" class="form-static-text" style="padding: 12px; background: var(--gray-50); border-radius: var(--radius); font-size: 14px; color: var(--gray-700);"></div>
+                    </div>
+                    <div class="qa-form-group">
+                        <label>Original Answer</label>
+                        <div id="qa-conv-original-answer" class="form-static-text" style="padding: 12px; background: var(--gray-50); border-radius: var(--radius); font-size: 14px; color: var(--gray-700); max-height: 100px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="qa-form-group">
+                        <label for="qa-conv-edited-answer">Edited Answer (optional)</label>
+                        <textarea id="qa-conv-edited-answer" class="answer" placeholder="Leave empty to use original answer, or edit to improve..." maxlength="4000"></textarea>
+                        <div class="qa-char-count"><span id="qa-conv-answer-count">0</span>/4000</div>
+                    </div>
+                    <input type="hidden" id="qa-conv-session-id" value="">
+                    <input type="hidden" id="qa-conv-message-index" value="">
+                    <input type="hidden" id="qa-conv-site-id" value="">
+                    <div class="qa-modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-qa-conv">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="save-qa-conv">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M2 12h20"/>
+                            </svg>
+                            Create Q&A Pair
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

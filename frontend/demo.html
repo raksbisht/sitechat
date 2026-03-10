@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Site - Widget Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #1f2937;
+        }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo svg {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: white;
+        }
+        
+        .hero {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 100px 40px;
+            text-align: center;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+        }
+        
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .btn-white {
+            background: white;
+            color: #667eea;
+            border: none;
+        }
+        
+        .btn-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+        
+        .features {
+            background: white;
+            padding: 100px 40px;
+        }
+        
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        
+        .features .subtitle {
+            text-align: center;
+            font-size: 18px;
+            color: #6b7280;
+            margin-bottom: 60px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        
+        .feature-card {
+            padding: 32px;
+            border-radius: 16px;
+            background: #f9fafb;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .feature-icon.purple { background: #ede9fe; color: #7c3aed; }
+        .feature-icon.blue { background: #dbeafe; color: #2563eb; }
+        .feature-icon.green { background: #d1fae5; color: #059669; }
+        
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1f2937;
+        }
+        
+        .feature-card p {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        
+        .cta {
+            background: #1f2937;
+            padding: 100px 40px;
+            text-align: center;
+        }
+        
+        .cta h2 {
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+        }
+        
+        .cta p {
+            font-size: 18px;
+            color: #9ca3af;
+            margin-bottom: 32px;
+        }
+        
+        .cta .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+        }
+        
+        footer {
+            background: #111827;
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .demo-badge {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-badge span {
+            color: #10b981;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-badge">
+        <span>●</span> Demo Mode - Chat widget is active
+    </div>
+
+    <nav>
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+            </svg>
+            DemoSite
+        </div>
+        <div class="nav-links">
+            <a href="#">Features</a>
+            <a href="#">Pricing</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Build amazing products faster</h1>
+        <p>The modern platform for teams who want to ship quality software without the complexity.</p>
+        <div class="hero-buttons">
+            <a href="#" class="btn btn-white">Get Started</a>
+            <a href="#" class="btn btn-outline">Learn More</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="features-container">
+            <h2>Everything you need</h2>
+            <p class="subtitle">Powerful tools to help you build and scale</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon purple">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                    </div>
+                    <h3>Lightning Fast</h3>
+                    <p>Built for performance with optimized workflows that keep your team moving at full speed.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon blue">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <h3>Secure by Default</h3>
+                    <p>Enterprise-grade security with encryption, SSO, and compliance certifications built in.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon green">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="3" y1="9" x2="21" y2="9"/>
+                            <line x1="9" y1="21" x2="9" y2="9"/>
+                        </svg>
+                    </div>
+                    <h3>Easy Integration</h3>
+                    <p>Connect with your favorite tools and services through our extensive API and integrations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Ready to get started?</h2>
+        <p>Join thousands of teams who trust us with their workflow.</p>
+        <a href="#" class="btn">Start Free Trial</a>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 DemoSite. This is a demo page to preview the SiteChat widget.</p>
+    </footer>
+
+    <!-- 
+    ===========================================
+    SiteChat Widget Integration
+    ===========================================
+    
+    Security Best Practices:
+    1. Use HTTPS in production (replace http:// with https://)
+    2. The 'integrity' attribute (SRI hash) ensures the script hasn't been tampered with
+    3. The 'crossOrigin' attribute is required when using SRI
+    4. Configure allowed domains in your SiteChat dashboard for additional security
+    
+    To get your secure embed code with SRI hash:
+    - Visit: /api/embed/script/{your-site-id}?include_sri=true
+    - Or check security info: /api/embed/security/{your-site-id}
+    ===========================================
+    -->
+    
+    <!-- Development embed (no SRI - for local testing only) -->
+    <script>
+        (function() {
+          var s = document.createElement('script');
+          s.src = 'http://localhost:8000/widget/chatbot.js';
+          s.async = true;
+          s.dataset.siteId = '3779edd6793b';
+          s.dataset.apiUrl = 'http://localhost:8000';
+          document.head.appendChild(s);
+        })();
+        </script>
+</body>
+</html>

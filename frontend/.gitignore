@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Source files (keep private)
+src/
+
+# Build artifacts
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

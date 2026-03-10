@@ -1,0 +1,557 @@
+"""
+RAG Engine with all best practices:
+- Hybrid search (semantic + keyword)
+- Query rewriting
+- Document grading
+- Conversation memory
+- Structured output
+- Source citations
+- Q&A pair matching for trained responses
+"""
+import re
+from typing import List, Dict, Optional, Tuple, AsyncGenerator
+from datetime import datetime
+from langchain_core.documents import Document
+from loguru import logger
+import numpy as np
+
+from app.config import settings
+from app.database import get_mongodb, get_vector_store
+from app.services.ollama import get_ollama_service
+from app.models.schemas import ChatResponse, SourceDocument
+
+
+class RAGEngine:
+    """RAG Engine with production-ready features."""
+    
+    QA_MATCH_THRESHOLD = 0.85  # Confidence threshold for using Q&A pair directly
+    
+    def __init__(self):
+        self.ollama = get_ollama_service()
+        self.vector_store = get_vector_store()
+        self._qa_cache: Dict[str, List[Dict]] = {}  # Cache Q&A pairs by site_id
+        self._qa_embeddings_cache: Dict[str, List[Tuple[str, List[float]]]] = {}  # Cache Q&A embeddings
+    
+    async def _check_qa_match(
+        self,
+        query: str,
+        site_id: str
+    ) -> Optional[Tuple[Dict, float]]:
+        """
+        Check if there's a matching Q&A pair for the query.
+        Returns the best matching Q&A pair and its similarity score if above threshold.
+        """
+        if not site_id:
+            return None
+        
+        mongodb = await get_mongodb()
+        
+        # Get Q&A pairs (use cache if available)
+        if site_id not in self._qa_cache:
+            qa_pairs = await mongodb.get_qa_for_rag(site_id)
+            self._qa_cache[site_id] = qa_pairs
+            # Clear embeddings cache when Q&A pairs change
+            self._qa_embeddings_cache.pop(site_id, None)
+        
+        qa_pairs = self._qa_cache.get(site_id, [])
+        
+        if not qa_pairs:
+            return None
+        
+        try:
+            # Get embeddings for Q&A questions if not cached
+            if site_id not in self._qa_embeddings_cache:
+                embeddings_model = self.vector_store.embeddings
+                qa_embeddings = []
+                
+                for qa in qa_pairs:
+                    question = qa.get("question", "")
+                    embedding = embeddings_model.embed_query(question)
+                    qa_embeddings.append((qa["id"], embedding))
+                
+                self._qa_embeddings_cache[site_id] = qa_embeddings
+            
+            qa_embeddings = self._qa_embeddings_cache.get(site_id, [])
+            
+            if not qa_embeddings:
+                return None
+            
+            # Get query embedding
+            embeddings_model = self.vector_store.embeddings
+            query_embedding = embeddings_model.embed_query(query)
+            query_embedding = np.array(query_embedding)
+            
+            # Find best matching Q&A pair using cosine similarity
+            best_match = None
+            best_score = 0.0
+            
+            for qa_id, qa_emb in qa_embeddings:
+                qa_emb_array = np.array(qa_emb)
+                
+                # Cosine similarity
+                dot_product = np.dot(query_embedding, qa_emb_array)
+                norm_product = np.linalg.norm(query_embedding) * np.linalg.norm(qa_emb_array)
+                
+                if norm_product > 0:
+                    similarity = dot_product / norm_product
+                else:
+                    similarity = 0.0
+                
+                if similarity > best_score:
+                    best_score = similarity
+                    best_match = next((qa for qa in qa_pairs if qa["id"] == qa_id), None)
+            
+            if best_match and best_score >= self.QA_MATCH_THRESHOLD:
+                logger.info(f"Q&A match found: '{best_match['question'][:50]}...' with score {best_score:.3f}")
+                return best_match, best_score
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Q&A matching error: {e}")
+            return None
+    
+    def invalidate_qa_cache(self, site_id: str = None):
+        """Invalidate Q&A cache for a site or all sites."""
+        if site_id:
+            self._qa_cache.pop(site_id, None)
+            self._qa_embeddings_cache.pop(site_id, None)
+        else:
+            self._qa_cache.clear()
+            self._qa_embeddings_cache.clear()
+    
+    async def chat(
+        self,
+        message: str,
+        session_id: str,
+        user_id: str = None,
+        site_id: str = None,
+        stream: bool = False
+    ) -> ChatResponse:
+        """
+        Process a chat message and generate a response.
+        
+        Args:
+            message: User's message
+            session_id: Conversation session ID
+            user_id: Optional user ID for long-term memory
+            site_id: Optional site ID to filter documents
+            stream: Whether to stream the response
+        
+        Returns:
+            ChatResponse with answer, sources, and suggestions
+        """
+        mongodb = await get_mongodb()
+        
+        # Get site URL filter and name if site_id provided
+        site_url_filter = None
+        site_name = None
+        if site_id:
+            site = await mongodb.db.sites.find_one({"site_id": site_id})
+            if site:
+                site_url_filter = site.get("url", "").rstrip("/")
+                site_name = site.get("name") or site_url_filter.replace("https://", "").replace("http://", "")
+                logger.info(f"Filtering by site: {site_url_filter}")
+        
+        try:
+            # 1. Get conversation history
+            history = await mongodb.get_conversation_history(session_id)
+            
+            # 2. Rewrite query with context
+            rewritten_query = await self._rewrite_query(message, history)
+            logger.info(f"Rewritten query: {rewritten_query}")
+            
+            # 3. Check for matching Q&A pair first
+            qa_match = await self._check_qa_match(rewritten_query, site_id)
+            
+            if qa_match:
+                qa_pair, qa_score = qa_match
+                logger.info(f"Using Q&A pair response (score: {qa_score:.3f})")
+                
+                # Use Q&A pair directly
+                answer = qa_pair["answer"]
+                sources = [SourceDocument(
+                    url=f"qa://{qa_pair['id']}",
+                    title="Trained Q&A Response",
+                    content_preview=qa_pair["question"][:200],
+                    relevance_score=qa_score
+                )]
+                confidence = min(0.98, qa_score + 0.05)
+                
+                # Increment Q&A use count
+                await mongodb.increment_qa_use_count(qa_pair["id"])
+                
+                # Generate follow-up questions
+                follow_ups = await self._generate_follow_ups(message, answer)
+                
+                # Save messages to history
+                await mongodb.save_message(
+                    session_id=session_id,
+                    role="user",
+                    content=message,
+                    site_id=site_id
+                )
+                await mongodb.save_message(
+                    session_id=session_id,
+                    role="assistant",
+                    content=answer,
+                    sources=[s.dict() for s in sources],
+                    site_id=site_id
+                )
+                
+                return ChatResponse(
+                    answer=answer,
+                    sources=sources,
+                    confidence=confidence,
+                    follow_up_questions=follow_ups,
+                    session_id=session_id
+                )
+            
+            # 4. No Q&A match - proceed with normal RAG retrieval
+            retrieved_docs = await self._retrieve_documents(rewritten_query, site_url_filter=site_url_filter)
+            
+            # 5. Grade documents for relevance
+            relevant_docs = await self._grade_documents(rewritten_query, retrieved_docs)
+            
+            # 6. Build context from relevant docs
+            context, sources = self._build_context(relevant_docs)
+            
+            # 7. Generate response
+            answer = await self._generate_response(
+                question=message,
+                context=context,
+                history=history,
+                user_id=user_id,
+                site_name=site_name
+            )
+            
+            # 8. Generate follow-up questions
+            follow_ups = await self._generate_follow_ups(message, answer)
+            
+            # 9. Calculate confidence
+            confidence = self._calculate_confidence(relevant_docs)
+            
+            # 10. Save messages to history
+            await mongodb.save_message(
+                session_id=session_id,
+                role="user",
+                content=message,
+                site_id=site_id
+            )
+            await mongodb.save_message(
+                session_id=session_id,
+                role="assistant",
+                content=answer,
+                sources=[s.dict() for s in sources],
+                site_id=site_id
+            )
+            
+            return ChatResponse(
+                answer=answer,
+                sources=sources,
+                confidence=confidence,
+                follow_up_questions=follow_ups,
+                session_id=session_id
+            )
+            
+        except Exception as e:
+            logger.error(f"RAG engine error: {e}")
+            raise
+    
+    async def chat_stream(
+        self,
+        message: str,
+        session_id: str,
+        user_id: str = None
+    ) -> AsyncGenerator[str, None]:
+        """Stream a chat response."""
+        mongodb = await get_mongodb()
+        
+        try:
+            # Get context (same as non-streaming)
+            history = await mongodb.get_conversation_history(session_id)
+            rewritten_query = await self._rewrite_query(message, history)
+            retrieved_docs = await self._retrieve_documents(rewritten_query)
+            relevant_docs = await self._grade_documents(rewritten_query, retrieved_docs)
+            context, sources = self._build_context(relevant_docs)
+            
+            # Build prompt
+            prompt = self._build_prompt(message, context, history)
+            system_prompt = self._get_system_prompt()
+            
+            # Stream response
+            full_response = ""
+            async for chunk in self.ollama.generate_stream(prompt, system_prompt):
+                full_response += chunk
+                yield chunk
+            
+            # Save to history after streaming completes
+            await mongodb.save_message(session_id, "user", message)
+            await mongodb.save_message(
+                session_id, "assistant", full_response,
+                sources=[s.dict() for s in sources]
+            )
+            
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            yield f"\n\nError: {str(e)}"
+    
+    async def _rewrite_query(
+        self,
+        query: str,
+        history: List[Dict]
+    ) -> str:
+        """Rewrite query with conversation context."""
+        if not history:
+            return query
+        
+        # Format history
+        history_text = "\n".join([
+            f"{m['role'].title()}: {m['content'][:200]}"
+            for m in history[-4:]  # Last 4 messages
+        ])
+        
+        prompt = f"""Given the conversation history and the user's new question, rewrite the question to be a standalone search query that captures the full context.
+
+Conversation history:
+{history_text}
+
+New question: {query}
+
+Rewritten search query (just the query, no explanation):"""
+        
+        try:
+            rewritten = await self.ollama.generate(
+                prompt,
+                temperature=0.3,
+                max_tokens=150
+            )
+            return rewritten.strip() or query
+        except Exception as e:
+            logger.warning(f"Query rewriting failed: {e}")
+            return query
+    
+    async def _retrieve_documents(
+        self,
+        query: str,
+        k: int = None,
+        site_url_filter: str = None
+    ) -> List[Tuple[Document, float]]:
+        """Retrieve relevant documents using hybrid search."""
+        k = k or settings.RETRIEVAL_K
+        
+        # Semantic search with scores (get more to allow filtering)
+        results = self.vector_store.similarity_search_with_score(query, k=k * 4)
+        
+        # Filter by site URL if provided
+        if site_url_filter:
+            filtered_results = []
+            for doc, score in results:
+                doc_url = doc.metadata.get("url", "") or doc.metadata.get("source", "")
+                if doc_url.startswith(site_url_filter):
+                    filtered_results.append((doc, score))
+            results = filtered_results
+            logger.info(f"Filtered to {len(results)} docs for site: {site_url_filter}")
+        
+        # Sort by score (lower is better for FAISS)
+        results.sort(key=lambda x: x[1])
+        
+        return results[:k]
+    
+    async def _grade_documents(
+        self,
+        query: str,
+        docs: List[Tuple[Document, float]]
+    ) -> List[Tuple[Document, float]]:
+        """Grade documents for relevance."""
+        if not docs:
+            return []
+        
+        graded = []
+        
+        for doc, score in docs:
+            # Simple relevance check based on score threshold
+            # Lower score = more relevant for Chroma
+            if score < 1.5:  # Threshold
+                graded.append((doc, score))
+            else:
+                # Check if any query terms appear in document
+                query_terms = set(query.lower().split())
+                doc_text = doc.page_content.lower()
+                
+                overlap = sum(1 for term in query_terms if term in doc_text)
+                if overlap >= len(query_terms) * 0.3:  # 30% overlap
+                    graded.append((doc, score))
+        
+        return graded
+    
+    def _build_context(
+        self,
+        docs: List[Tuple[Document, float]]
+    ) -> Tuple[str, List[SourceDocument]]:
+        """Build context string and source list from documents."""
+        if not docs:
+            return "", []
+        
+        context_parts = []
+        sources = []
+        seen_urls = set()
+        
+        for doc, score in docs:
+            # Add to context
+            context_parts.append(f"[Source: {doc.metadata.get('title', 'Unknown')}]\n{doc.page_content}")
+            
+            # Add to sources (deduplicate by URL)
+            url = doc.metadata.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                sources.append(SourceDocument(
+                    url=url,
+                    title=doc.metadata.get("title", "Unknown"),
+                    content_preview=doc.page_content[:200] + "...",
+                    relevance_score=max(0, min(1, 1 - score / 2))  # Normalize score
+                ))
+        
+        context = "\n\n---\n\n".join(context_parts)
+        return context, sources
+    
+    def _get_system_prompt(self, site_name: str = None) -> str:
+        """Get the system prompt for the chatbot."""
+        site_desc = site_name if site_name else "this website"
+        return f"""You are a friendly and helpful AI assistant for {site_desc}.
+
+Your role is to help users by answering their questions naturally and conversationally.
+
+IMPORTANT - Response style guidelines:
+- Respond naturally as if you already know the information - NEVER say phrases like:
+  - "Based on the provided context..."
+  - "According to the context..."
+  - "From the information provided..."
+  - "The context shows..."
+  - "Based on my knowledge base..."
+- Just answer directly and confidently
+- Be conversational, warm, and helpful
+- Keep responses concise but complete
+- Use simple, clear language
+
+Content guidelines:
+- Only answer based on the information you have about this website
+- If you don't have relevant information, say something like "I'm not sure about that" or "I don't have details on that topic"
+- Never make up information or guess
+- If a question is unclear, ask for clarification
+
+Format guidelines:
+- Use short paragraphs for readability
+- Use bullet points for lists
+- Bold important terms when helpful"""
+    
+    def _build_prompt(
+        self,
+        question: str,
+        context: str,
+        history: List[Dict]
+    ) -> str:
+        """Build the full prompt with context and history."""
+        # Format history
+        history_text = ""
+        if history:
+            history_text = "\n".join([
+                f"{m['role'].title()}: {m['content']}"
+                for m in history[-6:]
+            ])
+            history_text = f"Previous conversation:\n{history_text}\n\n"
+        
+        prompt = f"""{history_text}[Reference Information]
+{context if context else "No specific information available."}
+
+[User's Question]
+{question}
+
+[Instructions]
+Answer the user's question naturally and conversationally. Do NOT mention "context", "provided information", or "knowledge base" in your response. Just answer as if you naturally know about this website."""
+        
+        return prompt
+    
+    async def _generate_response(
+        self,
+        question: str,
+        context: str,
+        history: List[Dict],
+        user_id: str = None,
+        site_name: str = None
+    ) -> str:
+        """Generate the response using the LLM."""
+        prompt = self._build_prompt(question, context, history)
+        system_prompt = self._get_system_prompt(site_name)
+        
+        # Add user-specific context if available
+        if user_id:
+            mongodb = await get_mongodb()
+            user_memory = await mongodb.get_user_memory(user_id)
+            if user_memory:
+                system_prompt += f"\n\nUser preferences: {user_memory}"
+        
+        response = await self.ollama.generate(prompt, system_prompt)
+        return response.strip()
+    
+    async def _generate_follow_ups(
+        self,
+        question: str,
+        answer: str
+    ) -> List[str]:
+        """Generate follow-up question suggestions."""
+        prompt = f"""Based on this Q&A, suggest 2-3 natural follow-up questions the user might ask.
+
+Question: {question}
+Answer: {answer[:500]}
+
+Return only the questions, one per line, no numbering:"""
+        
+        try:
+            response = await self.ollama.generate(
+                prompt,
+                temperature=0.7,
+                max_tokens=200
+            )
+            
+            # Parse questions
+            lines = response.strip().split("\n")
+            questions = [
+                line.strip().strip("-").strip("•").strip()
+                for line in lines
+                if line.strip() and "?" in line
+            ][:3]
+            
+            return questions
+        except Exception as e:
+            logger.warning(f"Follow-up generation failed: {e}")
+            return []
+    
+    def _calculate_confidence(
+        self,
+        docs: List[Tuple[Document, float]]
+    ) -> float:
+        """Calculate confidence score based on document relevance."""
+        if not docs:
+            return 0.3  # Low confidence with no sources
+        
+        # Average normalized scores
+        scores = [max(0, min(1, 1 - score / 2)) for _, score in docs]
+        avg_score = sum(scores) / len(scores)
+        
+        # Boost confidence if we have multiple sources
+        source_bonus = min(0.2, len(docs) * 0.05)
+        
+        return min(0.95, avg_score + source_bonus)
+
+
+# Singleton instance
+_rag_engine: Optional[RAGEngine] = None
+
+
+def get_rag_engine() -> RAGEngine:
+    """Get or create RAGEngine instance."""
+    global _rag_engine
+    if _rag_engine is None:
+        _rag_engine = RAGEngine()
+    return _rag_engine
