@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 async function initializeApp() {
     if (!checkAuth()) return;
     
+    initSidebarCollapse();
+    initSiteDetailHashRouting();
     setupNavigation();
     setupEventListeners();
     setupAnalyticsPeriodButtons();
@@ -154,6 +156,7 @@ function setupEventListeners() {
     
     document.getElementById('copy-detail-embed')?.addEventListener('click', copyDetailEmbed);
     document.getElementById('detail-get-embed-btn')?.addEventListener('click', () => switchToDetailTab('embed'));
+    document.getElementById('detail-breadcrumb-sites')?.addEventListener('click', navigateDetailBreadcrumbSites);
     document.getElementById('recrawl-site')?.addEventListener('click', recrawlSite);
     document.getElementById('delete-site')?.addEventListener('click', deleteSite);
     
@@ -207,6 +210,15 @@ function setupEventListeners() {
                 closeUploadModal();
             }
         }
+        const tag = e.target && e.target.tagName;
+        const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable;
+        if (e.key === '[' && !e.metaKey && !e.ctrlKey && !e.altKey && !inField) {
+            const toggle = document.getElementById('sidebar-toggle');
+            if (toggle && window.matchMedia('(min-width: 769px)').matches) {
+                e.preventDefault();
+                toggle.click();
+            }
+        }
     });
 }
 
@@ -236,8 +248,10 @@ function renderSites() {
     existingItems.forEach(item => item.remove());
     
     if (sites.length === 0) {
+        currentDetailSite = null;
         if (elements.emptyState) elements.emptyState.style.display = 'flex';
         showDetailEmptyState();
+        clearSiteDetailHash();
     } else {
         if (elements.emptyState) elements.emptyState.style.display = 'none';
         sites.forEach(site => {
@@ -817,6 +831,131 @@ function pollSiteStatus(siteId) {
 
 let currentDetailSite = null;
 
+const VALID_DETAIL_TABS = [
+    'appearance', 'embed', 'behavior', 'quick-prompts', 'triggers', 'training',
+    'handoff', 'leads', 'security', 'crawling'
+];
+
+const DETAIL_TAB_LABELS = {
+    appearance: 'Appearance',
+    embed: 'Embed',
+    behavior: 'Behavior',
+    'quick-prompts': 'Quick Prompts',
+    triggers: 'Triggers',
+    training: 'Training',
+    handoff: 'Handoff',
+    leads: 'Leads',
+    security: 'Security',
+    crawling: 'Crawling'
+};
+
+const SIDEBAR_COLLAPSED_KEY = 'sitechat-sidebar-collapsed';
+
+function getDetailTabFromHash() {
+    const raw = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+    if (!raw) return 'appearance';
+    const tab = raw.split(/[?&]/)[0];
+    return VALID_DETAIL_TABS.includes(tab) ? tab : 'appearance';
+}
+
+function clearSiteDetailHash() {
+    const base = window.location.pathname + window.location.search;
+    if (window.location.hash) {
+        history.replaceState(null, '', base);
+    }
+}
+
+function setSiteDetailHash(tabId) {
+    if (!currentDetailSite) return;
+    const base = window.location.pathname + window.location.search;
+    history.replaceState(null, '', `${base}#${tabId}`);
+}
+
+function updateDetailBreadcrumbSection(tabId) {
+    const sectionEl = document.getElementById('detail-breadcrumb-section');
+    if (!sectionEl) return;
+    const label = DETAIL_TAB_LABELS[tabId] || tabId;
+    sectionEl.textContent = label;
+}
+
+function navigateDetailBreadcrumbSites() {
+    currentDetailSite = null;
+    document.querySelectorAll('.site-card, .site-list-item').forEach(c => c.classList.remove('active'));
+    showDetailEmptyState();
+    clearSiteDetailHash();
+}
+
+/** @param {{ skipHash?: boolean }} [opts] */
+function activateDetailTab(tabId, opts = {}) {
+    const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
+    const panel = document.getElementById('detail-tab-content');
+    if (!tabs.length) return;
+
+    const valid = VALID_DETAIL_TABS.includes(tabId) ? tabId : 'appearance';
+
+    tabs.forEach(t => {
+        const on = t.dataset.tab === valid;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        if (on && panel && t.id) {
+            panel.setAttribute('aria-labelledby', t.id);
+        }
+    });
+
+    loadDetailTabContent(valid);
+    if (!opts.skipHash) {
+        setSiteDetailHash(valid);
+    }
+    updateDetailBreadcrumbSection(valid);
+}
+
+function initSiteDetailHashRouting() {
+    window.addEventListener('hashchange', () => {
+        if (!currentDetailSite) return;
+        const sitesView = document.getElementById('sites-view');
+        if (!sitesView?.classList.contains('active')) return;
+        activateDetailTab(getDetailTabFromHash(), { skipHash: true });
+        updateAppearanceEmbedCode();
+        updateWidgetPreview();
+    });
+}
+
+function initSidebarCollapse() {
+    const btn = document.getElementById('sidebar-toggle');
+    const mq = window.matchMedia('(min-width: 769px)');
+
+    function applyCollapsed(collapsed) {
+        if (!mq.matches) {
+            document.body.classList.remove('sidebar-collapsed');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'true');
+                btn.title = 'Collapse sidebar';
+                btn.setAttribute('aria-label', 'Collapse sidebar');
+            }
+            return;
+        }
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+        if (btn) {
+            btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+            btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+        }
+    }
+
+    applyCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+
+    mq.addEventListener('change', () => {
+        applyCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    });
+
+    btn?.addEventListener('click', () => {
+        if (!mq.matches) return;
+        const next = !document.body.classList.contains('sidebar-collapsed');
+        applyCollapsed(next);
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+    });
+}
+
 async function openSiteDetails(site) {
     currentDetailSite = site;
     
@@ -854,13 +993,15 @@ async function openSiteDetails(site) {
     if (docsCountEl) docsCountEl.textContent = docs?.length || 0;
     
     await loadSiteConfig(site.site_id);
-    
-    loadDetailTabContent('appearance');
-    
-    // Update the appearance tab embed code and preview
+
+    const breadcrumbSite = document.getElementById('detail-breadcrumb-site-name');
+    if (breadcrumbSite) breadcrumbSite.textContent = siteName;
+
+    activateDetailTab(getDetailTabFromHash());
+
     updateAppearanceEmbedCode();
     updateWidgetPreview();
-    
+
     setupDetailTabs();
     setupQuickActions();
 }
@@ -895,30 +1036,15 @@ function closeSidePanel() {
 
 function setupDetailTabs() {
     const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
-    const panel = document.getElementById('detail-tab-content');
 
     tabs.forEach(tab => {
-        tab.onclick = () => {
-            tabs.forEach(t => {
-                t.classList.remove('active');
-                t.setAttribute('aria-selected', 'false');
-            });
-            tab.classList.add('active');
-            tab.setAttribute('aria-selected', 'true');
-
-            if (panel && tab.id) {
-                panel.setAttribute('aria-labelledby', tab.id);
-            }
-
-            loadDetailTabContent(tab.dataset.tab);
-        };
+        tab.onclick = () => activateDetailTab(tab.dataset.tab);
     });
 }
 
 /** Jump to a site-detail tab (e.g. from header "Get code" → Embed). */
 function switchToDetailTab(tabId) {
-    const btn = document.querySelector(`#detail-settings-nav .detail-tab[data-tab="${tabId}"]`);
-    if (btn) btn.click();
+    activateDetailTab(tabId);
 }
 
 function loadDetailTabContent(tabId) {
