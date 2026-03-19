@@ -11,7 +11,7 @@ test.describe('Site Management', () => {
     await page.fill('#login-email', 'admin@sitechat.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
   });
 
   test.describe('Sites View', () => {

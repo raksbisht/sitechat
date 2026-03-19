@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💬 SiteChat
+<h1><img src="docs/images/sitechat-logo.svg" alt="SiteChat" width="280" height="62" /></h1>
 
 ### AI-Powered Customer Support Platform
 
@@ -340,11 +340,13 @@ sitechat/
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/
-│   ├── index.html                 # Dashboard
+│   ├── landing.html               # Marketing landing (served at /)
+│   ├── index.html                 # Dashboard SPA (served at /app)
 │   ├── login.html                 # Login page
 │   ├── demo.html                  # Widget demo
 │   ├── js/app.js                  # Dashboard logic
 │   ├── css/styles.css
+│   ├── css/landing.css            # Landing page styles
 │   ├── package.json               # Widget build config
 │   ├── build.js                   # Obfuscation script
 │   ├── src/widget/chatbot.js      # Widget source (private)
@@ -396,9 +398,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 | URL | Description |
 |-----|-------------|
-| http://localhost:8000 | Dashboard |
+| http://localhost:8000 | Marketing landing |
+| http://localhost:8000/app | Dashboard (after login) |
+| http://localhost:8000/dashboard | Same as `/app` |
+| http://localhost:8000/login | Sign in |
 | http://localhost:8000/api/docs | API Documentation |
 | http://localhost:8000/demo | Widget Demo |
+
+> **Seeing “It works!”?** That is Apache on port **80**, not SiteChat. Use **http://localhost:8000** above, or run `./scripts/run-sitechat.sh` from the repo root (opens the browser). To serve SiteChat on plain `http://localhost`, see [deploy/APACHE_PROXY.md](deploy/APACHE_PROXY.md).
 
 ### Default Login
 
@@ -611,7 +618,7 @@ Add the chatbot to any website with a single script tag:
   src="https://your-domain.com/widget/chatbot.js"
   data-site-id="YOUR_SITE_ID"
   data-api-url="https://your-domain.com/api"
-  data-color="#1B5E3B"
+  data-color="#0D9488"
   data-title="Chat with us"
   data-position="bottom-right">
 </script>
@@ -623,7 +630,7 @@ Add the chatbot to any website with a single script tag:
 |-----------|-------------|---------|
 | `data-site-id` | Site ID (required) | - |
 | `data-api-url` | Backend API URL | - |
-| `data-color` | Primary theme color | `#1B5E3B` |
+| `data-color` | Primary theme color | `#0D9488` |
 | `data-title` | Chat header title | `Chat with us` |
 | `data-welcome` | Welcome message | `Hi! How can I help you?` |
 | `data-position` | Widget position | `bottom-right` |

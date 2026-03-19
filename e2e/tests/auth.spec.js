@@ -55,7 +55,7 @@ test.describe('Authentication', () => {
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
 
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
     
     const token = await page.evaluate(() => localStorage.getItem('token'));
     expect(token).toBeTruthy();
@@ -79,7 +79,7 @@ test.describe('Authentication', () => {
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
 
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
     
     const rememberedEmail = await page.evaluate(() => localStorage.getItem('remember_email'));
     expect(rememberedEmail).toBe('admin@sitechat.com');
@@ -104,7 +104,7 @@ test.describe('Authentication', () => {
 
     await page.goto('/login');
     
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
   });
 });
 
@@ -114,7 +114,7 @@ test.describe('Logout', () => {
     await page.fill('#login-email', 'admin@sitechat.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
   });
 
   test('should display logout button', async ({ page }) => {
@@ -144,7 +144,7 @@ test.describe('Session Management', () => {
     await page.fill('#login-email', 'admin@sitechat.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
 
     await page.evaluate(() => {
       localStorage.setItem('token', 'invalid-expired-token');
@@ -160,7 +160,7 @@ test.describe('Session Management', () => {
     await page.fill('#login-email', 'admin@sitechat.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
-    await expect(page).toHaveURL(/.*\/$/);
+    await expect(page).toHaveURL(/\/app\/?$/);
 
     await expect(page.locator('#user-name')).toBeVisible();
     await expect(page.locator('#user-role')).toBeVisible();

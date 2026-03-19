@@ -14,7 +14,7 @@ describe('SiteChat Widget', () => {
     mockScript.dataset.siteId = 'test-site-123';
     mockScript.dataset.apiUrl = 'http://localhost:8000';
     mockScript.dataset.position = 'bottom-right';
-    mockScript.dataset.primaryColor = '#1B5E3B';
+    mockScript.dataset.primaryColor = '#0D9488';
     mockScript.dataset.title = 'Test Chat';
     document.head.appendChild(mockScript);
 
@@ -55,14 +55,14 @@ describe('SiteChat Widget', () => {
         siteId: mockScript.dataset.siteId || 'default',
         apiUrl: mockScript.dataset.apiUrl || 'http://localhost:8000',
         position: mockScript.dataset.position || 'bottom-right',
-        primaryColor: mockScript.dataset.primaryColor || '#1B5E3B',
+        primaryColor: mockScript.dataset.primaryColor || '#0D9488',
         title: mockScript.dataset.title || 'Ask AI'
       };
 
       expect(config.siteId).toBe('test-site-123');
       expect(config.apiUrl).toBe('http://localhost:8000');
       expect(config.position).toBe('bottom-right');
-      expect(config.primaryColor).toBe('#1B5E3B');
+      expect(config.primaryColor).toBe('#0D9488');
       expect(config.title).toBe('Test Chat');
     });
   });
@@ -116,14 +116,14 @@ describe('SiteChat Widget', () => {
         siteId: 'default',
         apiUrl: 'http://localhost:8000',
         position: 'bottom-right',
-        primaryColor: '#1B5E3B',
+        primaryColor: '#0D9488',
         title: 'Ask AI',
         welcomeMessage: 'Hi! How can I help you today?',
         showSources: true,
         hideBranding: false
       };
 
-      expect(defaultConfig.primaryColor).toBe('#1B5E3B');
+      expect(defaultConfig.primaryColor).toBe('#0D9488');
       expect(defaultConfig.welcomeMessage).toBe('Hi! How can I help you today?');
     });
   });
@@ -442,7 +442,7 @@ describe('SiteChat Widget', () => {
         return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
       }
 
-      const original = '#1B5E3B';
+      const original = '#0D9488';
       const darker = adjustColor(original, -20);
 
       expect(darker).toMatch(/^#[0-9a-f]{6}$/i);

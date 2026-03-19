@@ -986,7 +986,7 @@ function initTabHandlers(tabId) {
 function getAppearanceTabContent() {
     const config = currentSiteConfig || {};
     const appearance = config.appearance || {};
-    const primaryColor = appearance.primary_color || '#1B5E3B';
+    const primaryColor = appearance.primary_color || '#0D9488';
     const chatTitle = appearance.chat_title || 'Chat with us';
     const welcomeMsg = appearance.welcome_message || 'Hi! How can I help you today?';
     
@@ -1635,7 +1635,7 @@ function initInteractivePreview() {
 function resetPreviewMessages() {
     const messagesContainer = document.getElementById('preview-messages');
     const welcomeMsg = document.getElementById('config-welcome')?.value || 'Hi! How can I help you today?';
-    const color = document.getElementById('config-color')?.value || '#1B5E3B';
+    const color = document.getElementById('config-color')?.value || '#0D9488';
     
     if (messagesContainer) {
         messagesContainer.innerHTML = `
@@ -1659,7 +1659,7 @@ async function sendPreviewMessage() {
     if (!input || !messagesContainer || !input.value.trim()) return;
     
     const message = input.value.trim();
-    const color = document.getElementById('config-color')?.value || '#1B5E3B';
+    const color = document.getElementById('config-color')?.value || '#0D9488';
     input.value = '';
     sendBtn.disabled = true;
     
@@ -2465,7 +2465,7 @@ function setupCustomizeTabs() {
 }
 
 function updateWidgetPreview() {
-    const color = document.getElementById('config-color')?.value || '#1B5E3B';
+    const color = document.getElementById('config-color')?.value || '#0D9488';
     const title = document.getElementById('config-title')?.value || 'Chat with us';
     const welcome = document.getElementById('config-welcome')?.value || 'Hi! How can I help you today?';
     
@@ -2682,7 +2682,7 @@ async function loadSiteConfig(siteId) {
 function getDefaultConfig() {
     return {
         appearance: {
-            primary_color: '#1B5E3B',
+            primary_color: '#0D9488',
             chat_title: 'Chat with us',
             welcome_message: 'Hi! How can I help you today?',
             bot_avatar_url: null,
@@ -2709,8 +2709,8 @@ function populateConfigForm(config) {
     // Appearance
     const colorInput = document.getElementById('config-color');
     const colorTextInput = document.getElementById('config-color-text');
-    if (colorInput) colorInput.value = appearance.primary_color || '#1B5E3B';
-    if (colorTextInput) colorTextInput.value = (appearance.primary_color || '#1B5E3B').toUpperCase();
+    if (colorInput) colorInput.value = appearance.primary_color || '#0D9488';
+    if (colorTextInput) colorTextInput.value = (appearance.primary_color || '#0D9488').toUpperCase();
     
     const titleInput = document.getElementById('config-title');
     if (titleInput) titleInput.value = appearance.chat_title || 'Chat with us';
@@ -2756,7 +2756,7 @@ function populateConfigForm(config) {
 function getConfigFromForm() {
     return {
         appearance: {
-            primary_color: document.getElementById('config-color')?.value || '#1B5E3B',
+            primary_color: document.getElementById('config-color')?.value || '#0D9488',
             chat_title: document.getElementById('config-title')?.value || 'Chat with us',
             welcome_message: document.getElementById('config-welcome')?.value || 'Hi! How can I help you today?',
             bot_avatar_url: null,
@@ -5140,8 +5140,8 @@ async function loadWhiteLabelConfig() {
 function populateWhiteLabelForm(config) {
     const fields = {
         'wl-app-name': config.app_name || 'SiteChat',
-        'wl-primary-color': config.primary_color || '#1B5E3B',
-        'wl-primary-color-text': config.primary_color || '#1B5E3B',
+        'wl-primary-color': config.primary_color || '#0D9488',
+        'wl-primary-color-text': config.primary_color || '#0D9488',
         'wl-logo-url': config.logo_url || '',
         'wl-favicon-url': config.favicon_url || '',
         'wl-login-title': config.login_title || 'SiteChat',
@@ -5199,7 +5199,7 @@ async function saveWhiteLabelConfig() {
     try {
         const config = {
             app_name: document.getElementById('wl-app-name')?.value || 'SiteChat',
-            primary_color: document.getElementById('wl-primary-color')?.value || '#1B5E3B',
+            primary_color: document.getElementById('wl-primary-color')?.value || '#0D9488',
             logo_url: document.getElementById('wl-logo-url')?.value || null,
             favicon_url: document.getElementById('wl-favicon-url')?.value || null,
             login_title: document.getElementById('wl-login-title')?.value || 'SiteChat',

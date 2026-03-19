@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SiteChat — AI support chat for your website</title>
+  <meta name="description" content="RAG-powered chatbots trained on your site. Embed in one line. Human handoff, analytics, and privacy-first deployment.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/landing.css">
+</head>
+<body class="landing" data-sitechat-landing>
+  <div class="landing-bg" aria-hidden="true"></div>
+  <div class="landing-grid-bg" aria-hidden="true"></div>
+
+  <aside class="landing-demo-banner" role="alert" aria-live="polite">
+    <div class="landing-demo-banner-sheen" aria-hidden="true"></div>
+    <div class="wrap landing-demo-banner-inner">
+      <div class="landing-demo-icon" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <span class="landing-demo-pill">Demo</span>
+      <div class="landing-demo-copy">
+        <p class="landing-demo-title">Temporary demo —&nbsp;</p>
+        <p class="landing-demo-body">You’re on a shared instance. <strong>Data is wiped on a schedule.</strong> Don’t store anything sensitive.</p>
+      </div>
+      <a class="landing-demo-cta" href="/api/docs">API docs</a>
+    </div>
+  </aside>
+
+  <header class="landing-header">
+    <div class="wrap landing-header-inner">
+      <nav class="landing-nav" aria-label="Primary">
+        <a href="/" class="landing-logo" aria-label="SiteChat home">
+          <span class="landing-logo-mark" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#14b8a6"/><stop offset="100%" style="stop-color:#22d3ee"/>
+                </linearGradient>
+              </defs>
+              <rect x="4" y="8" width="28" height="22" rx="6" fill="url(#lg)" opacity="0.25"/>
+              <path fill="url(#lg)" d="M8 10h20a3 3 0 013 3v10a3 3 0 01-3 3h-5l-4 4v-4H8a3 3 0 01-3-3V13a3 3 0 013-3z"/>
+            </svg>
+          </span>
+          <span class="landing-logo-text">Site<span>Chat</span></span>
+        </a>
+        <button type="button" class="landing-nav-toggle" aria-expanded="false" aria-controls="landing-nav-menu" id="nav-toggle" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="landing-nav-overlay" id="nav-overlay" hidden></div>
+        <div class="landing-nav-links" id="landing-nav-menu">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="/demo">Live demo</a>
+          <a href="/api/docs">API</a>
+          <div class="landing-nav-cta">
+            <a href="/login" class="btn btn-ghost">Sign in</a>
+            <a href="/login" class="btn btn-primary">Get started</a>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="landing-hero">
+      <div class="wrap landing-hero-grid">
+        <div class="landing-hero-copy">
+          <p class="landing-eyebrow">
+            <span class="landing-eyebrow-dot"></span>
+            RAG · Widget · Handoff · Self-hosted ready
+          </p>
+          <h1 class="landing-hero-title">The chat widget that <span class="landing-gradient-text">actually knows your site</span></h1>
+          <p class="landing-hero-lead">Crawl pages, upload docs, embed one script. Visitors get cited answers in real time—your team jumps in when it counts.</p>
+          <div class="landing-hero-actions">
+            <a href="/login" class="btn btn-primary btn-lg">Start building</a>
+            <a href="/demo" class="btn btn-outline btn-lg">View live widget</a>
+          </div>
+          <p class="landing-hero-meta"><a href="/app" class="landing-link-arrow">Open dashboard →</a> · No credit card for self-hosted</p>
+          <div class="landing-hero-stats">
+            <div class="landing-stat"><strong>Multi-LLM</strong><span>Ollama, OpenAI, Anthropic</span></div>
+            <div class="landing-stat"><strong>Sources</strong><span>Citations in every reply</span></div>
+            <div class="landing-stat"><strong>White-label</strong><span>Your brand, your data</span></div>
+          </div>
+        </div>
+        <div class="landing-hero-visual-wrap">
+          <div class="landing-hero-glow" aria-hidden="true"></div>
+          <div class="landing-browser" aria-hidden="true">
+            <div class="landing-browser-chrome">
+              <span class="landing-browser-dots"><i></i><i></i><i></i></span>
+              <span class="landing-browser-url">acme.com</span>
+            </div>
+            <div class="landing-browser-body">
+              <div class="landing-browser-page">
+                <div class="landing-skel landing-skel-title"></div>
+                <div class="landing-skel landing-skel-line"></div>
+                <div class="landing-skel landing-skel-line short"></div>
+                <div class="landing-skel landing-skel-line"></div>
+              </div>
+              <div class="landing-browser-chat">
+                <div class="landing-chat-bubble user">Shipping to EU?</div>
+                <div class="landing-chat-bubble bot">Yes—we ship to all EU countries in 3–5 days. Duties shown at checkout.<cite>Help center · Shipping policy</cite></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-trust">
+      <div class="wrap">
+        <p class="landing-trust-label">Built for operators who need control</p>
+        <ul class="landing-trust-list">
+          <li>Scheduled crawls</li>
+          <li>JWT &amp; roles</li>
+          <li>Export conversations</li>
+          <li>Lead capture</li>
+          <li>Trigger messages</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="landing-features" id="features">
+      <div class="wrap">
+        <header class="landing-section-head">
+          <span class="landing-section-tag">Platform</span>
+          <h2 class="landing-section-title">One stack. Every conversation.</h2>
+          <p class="landing-section-sub">From first crawl to human handoff—without duct-taping five SaaS tools.</p>
+        </header>
+        <div class="landing-bento">
+          <article class="landing-bento-card landing-bento-featured">
+            <div class="landing-bento-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            </div>
+            <h3>Retrieval that proves itself</h3>
+            <p>Every answer can surface the pages and docs it came from—plus confidence—so visitors trust the bot and you trust the logs.</p>
+            <div class="landing-bento-meta">PDF · DOCX · Site crawl · Q&amp;A overrides</div>
+          </article>
+          <article class="landing-bento-card">
+            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            <h3>Embed in 60 seconds</h3>
+            <p>Single script tag. Colors, copy, position—live preview in the dashboard.</p>
+          </article>
+          <article class="landing-bento-card">
+            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <h3>Queue &amp; handoff</h3>
+            <p>Agents claim threads, reply in context, resolve when done.</p>
+          </article>
+          <article class="landing-bento-card">
+            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
+            <h3>Analytics &amp; leads</h3>
+            <p>Volume, trends, CSV export—capture emails from the widget.</p>
+          </article>
+          <article class="landing-bento-card">
+            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+            <h3>Your infra, your models</h3>
+            <p>Local LLMs or cloud APIs—switch with config, not a rewrite.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-code" aria-labelledby="embed-heading">
+      <div class="wrap landing-code-inner">
+        <div class="landing-code-copy">
+          <h2 id="embed-heading">Drop in. Ship today.</h2>
+          <p>Paste once on any site or SPA. The widget talks to your SiteChat API—CORS and keys handled from the dashboard.</p>
+          <a href="/login" class="btn btn-primary">Get embed code</a>
+        </div>
+        <div class="landing-code-block">
+          <div class="landing-code-header"><span>embed.html</span></div>
+          <pre class="landing-code-pre"><code><span class="tok-p">&lt;script</span> <span class="tok-a">src</span>=<span class="tok-s">"…/widget/chatbot.js"</span>
+  <span class="tok-a">data-site-id</span>=<span class="tok-s">"YOUR_SITE_ID"</span>
+  <span class="tok-a">data-api-url</span>=<span class="tok-s">"https://api.yours.com"</span>
+  <span class="tok-a">data-color</span>=<span class="tok-s">"#0d9488"</span><span class="tok-p">&gt;&lt;/script&gt;</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-dark" id="how-it-works">
+      <div class="wrap">
+        <header class="landing-section-head landing-section-head--light">
+          <span class="landing-section-tag">Workflow</span>
+          <h2 class="landing-section-title">Three steps. Live in an afternoon.</h2>
+          <p class="landing-section-sub">Index once, ship the widget, then refine from real conversations.</p>
+        </header>
+        <ol class="landing-timeline">
+          <li class="landing-timeline-item">
+            <span class="landing-timeline-num">01</span>
+            <h3>Index</h3>
+            <p>Point at your domain or upload files. Scheduled re-crawls keep answers fresh.</p>
+          </li>
+          <li class="landing-timeline-item">
+            <span class="landing-timeline-num">02</span>
+            <h3>Configure</h3>
+            <p>Prompt, model, widget skin, security—preview before you publish.</p>
+          </li>
+          <li class="landing-timeline-item">
+            <span class="landing-timeline-num">03</span>
+            <h3>Learn</h3>
+            <p>Read transcripts, add Q&amp;A pairs, route hard questions to humans.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="landing-cta">
+      <div class="wrap">
+        <div class="landing-cta-card">
+          <div class="landing-cta-text">
+            <h2>Your site, answering questions 24/7</h2>
+            <p>Spin up your first chatbot in minutes. No credit card for self-hosted.</p>
+          </div>
+          <div class="landing-cta-btns">
+            <a href="/login" class="btn btn-primary btn-lg">Get started</a>
+            <a href="/app" class="btn btn-ghost-light btn-lg">Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="landing-footer">
+    <div class="wrap">
+      <div class="landing-footer-top">
+        <div class="landing-footer-brand">
+          <a href="/" class="landing-logo landing-logo--footer">
+            <span class="landing-logo-mark" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="lg-footer" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#14b8a6"/><stop offset="100%" style="stop-color:#22d3ee"/>
+                  </linearGradient>
+                </defs>
+                <path fill="url(#lg-footer)" d="M8 10h20a3 3 0 013 3v10a3 3 0 01-3 3h-5l-4 4v-4H8a3 3 0 01-3-3V13a3 3 0 013-3z"/>
+              </svg>
+            </span>
+            <span class="landing-logo-text">Site<span>Chat</span></span>
+          </a>
+          <p>Open-source friendly RAG chat for teams that outgrow generic widgets.</p>
+        </div>
+        <div class="landing-footer-cols">
+          <div>
+            <h4>Product</h4>
+            <ul>
+              <li><a href="/demo">Demo</a></li>
+              <li><a href="/app">Dashboard</a></li>
+              <li><a href="/api/docs">API docs</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Legal</h4>
+            <ul>
+              <li><a href="#">Privacy</a></li>
+              <li><a href="#">Terms</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="landing-footer-bottom">
+        <span>© SiteChat · MIT License</span>
+        <a href="https://github.com" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var toggle = document.getElementById('nav-toggle');
+      var menu = document.getElementById('landing-nav-menu');
+      var overlay = document.getElementById('nav-overlay');
+      if (!toggle || !menu) return;
+      function openNav() {
+        menu.classList.add('is-open');
+        overlay.classList.add('is-open');
+        overlay.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+      function closeNav() {
+        menu.classList.remove('is-open');
+        overlay.classList.remove('is-open');
+        overlay.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+      toggle.addEventListener('click', function () {
+        if (menu.classList.contains('is-open')) closeNav();
+        else openNav();
+      });
+      overlay.addEventListener('click', closeNav);
+      menu.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+          if (window.matchMedia('(max-width: 899px)').matches) closeNav();
+        });
+      });
+      var header = document.querySelector('.landing-header');
+      function onScroll() {
+        if (!header) return;
+        header.classList.toggle('landing-header--scrolled', window.scrollY > 12);
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+  </script>
+</body>
+</html>

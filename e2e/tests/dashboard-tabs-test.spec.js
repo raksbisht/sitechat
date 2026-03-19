@@ -23,8 +23,8 @@ test.describe('SiteChat Dashboard Tab Testing', () => {
     const results = [];
 
     // Navigate to the dashboard
-    console.log('Navigating to http://localhost:8000...');
-    await page.goto('http://localhost:8000');
+    console.log('Navigating to dashboard (/app)...');
+    await page.goto('/app');
     await page.waitForLoadState('networkidle');
     
     // Take initial screenshot

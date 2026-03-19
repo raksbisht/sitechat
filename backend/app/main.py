@@ -207,21 +207,34 @@ if os.path.exists(frontend_path):
 
 @app.get("/")
 async def root():
-    """Serve the frontend or return API info."""
+    """Serve marketing landing page, or dashboard fallback if landing missing."""
+    landing_path = os.path.join(frontend_path, "landing.html")
+    if os.path.exists(landing_path):
+        return FileResponse(landing_path)
+
     frontend_index = os.path.join(frontend_path, "index.html")
     logger.info(f"Looking for index.html at: {frontend_index}")
-    
     if os.path.exists(frontend_index):
         return FileResponse(frontend_index)
-    
+
     return {
         "name": settings.APP_NAME,
         "version": "1.0.0",
         "status": "running",
         "docs": "/api/docs",
         "frontend_path": frontend_path,
-        "exists": os.path.exists(frontend_path)
+        "exists": os.path.exists(frontend_path),
     }
+
+
+@app.get("/app")
+@app.get("/dashboard")
+async def dashboard_app():
+    """Serve authenticated SPA dashboard."""
+    frontend_index = os.path.join(frontend_path, "index.html")
+    if os.path.exists(frontend_index):
+        return FileResponse(frontend_index)
+    return {"error": "Dashboard not found"}
 
 
 @app.get("/demo")

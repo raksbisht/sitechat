@@ -1,13 +1,13 @@
 /* ===== Base Styles ===== */
 :root {
-    /* Primary Colors */
-    --primary: #1B5E3B;
-    --primary-dark: #145230;
-    --primary-light: #2D7A4E;
-    --primary-lighter: #E8F5EE;
-    --primary-500: #1B5E3B;
-    --primary-600: #145230;
-    --primary-700: #0f3d24;
+    /* Primary — aligned with marketing landing (teal / cyan) */
+    --primary: #0d9488;
+    --primary-dark: #0f766e;
+    --primary-light: #14b8a6;
+    --primary-lighter: #ccfbf1;
+    --primary-500: #0d9488;
+    --primary-600: #0f766e;
+    --primary-700: #115e59;
     
     /* Semantic Colors */
     --accent-green: #4CAF50;
@@ -49,8 +49,8 @@
     --purple-600: #9333ea;
     --purple-700: #7c3aed;
     
-    /* Gray Scale */
-    --gray-50: #F8FAF9;
+    /* Gray Scale — landing-adjacent cool neutrals */
+    --gray-50: #f4f7f6;
     --gray-100: #f3f4f6;
     --gray-200: #e5e7eb;
     --gray-300: #d1d5db;
@@ -78,6 +78,11 @@
     --transition: all 0.2s ease;
     --transition-fast: all 0.15s ease;
     --transition-slow: all 0.3s ease;
+
+    /* Typography — match landing: DM Sans body, Plus Jakarta for UI chrome */
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
 }
 
 * {
@@ -86,18 +91,45 @@
     box-sizing: border-box;
 }
 
+/* Full-height app shell (sidebar is fixed; main must fill viewport for nested scroll) */
+html {
+    height: 100%;
+}
+
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-body);
     background: var(--gray-50);
     color: var(--gray-800);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100%;
+    min-height: 100dvh;
+}
+
+/* Headings & nav labels — slightly tighter for a polished dashboard */
+.sidebar-brand .brand-name,
+.master-header h2,
+.view-header h1,
+.view-header h2,
+.modal-header h2,
+.settings-section-title,
+.empty-state h2,
+.empty-state h3 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.025em;
+    font-weight: 700;
+}
+
+button, .btn, input, select, textarea {
+    font-family: var(--font-sans);
 }
 
 /* ===== App Layout ===== */
 .app {
     display: flex;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 /* ===== Sidebar ===== */
@@ -131,7 +163,7 @@ body {
     align-items: center;
     justify-content: center;
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.3);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 }
 
 .brand-name {
@@ -185,7 +217,7 @@ body {
 .menu-item.active {
     background: var(--primary);
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.25);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
 .menu-item svg {
@@ -303,15 +335,33 @@ body {
     flex: 1;
     margin-left: 260px;
     min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
 }
 
 .view {
     display: none;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 .view.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+/* Sites master–detail manages its own scroll regions */
+#sites-view.view.active {
+    overflow: hidden;
+}
+
+/* Full-bleed views: fill main and scroll inside panels */
+#conversations-view.view.active > .conversations-layout,
+#handoffs-view.view.active > .handoffs-layout {
+    flex: 1;
+    min-height: 0;
 }
 
 .page-container {
@@ -365,13 +415,13 @@ body {
 .btn-primary {
     background: var(--primary);
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.25);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
 .btn-primary:hover {
     background: var(--primary-light);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(27, 94, 59, 0.3);
+    box-shadow: 0 6px 16px rgba(13, 148, 136, 0.3);
 }
 
 .btn-secondary {
@@ -457,7 +507,7 @@ body {
 
 .site-card.active {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1), var(--shadow-lg);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1), var(--shadow-lg);
 }
 
 .site-card.active::before {
@@ -677,7 +727,7 @@ body {
 .site-select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .chat-messages {
@@ -732,7 +782,7 @@ body {
     color: var(--white);
     margin-left: auto;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.2);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
 }
 
 .message.assistant {
@@ -764,14 +814,14 @@ body {
     color: var(--primary);
     text-decoration: none;
     padding: 4px 8px;
-    background: rgba(27, 94, 59, 0.08);
+    background: rgba(13, 148, 136, 0.08);
     border-radius: 4px;
     margin-right: 8px;
     margin-bottom: 4px;
 }
 
 .source-link:hover {
-    background: rgba(27, 94, 59, 0.15);
+    background: rgba(13, 148, 136, 0.15);
 }
 
 .typing-indicator {
@@ -821,7 +871,7 @@ body {
 
 .chat-form:focus-within {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .chat-form textarea {
@@ -856,7 +906,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.25);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
 .chat-send:hover:not(:disabled) {
@@ -1169,7 +1219,7 @@ body {
 .form-field input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .field-hint {
@@ -1484,7 +1534,7 @@ body.is-admin .admin-only {
 .source-type-card.selected {
     border-color: var(--primary);
     background: var(--primary-lighter);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.15);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
 }
 
 .source-type-icon {
@@ -1497,7 +1547,7 @@ body.is-admin .admin-only {
     justify-content: center;
     margin-bottom: 14px;
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.25);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
 .source-type-icon svg {
@@ -1876,7 +1926,8 @@ body.is-admin .admin-only {
 
 .master-detail-layout {
     display: flex;
-    height: calc(100vh - 64px);
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -1889,6 +1940,7 @@ body.is-admin .admin-only {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    min-height: 0;
 }
 
 .master-header {
@@ -2020,6 +2072,8 @@ body.is-admin .admin-only {
 /* Detail Panel */
 .detail-panel {
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -2055,6 +2109,7 @@ body.is-admin .admin-only {
 
 .detail-content {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -2211,9 +2266,12 @@ body.is-admin .admin-only {
 
 .detail-tab-content {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 24px;
     background: var(--white);
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Tab Form Styles */
@@ -2389,7 +2447,7 @@ body.is-admin .admin-only {
     color: var(--white);
     font-size: 18px;
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.25);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
 .side-panel-title h2 {
@@ -3250,7 +3308,8 @@ body.is-admin .admin-only {
 .conversations-layout {
     display: grid;
     grid-template-columns: 400px 1fr;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
     background: var(--gray-50);
 }
 
@@ -3260,6 +3319,7 @@ body.is-admin .admin-only {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
 }
 
 .conversations-header {
@@ -3543,6 +3603,7 @@ body.is-admin .admin-only {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -3576,6 +3637,7 @@ body.is-admin .admin-only {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
 }
 
 .conversation-detail-header {
@@ -4229,7 +4291,8 @@ body.is-admin .admin-only {
 .handoffs-layout {
     display: grid;
     grid-template-columns: 380px 1fr;
-    height: calc(100vh - var(--sidebar-top-offset, 0px));
+    height: 100%;
+    min-height: 0;
     background: var(--gray-50);
 }
 
@@ -4238,6 +4301,7 @@ body.is-admin .admin-only {
     border-right: 1px solid var(--gray-200);
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .handoffs-header {
@@ -4404,6 +4468,8 @@ body.is-admin .admin-only {
 .handoff-detail-panel {
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    height: 100%;
     background: white;
 }
 
@@ -4431,6 +4497,7 @@ body.is-admin .admin-only {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
 }
 
 .handoff-detail-header {
@@ -5593,7 +5660,7 @@ body.is-admin .admin-only {
 .widget-preview-mini {
     width: 100%;
     background: white;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
 }
 
 .widget-preview-mini .preview-header {
@@ -5769,13 +5836,13 @@ body.is-admin .admin-only {
 .embed-card-icon {
     width: 40px;
     height: 40px;
-    background: var(--primary, #1B5E3B);
+    background: var(--primary, #0d9488);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(27, 94, 59, 0.2);
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.2);
 }
 
 .embed-card-icon svg {
@@ -5800,11 +5867,11 @@ body.is-admin .admin-only {
 }
 
 .embed-card-desc code {
-    background: rgba(27, 94, 59, 0.1);
+    background: rgba(13, 148, 136, 0.1);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
-    color: var(--primary, #1B5E3B);
+    color: var(--primary, #0d9488);
 }
 
 .embed-code-block {
@@ -5838,7 +5905,7 @@ body.is-admin .admin-only {
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: var(--primary, #1B5E3B);
+    background: var(--primary, #0d9488);
     color: white;
     border: none;
     border-radius: 6px;
@@ -5880,8 +5947,8 @@ body.is-admin .admin-only {
 
 .embed-option-btn:hover {
     background: white;
-    border-color: var(--primary, #1B5E3B);
-    color: var(--primary, #1B5E3B);
+    border-color: var(--primary, #0d9488);
+    color: var(--primary, #0d9488);
 }
 
 @media (max-width: 768px) {
@@ -5929,7 +5996,7 @@ body.is-admin .admin-only {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-sans);
 }
 
 .widget-preview-header {
@@ -6144,7 +6211,7 @@ body.is-admin .admin-only {
 }
 
 .widget-preview-message.user .preview-bubble {
-    background: var(--primary, #1B5E3B);
+    background: var(--primary, #0d9488);
     color: white;
     border-radius: 12px;
     border-top-right-radius: 4px;
@@ -6212,7 +6279,7 @@ body.is-admin .admin-only {
 
 .range-input::-webkit-slider-thumb:hover {
     transform: scale(1.15);
-    box-shadow: 0 2px 8px rgba(27, 94, 59, 0.35);
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
 }
 
 .range-input::-webkit-slider-thumb:active {
@@ -6232,7 +6299,7 @@ body.is-admin .admin-only {
 
 .range-input::-moz-range-thumb:hover {
     transform: scale(1.15);
-    box-shadow: 0 2px 8px rgba(27, 94, 59, 0.35);
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
 }
 
 /* Enhanced Toggle Switch - subtle shadow */
@@ -6250,7 +6317,7 @@ body.is-admin .admin-only {
 .toggle-label input[type="checkbox"]:checked + .toggle-switch,
 .toggle-row input[type="checkbox"]:checked + .toggle-switch {
     background: var(--primary);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 0 2px rgba(27, 94, 59, 0.1);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08), 0 0 0 2px rgba(13, 148, 136, 0.1);
 }
 
 .toggle-label input[type="checkbox"]:checked + .toggle-switch::after,
@@ -6397,7 +6464,7 @@ body.is-admin .admin-only {
 .form-textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 /* Form Textarea Improvements */
@@ -6433,7 +6500,7 @@ body.is-admin .admin-only {
 /* Button Hover Lift Effect */
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(27, 94, 59, 0.25);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
 }
 
 .btn-primary:active {
@@ -6513,7 +6580,7 @@ body.is-admin .admin-only {
     gap: 6px;
     padding: 6px 10px;
     background: var(--primary-lighter);
-    border: 1px solid rgba(27, 94, 59, 0.2);
+    border: 1px solid rgba(13, 148, 136, 0.2);
     border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
@@ -6522,7 +6589,7 @@ body.is-admin .admin-only {
 }
 
 .domain-tag:hover {
-    background: rgba(27, 94, 59, 0.15);
+    background: rgba(13, 148, 136, 0.15);
 }
 
 .domain-tag .remove-domain {
@@ -6606,7 +6673,7 @@ body.is-admin .admin-only {
 
 .qa-stat-card.primary {
     background: var(--primary-lighter);
-    border-color: rgba(27, 94, 59, 0.2);
+    border-color: rgba(13, 148, 136, 0.2);
 }
 
 .qa-stat-value {
@@ -6666,7 +6733,7 @@ body.is-admin .admin-only {
 .qa-search-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 /* Q&A List */
@@ -6848,7 +6915,7 @@ body.is-admin .admin-only {
 .qa-form-group textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(27, 94, 59, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .qa-form-group textarea.question {

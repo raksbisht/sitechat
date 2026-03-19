@@ -6,15 +6,15 @@
     <title>Login - SiteChat</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #1B5E3B;
-            --primary-dark: #145230;
-            --primary-light: #2D7A4E;
-            --primary-lighter: #E8F5EE;
-            --accent: #10b981;
-            --gray-50: #F8FAF9;
+            --primary: #0d9488;
+            --primary-dark: #0f766e;
+            --primary-light: #14b8a6;
+            --primary-lighter: #ccfbf1;
+            --accent: #22d3ee;
+            --gray-50: #f4f7f6;
             --gray-100: #f3f4f6;
             --gray-200: #e5e7eb;
             --gray-300: #d1d5db;
@@ -40,7 +40,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
             display: flex;
             background: var(--gray-50);
@@ -50,7 +50,7 @@
         /* Left Panel - Branding */
         .login-branding {
             flex: 1;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, #0d3320 100%);
+            background: linear-gradient(145deg, #0f766e 0%, #0d9488 38%, #0891b2 72%, #0e7490 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -98,6 +98,7 @@
         }
 
         .branding-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 36px;
             font-weight: 700;
             color: white;
@@ -165,6 +166,7 @@
         }
 
         .login-header h1 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 28px;
             font-weight: 700;
             color: var(--gray-900);
@@ -300,7 +302,7 @@
             border-radius: var(--radius);
             font-size: 15px;
             font-weight: 600;
-            font-family: inherit;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
@@ -317,7 +319,7 @@
         .btn-primary:hover {
             background: var(--primary-dark);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(27, 94, 59, 0.3);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
         }
 
         .btn-primary:active {
@@ -566,7 +568,7 @@
         // Check if already logged in
         const token = localStorage.getItem('token');
         if (token) {
-            window.location.href = '/';
+            window.location.href = '/app';
         }
 
         // Load platform white-label settings
@@ -648,7 +650,7 @@
                     localStorage.removeItem('remember_email');
                 }
 
-                window.location.href = '/';
+                window.location.href = '/app';
 
             } catch (error) {
                 errorMsg.textContent = error.message;
