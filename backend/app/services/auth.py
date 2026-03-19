@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 from jose import JWTError, jwt
 import bcrypt
 from pydantic import BaseModel, EmailStr, field_validator
@@ -12,6 +12,7 @@ from app.config import settings
 class UserRole(str, Enum):
     ADMIN = "admin"
     USER = "user"
+    AGENT = "agent"
 
 
 class UserCreate(BaseModel):
@@ -43,12 +44,46 @@ class UserLogin(BaseModel):
     password: str
 
 
+class AgentCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    assigned_site_ids: List[str] = []
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength_agent(cls, v: str) -> str:
+        from app.core.security import validate_password
+        is_valid, error_message = validate_password(v)
+        if not is_valid:
+            raise ValueError(error_message)
+        return v
+
+
+class AgentUpdate(BaseModel):
+    name: Optional[str] = None
+    assigned_site_ids: Optional[List[str]] = None
+    password: Optional[str] = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_optional_password(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        from app.core.security import validate_password
+        is_valid, error_message = validate_password(v)
+        if not is_valid:
+            raise ValueError(error_message)
+        return v
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
     name: str
     role: UserRole
     created_at: datetime
+    assigned_site_ids: List[str] = []
 
 
 class TokenResponse(BaseModel):
@@ -157,6 +192,79 @@ class AuthService:
         if hasattr(self._provider, 'delete_user'):
             return await self._provider.delete_user(user_id)
         return False
+
+    async def _sites_belong_to_admin(self, admin_id: str, site_ids: List[str]) -> bool:
+        if not site_ids:
+            return True
+        for sid in site_ids:
+            if not hasattr(self._provider, "get_site"):
+                return False
+            site = await self._provider.get_site(sid)
+            if not site or site.get("user_id") != admin_id:
+                return False
+        return True
+
+    async def create_support_agent(self, admin: dict, data: AgentCreate) -> Optional[dict]:
+        """Create a handoff agent user scoped to admin's sites."""
+        admin_id = str(admin["_id"])
+        existing = await self._provider.get_user_by_email(data.email)
+        if existing:
+            return None
+        if not await self._sites_belong_to_admin(admin_id, data.assigned_site_ids):
+            raise ValueError("One or more sites are invalid or not owned by you")
+
+        user_doc = {
+            "email": data.email,
+            "name": data.name,
+            "password_hash": get_password_hash(data.password),
+            "role": UserRole.AGENT.value,
+            "owner_id": admin_id,
+            "assigned_site_ids": list(data.assigned_site_ids),
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        }
+        user_id = await self._provider.create_user(user_doc)
+        return await self._provider.get_user_by_id(user_id)
+
+    async def list_support_agents(self, admin: dict) -> list:
+        admin_id = str(admin["_id"])
+        if hasattr(self._provider, "list_users_agents_for_owner"):
+            return await self._provider.list_users_agents_for_owner(admin_id)
+        return []
+
+    async def update_support_agent(self, admin: dict, agent_id: str, data: AgentUpdate) -> Optional[dict]:
+        admin_id = str(admin["_id"])
+        agent = await self._provider.get_user_by_id(agent_id)
+        if not agent or agent.get("role") != UserRole.AGENT.value:
+            return None
+        if agent.get("owner_id") != admin_id:
+            return None
+
+        updates = {}
+        if data.name is not None:
+            updates["name"] = data.name
+        if data.assigned_site_ids is not None:
+            if not await self._sites_belong_to_admin(admin_id, data.assigned_site_ids):
+                raise ValueError("One or more sites are invalid or not owned by you")
+            updates["assigned_site_ids"] = list(data.assigned_site_ids)
+        if data.password:
+            updates["password_hash"] = get_password_hash(data.password)
+
+        if not updates:
+            return agent
+
+        if hasattr(self._provider, "update_user"):
+            await self._provider.update_user(agent_id, updates)
+        return await self._provider.get_user_by_id(agent_id)
+
+    async def delete_support_agent(self, admin: dict, agent_id: str) -> bool:
+        admin_id = str(admin["_id"])
+        agent = await self._provider.get_user_by_id(agent_id)
+        if not agent or agent.get("role") != UserRole.AGENT.value:
+            return False
+        if agent.get("owner_id") != admin_id:
+            return False
+        return await self.delete_user(agent_id)
     
     async def ensure_admin_exists(self):
         """
@@ -218,5 +326,6 @@ def user_to_response(user: dict) -> UserResponse:
         email=user["email"],
         name=user["name"],
         role=UserRole(user["role"]),
-        created_at=user["created_at"]
+        created_at=user["created_at"],
+        assigned_site_ids=list(user.get("assigned_site_ids") or []),
     )

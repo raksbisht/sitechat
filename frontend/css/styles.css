@@ -1129,6 +1129,48 @@ button, .btn, input, select, textarea {
     padding: 24px;
 }
 
+body:not(.is-admin) .is-admin-only {
+    display: none !important;
+}
+
+body.is-agent .menu-item[data-view="sites"],
+body.is-agent .menu-item[data-view="admin"],
+body.is-agent .menu-item[data-view="conversations"],
+body.is-agent .menu-item[data-view="settings"] {
+    display: none !important;
+}
+
+.agent-form-panel {
+    margin-bottom: 24px;
+}
+
+.agent-form-panel .section-desc {
+    margin-bottom: 20px;
+}
+
+.agent-sites-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+}
+
+.agent-site-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.agents-table-wrap .data-table {
+    width: 100%;
+}
+
 .section-title {
     font-size: 16px;
     font-weight: 600;

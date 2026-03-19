@@ -17,6 +17,7 @@ from app.services.crawler import CrawlerService
 from app.services.indexer import IndexerService
 from app.database.vector_store import get_vector_store
 from app.routes.auth import get_current_user, require_auth
+from app.services.auth import UserRole
 from app.core.security import generate_sri_hash_for_file, validate_widget_domain, get_request_origin
 
 router = APIRouter(prefix="/api/embed", tags=["embed"])
@@ -145,6 +146,12 @@ async def setup_chatbot(
     Set up a new chatbot for a website (requires authentication).
     Returns an embed script that can be added to the website.
     """
+    if user.get("role") == UserRole.AGENT.value:
+        raise HTTPException(
+            status_code=403,
+            detail="Support agents cannot create or register sites",
+        )
+
     url = str(request.url).rstrip("/")
     site_id = generate_site_id(url)
     site_name = request.name or url.replace("https://", "").replace("http://", "").split("/")[0]

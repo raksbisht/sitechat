@@ -64,6 +64,15 @@
                     <span>Handoffs</span>
                     <span class="menu-badge" id="handoff-badge" style="display: none;">0</span>
                 </a>
+                <a href="#" class="menu-item is-admin-only" data-view="agents" title="Support agents">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <line x1="19" y1="8" x2="19" y2="14"/>
+                        <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                    <span>Agents</span>
+                </a>
                 
                 <div class="menu-label">General</div>
                 <a href="#" class="menu-item" data-view="settings" title="Settings">
@@ -801,6 +810,57 @@
                                 <button type="submit" class="btn btn-primary" id="wl-save-btn">Save Changes</button>
                             </div>
                         </form>
+                    </section>
+                </div>
+            </div>
+            
+            <!-- Support agents (admin) -->
+            <div class="view" id="agents-view">
+                <div class="page-container">
+                    <header class="page-header">
+                        <div>
+                            <h1 class="page-title">Support agents</h1>
+                            <p class="page-subtitle">Create logins for people who handle live chat handoffs. Each agent only sees the sites you assign.</p>
+                        </div>
+                        <div class="header-actions">
+                            <button type="button" class="btn btn-primary" id="add-agent-btn">Add agent</button>
+                        </div>
+                    </header>
+                    <section class="settings-section agent-form-panel" id="agent-form-panel">
+                        <h3 class="section-title" id="agent-form-title">Add support agent</h3>
+                        <p class="section-desc">Agents sign in with the email and password below. Assign at least one site so they can see handoffs.</p>
+                        <form id="agent-form" class="settings-form">
+                            <input type="hidden" id="agent-edit-id" value="">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="agent-name">Name</label>
+                                    <input type="text" class="form-input" id="agent-name" required autocomplete="name" minlength="2" maxlength="100" placeholder="Jane Doe">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="agent-email">Email</label>
+                                    <input type="email" class="form-input" id="agent-email" required autocomplete="email" placeholder="jane@company.com">
+                                </div>
+                            </div>
+                            <div class="form-group" id="agent-password-group">
+                                <label class="form-label" for="agent-password">Password</label>
+                                <input type="password" class="form-input" id="agent-password" autocomplete="new-password" required minlength="8" placeholder="••••••••">
+                                <span class="form-hint" id="agent-password-hint">At least 8 characters, with upper, lower, and number or symbol.</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Assigned sites</label>
+                                <p class="section-desc" style="margin-top: 0;">Agent will only see handoffs for checked sites.</p>
+                                <div id="agent-sites-checkboxes" class="agent-sites-checkboxes"></div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancel-agent-form">Clear</button>
+                                <button type="submit" class="btn btn-primary" id="save-agent-btn">Save agent</button>
+                            </div>
+                        </form>
+                    </section>
+                    <section class="settings-section" id="agents-page-section">
+                        <h3 class="section-title">Your agents</h3>
+                        <p class="text-muted" id="agents-loading">Loading agents…</p>
+                        <div class="agents-table-wrap" id="agents-table-wrap"></div>
                     </section>
                 </div>
             </div>

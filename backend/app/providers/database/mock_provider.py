@@ -225,6 +225,13 @@ class MockDatabaseProvider(BaseDatabaseProvider):
         
         return [{**s, "_id": s["site_id"]} for s in sites]
     
+    async def list_sites_by_site_ids(self, site_ids: List[str]) -> List[Dict]:
+        if not site_ids:
+            return []
+        out = [self._sites[sid] for sid in site_ids if sid in self._sites]
+        out.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        return [{**s, "_id": s["site_id"]} for s in out]
+    
     async def update_site(self, site_id: str, updates: Dict) -> bool:
         """Update site data."""
         if site_id not in self._sites:
@@ -293,6 +300,32 @@ class MockDatabaseProvider(BaseDatabaseProvider):
         if user:
             return {**user, "_id": user_id}
         return None
+    
+    async def update_user(self, user_id: str, updates: Dict) -> bool:
+        user = self._users.get(user_id)
+        if not user:
+            return False
+        user.update(updates)
+        user["updated_at"] = datetime.utcnow()
+        return True
+    
+    async def get_all_users(self) -> List[Dict]:
+        return [{**u, "_id": uid} for uid, u in self._users.items()]
+    
+    async def delete_user(self, user_id: str) -> bool:
+        if user_id in self._users:
+            del self._users[user_id]
+            return True
+        return False
+    
+    async def list_users_agents_for_owner(self, owner_id: str) -> List[Dict]:
+        out = [
+            {**u, "_id": uid}
+            for uid, u in self._users.items()
+            if u.get("role") == "agent" and u.get("owner_id") == owner_id
+        ]
+        out.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        return out
     
     # ===========================================
     # Crawl Job Operations

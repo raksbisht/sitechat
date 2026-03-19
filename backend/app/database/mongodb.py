@@ -66,6 +66,8 @@ class MongoDB:
         await self.db.leads.create_index("session_id")
         await self.db.leads.create_index("email")
         await self.db.leads.create_index([("site_id", 1), ("captured_at", -1)])
+        await self.db.users.create_index("owner_id")
+        await self.db.users.create_index([("role", 1), ("owner_id", 1)])
     
     # ==================== Conversations ====================
     
@@ -518,6 +520,55 @@ class MongoDB:
             user["_id"] = str(user["_id"])
         return user
     
+    async def update_user(self, user_id: str, updates: Dict) -> bool:
+        """Update user fields by user_id field or MongoDB _id."""
+        from bson import ObjectId
+        
+        user = await self.get_user_by_id(user_id)
+        if not user:
+            return False
+        oid = user["_id"]
+        try:
+            obj = ObjectId(oid)
+        except Exception:
+            return False
+        patch = dict(updates)
+        patch["updated_at"] = datetime.utcnow()
+        result = await self.db.users.update_one({"_id": obj}, {"$set": patch})
+        return result.modified_count > 0 or result.matched_count > 0
+    
+    async def get_all_users(self) -> List[Dict]:
+        """List users (admin tooling)."""
+        cursor = self.db.users.find({}).sort("created_at", -1).limit(500)
+        users = await cursor.to_list(length=500)
+        for u in users:
+            u["_id"] = str(u["_id"])
+        return users
+    
+    async def delete_user(self, user_id: str) -> bool:
+        """Delete user by logical id."""
+        from bson import ObjectId
+        
+        user = await self.get_user_by_id(user_id)
+        if not user:
+            return False
+        try:
+            obj = ObjectId(user["_id"])
+        except Exception:
+            return False
+        result = await self.db.users.delete_one({"_id": obj})
+        return result.deleted_count > 0
+    
+    async def list_users_agents_for_owner(self, owner_id: str) -> List[Dict]:
+        """Support agents created by this admin (owner_id)."""
+        cursor = self.db.users.find(
+            {"role": "agent", "owner_id": owner_id}
+        ).sort("created_at", -1)
+        users = await cursor.to_list(length=200)
+        for u in users:
+            u["_id"] = str(u["_id"])
+        return users
+    
     # ==================== Site Management ====================
     
     async def list_sites(self, user_id: Optional[str] = None) -> List[Dict]:
@@ -532,6 +583,16 @@ class MongoDB:
         for site in sites:
             site["_id"] = str(site["_id"])
         
+        return sites
+    
+    async def list_sites_by_site_ids(self, site_ids: List[str]) -> List[Dict]:
+        """List sites whose site_id is in the given list."""
+        if not site_ids:
+            return []
+        cursor = self.db.sites.find({"site_id": {"$in": site_ids}}).sort("created_at", -1)
+        sites = await cursor.to_list(length=100)
+        for site in sites:
+            site["_id"] = str(site["_id"])
         return sites
     
     async def get_site(self, site_id: str) -> Optional[Dict]:
@@ -822,15 +883,20 @@ class MongoDB:
     
     async def get_handoff_queue(
         self,
-        site_id: str = None,
+        site_id: Optional[str] = None,
+        site_ids: Optional[List[str]] = None,
         status: List[str] = None,
         page: int = 1,
         limit: int = 20
     ) -> Tuple[List[Dict], int, int, int]:
-        """Get handoff queue with counts."""
-        query = {}
-        if site_id:
-            query["site_id"] = site_id
+        """Get handoff queue with counts. Use site_ids for multiple sites, or site_id for one, or neither for all sites."""
+        base: Dict[str, Any] = {}
+        if site_ids is not None:
+            base["site_id"] = {"$in": site_ids}
+        elif site_id:
+            base["site_id"] = site_id
+        
+        query: Dict[str, Any] = dict(base)
         if status:
             query["status"] = {"$in": status}
         else:
@@ -838,12 +904,8 @@ class MongoDB:
         
         total = await self.db.handoff_sessions.count_documents(query)
         
-        pending_count = await self.db.handoff_sessions.count_documents(
-            {**query, "status": "pending"} if status is None else {"site_id": site_id, "status": "pending"} if site_id else {"status": "pending"}
-        )
-        active_count = await self.db.handoff_sessions.count_documents(
-            {**query, "status": "active"} if status is None else {"site_id": site_id, "status": "active"} if site_id else {"status": "active"}
-        )
+        pending_count = await self.db.handoff_sessions.count_documents({**base, "status": "pending"})
+        active_count = await self.db.handoff_sessions.count_documents({**base, "status": "active"})
         
         skip = (page - 1) * limit
         cursor = self.db.handoff_sessions.find(query).sort([

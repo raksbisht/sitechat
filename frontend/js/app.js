@@ -60,6 +60,11 @@ async function initializeApp() {
     updateUserUI();
     loadWhiteLabelConfig();
     await loadSites();
+    if (currentUser.role === 'agent') {
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('.menu-item[data-view="handoffs"]')?.classList.add('active');
+        switchView('handoffs');
+    }
 }
 
 function checkAuth() {
@@ -73,9 +78,15 @@ function checkAuth() {
     
     try {
         currentUser = JSON.parse(userStr);
+        if (!currentUser.assigned_site_ids) {
+            currentUser.assigned_site_ids = [];
+        }
         
         if (currentUser.role === 'admin') {
             document.body.classList.add('is-admin');
+        }
+        if (currentUser.role === 'agent') {
+            document.body.classList.add('is-agent');
         }
         
         return true;
@@ -101,7 +112,8 @@ function updateUserUI() {
     const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
     elements.userAvatar.textContent = initial;
     elements.userName.textContent = currentUser.name || currentUser.email;
-    elements.userRole.textContent = currentUser.role;
+    const roleLabels = { admin: 'Admin', agent: 'Support agent', user: 'User' };
+    elements.userRole.textContent = roleLabels[currentUser.role] || currentUser.role;
 }
 
 function logout() {
@@ -123,8 +135,21 @@ function setupNavigation() {
 }
 
 function switchView(viewId) {
+    if (currentUser?.role === 'agent' && !['handoffs', 'help'].includes(viewId)) {
+        viewId = 'handoffs';
+    }
+    if (viewId === 'agents' && currentUser?.role !== 'admin') {
+        viewId = 'sites';
+    }
+
+    const viewEl = document.getElementById(`${viewId}-view`);
+    if (!viewEl) {
+        console.warn('Unknown view:', viewId);
+        return;
+    }
+
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(`${viewId}-view`).classList.add('active');
+    viewEl.classList.add('active');
     
     if (viewId === 'sites') {
         loadSites();
@@ -138,6 +163,11 @@ function switchView(viewId) {
         initConversationsView();
     } else if (viewId === 'settings') {
         initWhiteLabelSettings();
+    } else if (viewId === 'handoffs') {
+        populateHandoffSiteFilter();
+        initHandoffsView();
+    } else if (viewId === 'agents') {
+        initAgentsView();
     }
 }
 
@@ -174,6 +204,7 @@ function setupEventListeners() {
     document.getElementById('website-form')?.addEventListener('submit', handleWebsiteSubmit);
     document.getElementById('documents-form')?.addEventListener('submit', handleDocumentsSubmit);
     document.getElementById('both-form')?.addEventListener('submit', handleBothSubmit);
+    document.getElementById('agent-form')?.addEventListener('submit', submitAgentForm);
     
     // File upload zones
     setupUploadZone('upload-zone', 'file-input', 'file-list', 'selectedFiles');
@@ -259,7 +290,7 @@ function renderSites() {
             sitesList.appendChild(item);
         });
         
-        if (!currentDetailSite && sites.length > 0) {
+        if (!currentDetailSite && sites.length > 0 && currentUser?.role !== 'agent') {
             selectSite(sites[0]);
         }
     }
@@ -4417,7 +4448,12 @@ function initHandoffsView() {
     startHandoffPolling();
 }
 
+let handoffsListenersInitialized = false;
+
 function setupHandoffsEventListeners() {
+    if (handoffsListenersInitialized) return;
+    handoffsListenersInitialized = true;
+
     const siteFilter = document.getElementById('handoff-site-filter');
     const statusFilter = document.getElementById('handoff-status-filter');
     const inputForm = document.getElementById('handoff-input-form');
@@ -4789,14 +4825,6 @@ async function populateHandoffSiteFilter() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const handoffsMenuItem = document.querySelector('[data-view="handoffs"]');
-    if (handoffsMenuItem) {
-        handoffsMenuItem.addEventListener('click', () => {
-            populateHandoffSiteFilter();
-            initHandoffsView();
-        });
-    }
-    
     setupHandoffSettingsListeners();
 });
 
@@ -5432,6 +5460,235 @@ function setupWhiteLabelListeners() {
 function initWhiteLabelSettings() {
     setupWhiteLabelListeners();
     loadWhiteLabelConfig();
+}
+
+// ----- Support agents (admin only; dedicated Agents page) -----
+let agentsPageListenersBound = false;
+
+function initAgentsView() {
+    if (currentUser?.role !== 'admin') return;
+
+    const addBtn = document.getElementById('add-agent-btn');
+    if (!agentsPageListenersBound) {
+        agentsPageListenersBound = true;
+        document.getElementById('add-agent-btn')?.addEventListener('click', () => showAgentForm(null, { scroll: true }));
+        document.getElementById('cancel-agent-form')?.addEventListener('click', resetAgentForm);
+    }
+
+    const preservedSites = Array.from(
+        document.querySelectorAll('#agent-sites-checkboxes input[name="agent-site"]:checked')
+    ).map(cb => cb.value);
+
+    loadSupportAgentsTable();
+    renderAgentSiteCheckboxes(preservedSites);
+}
+
+/**
+ * @param {object | null} editAgent
+ * @param {{ scroll?: boolean }} [opts]
+ */
+function showAgentForm(editAgent, opts = {}) {
+    const scroll = opts.scroll !== false;
+    const title = document.getElementById('agent-form-title');
+    const pwd = document.getElementById('agent-password');
+    const pwdGroup = document.getElementById('agent-password-group');
+    const pwdHint = document.getElementById('agent-password-hint');
+    const emailInput = document.getElementById('agent-email');
+    document.getElementById('agent-edit-id').value = editAgent?.id || '';
+
+    if (editAgent) {
+        if (title) title.textContent = 'Edit support agent';
+        document.getElementById('agent-name').value = editAgent.name || '';
+        if (emailInput) {
+            emailInput.value = editAgent.email || '';
+            emailInput.disabled = true;
+        }
+        pwd.required = false;
+        pwd.value = '';
+        pwdHint.textContent = 'Leave blank to keep the current password.';
+        if (pwdGroup) pwdGroup.style.display = '';
+    } else {
+        if (title) title.textContent = 'Add support agent';
+        document.getElementById('agent-name').value = '';
+        if (emailInput) {
+            emailInput.value = '';
+            emailInput.disabled = false;
+        }
+        pwd.required = true;
+        pwd.value = '';
+        pwdHint.textContent = 'At least 8 characters, with upper, lower, and number or symbol.';
+        if (pwdGroup) pwdGroup.style.display = '';
+    }
+
+    renderAgentSiteCheckboxes(editAgent?.assigned_site_ids || []);
+
+    if (scroll) {
+        document.getElementById('agent-form-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function resetAgentForm() {
+    showAgentForm(null, { scroll: false });
+}
+
+function renderAgentSiteCheckboxes(selectedIds) {
+    const wrap = document.getElementById('agent-sites-checkboxes');
+    if (!wrap) return;
+    const selected = new Set(selectedIds || []);
+    if (!sites.length) {
+        wrap.innerHTML = '<p class="text-muted">Add at least one site first, then assign it here.</p>';
+        return;
+    }
+    wrap.innerHTML = sites.map(s => {
+        const id = s.site_id;
+        const label = s.name || s.url || id;
+        const checked = selected.has(id) ? 'checked' : '';
+        return `<label class="agent-site-row"><input type="checkbox" name="agent-site" value="${escapeHtml(id)}" ${checked}><span>${escapeHtml(label)}</span></label>`;
+    }).join('');
+}
+
+async function loadSupportAgentsTable() {
+    const wrap = document.getElementById('agents-table-wrap');
+    const loading = document.getElementById('agents-loading');
+    if (!wrap || currentUser?.role !== 'admin') return;
+
+    try {
+        if (loading) loading.style.display = '';
+        const response = await fetch(`${API_BASE}/auth/agents`, { headers: getAuthHeaders() });
+        if (!response.ok) throw new Error('Failed to load agents');
+        const agents = await response.json();
+        if (loading) loading.style.display = 'none';
+
+        if (!agents.length) {
+            wrap.innerHTML = '<p class="text-muted">No support agents yet. Add one to handle live handoffs.</p>';
+            return;
+        }
+
+        wrap.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Sites</th><th></th></tr>
+                </thead>
+                <tbody>
+                    ${agents.map(a => `
+                        <tr data-agent-id="${escapeHtml(a.id)}">
+                            <td>${escapeHtml(a.name)}</td>
+                            <td>${escapeHtml(a.email)}</td>
+                            <td>${(a.assigned_site_ids || []).length}</td>
+                            <td>
+                                <button type="button" class="btn btn-secondary btn-sm edit-agent-btn">Edit</button>
+                                <button type="button" class="btn btn-danger btn-sm delete-agent-btn">Remove</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+
+        wrap.querySelectorAll('.edit-agent-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tr = btn.closest('tr');
+                const id = tr?.dataset.agentId;
+                const rowAgent = agents.find(x => x.id === id);
+                if (rowAgent) showAgentForm(rowAgent, { scroll: true });
+            });
+        });
+        wrap.querySelectorAll('.delete-agent-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const tr = btn.closest('tr');
+                const id = tr?.dataset.agentId;
+                if (!id || !confirm('Remove this agent? They will no longer be able to log in.')) return;
+                const del = await fetch(`${API_BASE}/auth/agents/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                if (!del.ok) {
+                    alert('Could not remove agent');
+                    return;
+                }
+                loadSupportAgentsTable();
+            });
+        });
+    } catch (e) {
+        console.error(e);
+        if (loading) loading.style.display = 'none';
+        wrap.innerHTML = '<p class="text-muted">Could not load agents.</p>';
+    }
+}
+
+function formatAgentApiError(data) {
+    if (!data || typeof data !== 'object') return '';
+    const d = data.detail;
+    if (typeof d === 'string') return d;
+    if (Array.isArray(d)) {
+        return d
+            .map((item) => (typeof item === 'object' && item !== null ? item.msg || JSON.stringify(item) : String(item)))
+            .filter(Boolean)
+            .join(' ');
+    }
+    return data.message || '';
+}
+
+async function submitAgentForm(e) {
+    e.preventDefault();
+    if (currentUser?.role !== 'admin') {
+        alert('Only administrators can manage support agents.');
+        return;
+    }
+
+    const form = document.getElementById('agent-form');
+    if (form && typeof form.reportValidity === 'function' && !form.reportValidity()) {
+        return;
+    }
+
+    const editIdEl = document.getElementById('agent-edit-id');
+    const nameEl = document.getElementById('agent-name');
+    const emailEl = document.getElementById('agent-email');
+    const pwdEl = document.getElementById('agent-password');
+    if (!editIdEl || !nameEl || !emailEl || !pwdEl) {
+        console.error('Agent form fields missing from DOM');
+        return;
+    }
+
+    const editId = editIdEl.value;
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const password = pwdEl.value;
+    const boxes = document.querySelectorAll('#agent-sites-checkboxes input[name="agent-site"]:checked');
+    const assigned_site_ids = Array.from(boxes).map(b => b.value);
+
+    const saveBtn = document.getElementById('save-agent-btn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+    }
+
+    try {
+        if (editId) {
+            const body = { name, assigned_site_ids };
+            if (password) body.password = password;
+            const res = await fetch(`${API_BASE}/auth/agents/${editId}`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(formatAgentApiError(err) || 'Update failed');
+            }
+        } else {
+            const res = await fetch(`${API_BASE}/auth/agents`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ name, email, password, assigned_site_ids })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(formatAgentApiError(err) || 'Could not create agent');
+            }
+        }
+        resetAgentForm();
+        loadSupportAgentsTable();
+    } catch (err) {
+        alert(err.message || 'Save failed');
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
+    }
 }
 
 // ==================== Scheduled Crawling ====================

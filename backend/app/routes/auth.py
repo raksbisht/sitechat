@@ -6,7 +6,8 @@ from loguru import logger
 from app.database import get_mongodb
 from app.services.auth import (
     AuthService, UserCreate, UserLogin, UserResponse, TokenResponse,
-    UserRole, create_access_token, decode_token, user_to_response
+    UserRole, create_access_token, decode_token, user_to_response,
+    AgentCreate, AgentUpdate,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -152,3 +153,50 @@ async def delete_user(user_id: str, admin: dict = Depends(require_admin)):
         raise HTTPException(status_code=404, detail="User not found")
     
     return {"message": "User deleted successfully"}
+
+
+# ----- Support agents (handoff operators; admin only) -----
+
+
+@router.post("/agents", response_model=UserResponse)
+async def create_agent(data: AgentCreate, admin: dict = Depends(require_admin)):
+    mongodb = await get_mongodb()
+    auth_service = AuthService(mongodb)
+    try:
+        user = await auth_service.create_support_agent(admin, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return user_to_response(user)
+
+
+@router.get("/agents", response_model=list[UserResponse])
+async def list_agents(admin: dict = Depends(require_admin)):
+    mongodb = await get_mongodb()
+    auth_service = AuthService(mongodb)
+    agents = await auth_service.list_support_agents(admin)
+    return [user_to_response(a) for a in agents]
+
+
+@router.patch("/agents/{agent_id}", response_model=UserResponse)
+async def update_agent(agent_id: str, data: AgentUpdate, admin: dict = Depends(require_admin)):
+    mongodb = await get_mongodb()
+    auth_service = AuthService(mongodb)
+    try:
+        updated = await auth_service.update_support_agent(admin, agent_id, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not updated:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return user_to_response(updated)
+
+
+@router.delete("/agents/{agent_id}")
+async def delete_agent(agent_id: str, admin: dict = Depends(require_admin)):
+    mongodb = await get_mongodb()
+    auth_service = AuthService(mongodb)
+    ok = await auth_service.delete_support_agent(admin, agent_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    return {"message": "Agent deleted"}

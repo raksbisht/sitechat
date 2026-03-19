@@ -7,7 +7,15 @@ from datetime import datetime
 from loguru import logger
 
 from app.database import get_mongodb
-from app.routes.auth import require_auth, get_current_user
+from app.routes.auth import require_auth
+from app.core.site_access import (
+    is_admin,
+    is_agent,
+    assigned_site_ids,
+    can_access_handoff_session,
+    can_manage_site,
+    can_view_site,
+)
 from app.models.schemas import (
     HandoffRequest, HandoffSession, HandoffMessage, HandoffMessageRequest,
     HandoffStatusUpdate, HandoffListItem, HandoffQueueResponse,
@@ -144,16 +152,66 @@ async def get_handoff_queue(
     limit: int = Query(20, ge=1, le=100),
     user: dict = Depends(require_auth)
 ):
-    """Get handoff queue for a site."""
+    """Get handoff queue for a site, or all sites (admin / site owners / assigned agents)."""
     mongodb = await get_mongodb()
     
     status_list = [status] if status else None
-    handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
-        site_id=site_id,
-        status=status_list,
-        page=page,
-        limit=limit
-    )
+
+    if site_id == "all":
+        if is_admin(user):
+            handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
+                site_id=None,
+                site_ids=None,
+                status=status_list,
+                page=page,
+                limit=limit,
+            )
+        elif is_agent(user):
+            sids = assigned_site_ids(user)
+            if not sids:
+                return HandoffQueueResponse(
+                    handoffs=[],
+                    total=0,
+                    pending_count=0,
+                    active_count=0,
+                )
+            handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
+                site_id=None,
+                site_ids=sids,
+                status=status_list,
+                page=page,
+                limit=limit,
+            )
+        else:
+            sites = await mongodb.list_sites(user_id=str(user["_id"]))
+            sids = [s["site_id"] for s in sites]
+            if not sids:
+                return HandoffQueueResponse(
+                    handoffs=[],
+                    total=0,
+                    pending_count=0,
+                    active_count=0,
+                )
+            handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
+                site_id=None,
+                site_ids=sids,
+                status=status_list,
+                page=page,
+                limit=limit,
+            )
+    else:
+        site = await mongodb.get_site(site_id)
+        if not site:
+            raise HTTPException(status_code=404, detail="Site not found")
+        if not can_view_site(user, site):
+            raise HTTPException(status_code=403, detail="Access denied")
+        handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
+            site_id=site_id,
+            site_ids=None,
+            status=status_list,
+            page=page,
+            limit=limit,
+        )
     
     return HandoffQueueResponse(
         handoffs=[HandoffListItem(**h) for h in handoffs],
@@ -174,6 +232,10 @@ async def get_handoff_full(
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
+
+    site = await mongodb.get_site(handoff["site_id"])
+    if not can_access_handoff_session(user, handoff["site_id"], site):
+        raise HTTPException(status_code=403, detail="Access denied")
     
     return handoff
 
@@ -190,6 +252,10 @@ async def update_handoff_status(
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
+
+    site = await mongodb.get_site(handoff["site_id"])
+    if not can_access_handoff_session(user, handoff["site_id"], site):
+        raise HTTPException(status_code=403, detail="Access denied")
     
     agent_id = None
     agent_name = None
@@ -225,6 +291,10 @@ async def send_agent_message(
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
+
+    site = await mongodb.get_site(handoff["site_id"])
+    if not can_access_handoff_session(user, handoff["site_id"], site):
+        raise HTTPException(status_code=403, detail="Access denied")
     
     if handoff["status"] == "resolved":
         raise HTTPException(status_code=400, detail="Cannot message a resolved handoff")
@@ -258,6 +328,12 @@ async def get_handoff_config(
 ):
     """Get handoff configuration for a site."""
     mongodb = await get_mongodb()
+
+    site = await mongodb.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail="Site not found")
+    if not can_view_site(user, site):
+        raise HTTPException(status_code=403, detail="Access denied")
     
     config = await mongodb.get_site_handoff_config(site_id)
     return config or {}
@@ -271,6 +347,12 @@ async def update_handoff_config(
 ):
     """Update handoff configuration for a site."""
     mongodb = await get_mongodb()
+
+    site = await mongodb.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail="Site not found")
+    if not can_manage_site(user, site):
+        raise HTTPException(status_code=403, detail="Access denied")
     
     config_dict = config.model_dump()
     if config.business_hours:

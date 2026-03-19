@@ -7,8 +7,8 @@ from loguru import logger
 
 from app.database import get_mongodb
 from app.database.vector_store import get_vector_store
-from app.routes.auth import require_auth, get_current_user
-from app.services.auth import UserRole
+from app.routes.auth import require_auth
+from app.core.site_access import can_manage_site, can_view_site, is_admin, is_agent
 from app.models.schemas import SiteConfig, SiteConfigUpdate, SiteQuickPromptsConfig
 
 router = APIRouter(prefix="/api/sites", tags=["sites"])
@@ -18,11 +18,15 @@ router = APIRouter(prefix="/api/sites", tags=["sites"])
 async def list_sites(user: dict = Depends(require_auth)):
     """Get sites for the current user (or all sites for admin)."""
     db = await get_mongodb()
-    
-    is_admin = user.get("role") == UserRole.ADMIN.value
-    user_id = str(user["_id"]) if not is_admin else None
-    
-    sites = await db.list_sites(user_id=user_id)
+
+    if is_agent(user):
+        ids = user.get("assigned_site_ids") or []
+        sites = await db.list_sites_by_site_ids(ids) if ids else []
+    elif is_admin(user):
+        sites = await db.list_sites(user_id=None)
+    else:
+        user_id = str(user["_id"])
+        sites = await db.list_sites(user_id=user_id)
     
     result = []
     for site in sites:
@@ -55,8 +59,7 @@ async def get_site(site_id: str, user: dict = Depends(require_auth)):
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     
-    is_admin = user.get("role") == UserRole.ADMIN.value
-    if not is_admin and site.get("user_id") != str(user["_id"]):
+    if not can_view_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
     
     job = await db.get_crawl_job_by_url(site.get("url", "")) if hasattr(db, 'get_crawl_job_by_url') else None
@@ -81,8 +84,7 @@ async def delete_site(site_id: str, user: dict = Depends(require_auth)):
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     
-    is_admin = user.get("role") == UserRole.ADMIN.value
-    if not is_admin and site.get("user_id") != str(user["_id"]):
+    if not can_manage_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
     
     url = site.get("url")
@@ -135,8 +137,7 @@ async def update_site_config(
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     
-    is_admin = user.get("role") == UserRole.ADMIN.value
-    if not is_admin and site.get("user_id") != str(user["_id"]):
+    if not can_manage_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
     
     current_config = site.get("config", {})
@@ -181,8 +182,7 @@ async def reset_site_config(
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     
-    is_admin = user.get("role") == UserRole.ADMIN.value
-    if not is_admin and site.get("user_id") != str(user["_id"]):
+    if not can_manage_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
     
     default_config = SiteConfig()
@@ -205,8 +205,7 @@ async def update_quick_prompts(
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     
-    is_admin = user.get("role") == UserRole.ADMIN.value
-    if not is_admin and site.get("user_id") != str(user["_id"]):
+    if not can_manage_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
     
     current_config = site.get("config", {})
