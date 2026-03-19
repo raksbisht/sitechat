@@ -153,7 +153,14 @@
                                     </div>
                                 </div>
                                 <div class="detail-header-actions">
-                                    <a href="/demo" target="_blank" class="btn btn-secondary btn-sm" id="preview-site">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="detail-get-embed-btn" title="Open embed / install code">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="16 18 22 12 16 6"/>
+                                            <polyline points="8 6 2 12 8 18"/>
+                                        </svg>
+                                        Get code
+                                    </button>
+                                    <a href="/widget-demo" target="_blank" class="btn btn-secondary btn-sm" id="preview-site">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                             <circle cx="12" cy="12" r="3"/>
@@ -210,23 +217,52 @@
                                 </button>
                             </div>
                             
-                            <!-- Tabs Navigation -->
-                            <div class="detail-tabs">
-                                <button type="button" class="detail-tab active" data-tab="appearance">Appearance</button>
-                                <button type="button" class="detail-tab" data-tab="behavior">Behavior</button>
-                                <button type="button" class="detail-tab" data-tab="quick-prompts">Quick Prompts</button>
-                                <button type="button" class="detail-tab" data-tab="triggers">Triggers</button>
-                                <button type="button" class="detail-tab" data-tab="training">Training</button>
-                                <button type="button" class="detail-tab" data-tab="handoff">Handoff</button>
-                                <button type="button" class="detail-tab" data-tab="leads">Leads</button>
-                                <button type="button" class="detail-tab" data-tab="security">Security</button>
-                                <button type="button" class="detail-tab" data-tab="crawling">Crawling</button>
-                                <button type="button" class="detail-tab" data-tab="embed">Embed</button>
-                            </div>
-                            
-                            <!-- Tab Content Container -->
-                            <div class="detail-tab-content" id="detail-tab-content">
-                                <!-- Tab contents will be loaded here -->
+                            <!-- Settings: vertical sidebar + content -->
+                            <div class="detail-settings-layout">
+                                <nav class="detail-settings-nav" id="detail-settings-nav" aria-label="Site settings sections">
+                                    <div class="detail-nav-group">
+                                        <span class="detail-nav-group-label" id="detail-nav-h-widget">Widget</span>
+                                        <button type="button" class="detail-nav-item detail-tab active" role="tab" data-tab="appearance" aria-selected="true" aria-controls="detail-tab-content" id="detail-tab-btn-appearance">
+                                            <span class="detail-nav-item-text">Appearance</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="embed" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-embed">
+                                            <span class="detail-nav-item-text">Embed</span>
+                                        </button>
+                                    </div>
+                                    <div class="detail-nav-group">
+                                        <span class="detail-nav-group-label" id="detail-nav-h-ai">AI &amp; content</span>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="behavior" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-behavior">
+                                            <span class="detail-nav-item-text">Behavior</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="quick-prompts" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-quick-prompts">
+                                            <span class="detail-nav-item-text">Quick Prompts</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="triggers" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-triggers">
+                                            <span class="detail-nav-item-text">Triggers</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="training" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-training">
+                                            <span class="detail-nav-item-text">Training</span>
+                                        </button>
+                                    </div>
+                                    <div class="detail-nav-group">
+                                        <span class="detail-nav-group-label" id="detail-nav-h-ops">Operations</span>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="handoff" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-handoff">
+                                            <span class="detail-nav-item-text">Handoff</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="leads" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-leads">
+                                            <span class="detail-nav-item-text">Leads</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="security" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-security">
+                                            <span class="detail-nav-item-text">Security</span>
+                                        </button>
+                                        <button type="button" class="detail-nav-item detail-tab" role="tab" data-tab="crawling" aria-selected="false" aria-controls="detail-tab-content" id="detail-tab-btn-crawling">
+                                            <span class="detail-nav-item-text">Crawling</span>
+                                        </button>
+                                    </div>
+                                </nav>
+                                <div class="detail-tab-content" id="detail-tab-content" role="tabpanel" aria-labelledby="detail-tab-btn-appearance" tabindex="0">
+                                    <!-- Tab contents loaded by app.js -->
+                                </div>
                             </div>
                         </div>
                     </div>

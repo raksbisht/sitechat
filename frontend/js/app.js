@@ -153,6 +153,7 @@ function setupEventListeners() {
     elements.logoutBtn?.addEventListener('click', logout);
     
     document.getElementById('copy-detail-embed')?.addEventListener('click', copyDetailEmbed);
+    document.getElementById('detail-get-embed-btn')?.addEventListener('click', () => switchToDetailTab('embed'));
     document.getElementById('recrawl-site')?.addEventListener('click', recrawlSite);
     document.getElementById('delete-site')?.addEventListener('click', deleteSite);
     
@@ -893,16 +894,31 @@ function closeSidePanel() {
 }
 
 function setupDetailTabs() {
-    const tabs = document.querySelectorAll('.detail-tab');
+    const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
+    const panel = document.getElementById('detail-tab-content');
+
     tabs.forEach(tab => {
         tab.onclick = () => {
-            tabs.forEach(t => t.classList.remove('active'));
+            tabs.forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
             tab.classList.add('active');
-            
-            const tabId = tab.dataset.tab;
-            loadDetailTabContent(tabId);
+            tab.setAttribute('aria-selected', 'true');
+
+            if (panel && tab.id) {
+                panel.setAttribute('aria-labelledby', tab.id);
+            }
+
+            loadDetailTabContent(tab.dataset.tab);
         };
     });
+}
+
+/** Jump to a site-detail tab (e.g. from header "Get code" → Embed). */
+function switchToDetailTab(tabId) {
+    const btn = document.querySelector(`#detail-settings-nav .detail-tab[data-tab="${tabId}"]`);
+    if (btn) btn.click();
 }
 
 function loadDetailTabContent(tabId) {

@@ -2233,45 +2233,141 @@ body.is-admin .admin-only {
     height: 16px;
 }
 
-.detail-tabs {
+/* Site detail: sidebar sections + scrollable content */
+.detail-settings-layout {
+    flex: 1;
     display: flex;
-    gap: 4px;
-    padding: 0 24px;
+    flex-direction: row;
+    min-height: 0;
+    overflow: hidden;
     background: var(--white);
-    border-bottom: 1px solid var(--gray-200);
-    overflow-x: auto;
 }
 
-.detail-tab {
-    padding: 12px 16px;
+.detail-settings-nav {
+    width: 220px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 0 20px;
+    border-right: 1px solid var(--gray-200);
+    background: linear-gradient(180deg, var(--gray-50) 0%, var(--white) 35%);
+    -webkit-overflow-scrolling: touch;
+}
+
+.detail-nav-group {
+    margin-bottom: 4px;
+}
+
+.detail-nav-group-label {
+    display: block;
+    padding: 16px 18px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    user-select: none;
+}
+
+.detail-nav-item-text {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Sidebar tab buttons (share .detail-tab for JS) */
+.detail-settings-nav .detail-nav-item.detail-tab {
+    display: flex;
+    align-items: center;
+    width: calc(100% - 16px);
+    margin: 1px 8px;
+    padding: 10px 12px;
     border: none;
-    background: none;
+    border-radius: var(--radius);
+    background: transparent;
     font-size: 13px;
     font-weight: 500;
-    color: var(--gray-500);
+    font-family: var(--font-sans);
+    color: var(--gray-600);
+    text-align: left;
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
     white-space: nowrap;
-    transition: var(--transition);
+    border-bottom: none;
 }
 
-.detail-tab:hover {
-    color: var(--gray-700);
+.detail-settings-nav .detail-nav-item.detail-tab:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--gray-900);
 }
 
-.detail-tab.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
+.detail-settings-nav .detail-nav-item.detail-tab.active {
+    background: var(--primary-lighter);
+    color: var(--primary-dark);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.detail-settings-nav .detail-tab::after {
+    display: none !important;
 }
 
 .detail-tab-content {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 24px;
     background: var(--white);
     -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+    .detail-settings-layout {
+        flex-direction: column;
+    }
+
+    .detail-settings-nav {
+        width: 100%;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--gray-200);
+        padding: 10px 10px 12px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 6px 8px;
+        background: var(--white);
+    }
+
+    .detail-nav-group {
+        display: contents;
+    }
+
+    .detail-nav-group-label {
+        flex-basis: 100%;
+        width: 100%;
+        padding: 8px 8px 4px;
+    }
+
+    .detail-settings-nav .detail-nav-item.detail-tab {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 140px;
+        width: auto;
+        margin: 0;
+        justify-content: center;
+        text-align: center;
+        box-shadow: none;
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+
+    .detail-settings-nav .detail-nav-item.detail-tab.active {
+        box-shadow: none;
+        outline: 2px solid var(--primary);
+        outline-offset: -2px;
+    }
 }
 
 /* Tab Form Styles */
@@ -6428,14 +6524,12 @@ body.is-admin .admin-only {
     transform: translateY(0);
 }
 
-/* Tab Button Improvements */
-.detail-tab,
+/* Customize panel tabs (horizontal underline) */
 .customize-tab {
     position: relative;
     transition: var(--transition);
 }
 
-.detail-tab::after,
 .customize-tab::after {
     content: '';
     position: absolute;
@@ -6448,12 +6542,10 @@ body.is-admin .admin-only {
     transform: translateX(-50%);
 }
 
-.detail-tab:hover::after,
 .customize-tab:hover::after {
     width: 50%;
 }
 
-.detail-tab.active::after,
 .customize-tab.active::after {
     width: 100%;
 }
