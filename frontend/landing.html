@@ -3,8 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiteChat — AI support chat for your website</title>
-  <meta name="description" content="RAG-powered chatbots trained on your site. Embed in one line. Human handoff, analytics, and privacy-first deployment.">
+  <title>SiteChat — Open-source AI customer support for your website</title>
+  <meta name="description" content="Train an AI chatbot on your website in minutes. Self-hosted, free forever. Embed one script tag — get cited answers, human handoff, analytics, and full data ownership.">
+
+  <link rel="canonical" href="https://sitechat.in/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sitechat.in/">
+  <meta property="og:title" content="SiteChat — Open-source AI customer support for your website">
+  <meta property="og:description" content="Train an AI chatbot on your website in minutes. Self-hosted, free forever. Full data ownership, no subscriptions.">
+  <meta property="og:site_name" content="SiteChat">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SiteChat — Open-source AI customer support">
+  <meta name="twitter:description" content="Self-hosted RAG chatbot. Train on your site, embed in one tag. Free forever, MIT License.">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -14,21 +25,16 @@
   <div class="landing-bg" aria-hidden="true"></div>
   <div class="landing-grid-bg" aria-hidden="true"></div>
 
-  <aside class="landing-demo-banner" role="alert" aria-live="polite">
-    <div class="landing-demo-banner-sheen" aria-hidden="true"></div>
-    <div class="wrap landing-demo-banner-inner">
-      <div class="landing-demo-icon" aria-hidden="true">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      </div>
-      <span class="landing-demo-pill">Demo</span>
-      <div class="landing-demo-copy">
-        <p class="landing-demo-title">Temporary demo —&nbsp;</p>
-        <p class="landing-demo-body">You’re on a shared instance. <strong>Data is wiped on a schedule.</strong> Don’t store anything sensitive.</p>
-      </div>
-      <a class="landing-demo-cta" href="/api/docs">API docs</a>
+  <!-- OSS Banner -->
+  <div class="landing-oss-banner">
+    <div class="wrap landing-oss-banner-inner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>
+      <span>SiteChat is open source &amp; free to self-host —</span>
+      <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a>
     </div>
-  </aside>
+  </div>
 
+  <!-- Header -->
   <header class="landing-header">
     <div class="wrap landing-header-inner">
       <nav class="landing-nav" aria-label="Primary">
@@ -53,11 +59,15 @@
         <div class="landing-nav-links" id="landing-nav-menu">
           <a href="#features">Features</a>
           <a href="#how-it-works">How it works</a>
+          <a href="#why-sitechat">Why SiteChat</a>
+          <a href="#faq">FAQ</a>
           <a href="/demo">Live demo</a>
-          <a href="/api/docs">API</a>
+          <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer" class="landing-nav-github" aria-label="GitHub">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>
+          </a>
           <div class="landing-nav-cta">
             <a href="/login" class="btn btn-ghost">Sign in</a>
-            <a href="/login" class="btn btn-primary">Get started</a>
+            <a href="/login" class="btn btn-primary">Get started free</a>
           </div>
         </div>
       </nav>
@@ -65,24 +75,41 @@
   </header>
 
   <main>
+
+    <!-- ===================== HERO ===================== -->
     <section class="landing-hero">
       <div class="wrap landing-hero-grid">
         <div class="landing-hero-copy">
-          <p class="landing-eyebrow">
-            <span class="landing-eyebrow-dot"></span>
-            RAG · Widget · Handoff · Self-hosted ready
-          </p>
-          <h1 class="landing-hero-title">The chat widget that <span class="landing-gradient-text">actually knows your site</span></h1>
-          <p class="landing-hero-lead">Crawl pages, upload docs, embed one script. Visitors get cited answers in real time—your team jumps in when it counts.</p>
+          <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer" class="landing-hero-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>
+            Open source · MIT License
+            <span class="landing-hero-badge-arrow">→</span>
+          </a>
+          <h1 class="landing-hero-title">Make AI your expert<br><span class="landing-gradient-text">customer support agent</span></h1>
+          <p class="landing-hero-lead">Train a chatbot on your website content in minutes. Embed on any site with one script tag. Visitors get instant, cited answers — your team steps in when it counts.</p>
           <div class="landing-hero-actions">
-            <a href="/login" class="btn btn-primary btn-lg">Start building</a>
-            <a href="/demo" class="btn btn-outline btn-lg">View live widget</a>
+            <a href="/login" class="btn btn-primary btn-lg">Start for free</a>
+            <a href="/demo" class="btn btn-outline btn-lg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Live demo
+            </a>
           </div>
-          <p class="landing-hero-meta"><a href="/app" class="landing-link-arrow">Open dashboard →</a> · No credit card for self-hosted</p>
+          <p class="landing-hero-meta">No credit card · Self-hosted · <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer" class="landing-link-arrow">View on GitHub →</a></p>
           <div class="landing-hero-stats">
-            <div class="landing-stat"><strong>Multi-LLM</strong><span>Ollama, OpenAI, Anthropic</span></div>
-            <div class="landing-stat"><strong>Sources</strong><span>Citations in every reply</span></div>
-            <div class="landing-stat"><strong>White-label</strong><span>Your brand, your data</span></div>
+            <div class="landing-stat">
+              <strong>Free forever</strong>
+              <span>No subscriptions</span>
+            </div>
+            <div class="landing-stat-divider" aria-hidden="true"></div>
+            <div class="landing-stat">
+              <strong>Your data</strong>
+              <span>Never leaves your server</span>
+            </div>
+            <div class="landing-stat-divider" aria-hidden="true"></div>
+            <div class="landing-stat">
+              <strong>Multi-LLM</strong>
+              <span>Ollama, OpenAI, Anthropic</span>
+            </div>
           </div>
         </div>
         <div class="landing-hero-visual-wrap">
@@ -90,7 +117,7 @@
           <div class="landing-browser" aria-hidden="true">
             <div class="landing-browser-chrome">
               <span class="landing-browser-dots"><i></i><i></i><i></i></span>
-              <span class="landing-browser-url">acme.com</span>
+              <span class="landing-browser-url">yoursite.com</span>
             </div>
             <div class="landing-browser-body">
               <div class="landing-browser-page">
@@ -100,8 +127,14 @@
                 <div class="landing-skel landing-skel-line"></div>
               </div>
               <div class="landing-browser-chat">
-                <div class="landing-chat-bubble user">Shipping to EU?</div>
-                <div class="landing-chat-bubble bot">Yes—we ship to all EU countries in 3–5 days. Duties shown at checkout.<cite>Help center · Shipping policy</cite></div>
+                <div class="landing-chat-bubble user">What's your refund policy?</div>
+                <div class="landing-chat-bubble bot">
+                  We offer a full refund within 30 days of purchase—no questions asked. Just contact support with your order ID.
+                  <cite>Help center · Returns &amp; Refunds</cite>
+                </div>
+                <div class="landing-chat-typing" aria-label="Bot is typing">
+                  <span></span><span></span><span></span>
+                </div>
               </div>
             </div>
           </div>
@@ -109,119 +142,357 @@
       </div>
     </section>
 
+    <!-- ===================== TRUST BAR ===================== -->
     <section class="landing-trust">
       <div class="wrap">
-        <p class="landing-trust-label">Built for operators who need control</p>
+        <p class="landing-trust-label">Everything your support team needs, out of the box</p>
         <ul class="landing-trust-list">
-          <li>Scheduled crawls</li>
-          <li>JWT &amp; roles</li>
-          <li>Export conversations</li>
-          <li>Lead capture</li>
-          <li>Trigger messages</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Website crawling</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>PDF &amp; DOCX upload</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Human handoff queue</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Lead capture</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Conversation analytics</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Scheduled re-crawls</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Source citations</li>
+          <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>440+ tests</li>
         </ul>
       </div>
     </section>
 
+    <!-- ===================== PAIN → SOLUTION ===================== -->
+    <section class="landing-pain" aria-labelledby="pain-heading">
+      <div class="wrap">
+        <header class="landing-section-head">
+          <span class="landing-section-tag">The problem</span>
+          <h2 class="landing-section-title" id="pain-heading">Support tickets are costing you more than you think</h2>
+          <p class="landing-section-sub">Your team spends hours answering the same questions — questions your website already answers.</p>
+        </header>
+        <div class="landing-pain-grid">
+          <div class="landing-pain-col landing-pain-before">
+            <div class="landing-pain-col-head">
+              <span class="landing-pain-label before">Without SiteChat</span>
+            </div>
+            <ul class="landing-pain-list">
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Support team buried in repetitive tickets
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Visitors leave without finding answers
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Paying $100–$500/mo for chat SaaS
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Conversation data stored on vendor servers
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Zero support outside business hours
+              </li>
+            </ul>
+          </div>
+          <div class="landing-pain-divider" aria-hidden="true">
+            <div class="landing-pain-divider-line"></div>
+            <div class="landing-pain-divider-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="landing-pain-divider-line"></div>
+          </div>
+          <div class="landing-pain-col landing-pain-after">
+            <div class="landing-pain-col-head">
+              <span class="landing-pain-label after">With SiteChat</span>
+            </div>
+            <ul class="landing-pain-list">
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                AI handles 80% of questions automatically
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Instant, cited answers straight from your docs
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Free forever — self-host on your own server
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                All data stays on your infrastructure
+              </li>
+              <li>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                24/7 support — no overtime, no burnout
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FEATURES ===================== -->
     <section class="landing-features" id="features">
       <div class="wrap">
         <header class="landing-section-head">
           <span class="landing-section-tag">Platform</span>
-          <h2 class="landing-section-title">One stack. Every conversation.</h2>
-          <p class="landing-section-sub">From first crawl to human handoff—without duct-taping five SaaS tools.</p>
+          <h2 class="landing-section-title">One platform. Every conversation.</h2>
+          <p class="landing-section-sub">From first crawl to human handoff — without duct-taping five SaaS tools together.</p>
         </header>
         <div class="landing-bento">
           <article class="landing-bento-card landing-bento-featured">
             <div class="landing-bento-icon">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
             </div>
-            <h3>Retrieval that proves itself</h3>
-            <p>Every answer can surface the pages and docs it came from—plus confidence—so visitors trust the bot and you trust the logs.</p>
-            <div class="landing-bento-meta">PDF · DOCX · Site crawl · Q&amp;A overrides</div>
+            <h3>Trained on your content</h3>
+            <p>Crawl your entire website automatically, upload PDFs, DOCX, or paste raw text. Every answer cites the exact source page — so visitors trust the bot and you can verify it.</p>
+            <div class="landing-bento-tags">
+              <span>Website crawl</span>
+              <span>PDF</span>
+              <span>DOCX</span>
+              <span>Q&amp;A overrides</span>
+              <span>Auto re-crawl</span>
+            </div>
           </article>
           <article class="landing-bento-card">
-            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            <div class="landing-bento-icon sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
             <h3>Embed in 60 seconds</h3>
-            <p>Single script tag. Colors, copy, position—live preview in the dashboard.</p>
+            <p>One script tag on any site or SPA. Customize colors, position, welcome message — live preview in the dashboard.</p>
           </article>
           <article class="landing-bento-card">
-            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-            <h3>Queue &amp; handoff</h3>
-            <p>Agents claim threads, reply in context, resolve when done.</p>
+            <div class="landing-bento-icon sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <h3>Human handoff</h3>
+            <p>When the AI can't help, route to a live agent. Agents claim threads, reply in context, and resolve when done.</p>
           </article>
           <article class="landing-bento-card">
-            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg></div>
-            <h3>Analytics &amp; leads</h3>
-            <p>Volume, trends, CSV export—capture emails from the widget.</p>
+            <div class="landing-bento-icon sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+            </div>
+            <h3>Analytics &amp; lead capture</h3>
+            <p>Track volume, topics, and satisfaction. Capture visitor emails from the widget. Export everything as CSV.</p>
           </article>
           <article class="landing-bento-card">
-            <div class="landing-bento-icon sm"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
-            <h3>Your infra, your models</h3>
-            <p>Local LLMs or cloud APIs—switch with config, not a rewrite.</p>
+            <div class="landing-bento-icon sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </div>
+            <h3>Any LLM, your infra</h3>
+            <p>Ollama (local), OpenAI, Anthropic, or Azure — switch providers with one config change, no code rewrite.</p>
+          </article>
+          <article class="landing-bento-card">
+            <div class="landing-bento-icon sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07M8.46 8.46a5 5 0 000 7.07"/></svg>
+            </div>
+            <h3>Trigger messages</h3>
+            <p>Proactively engage visitors based on page, time-on-site, or scroll depth. Convert browsers into conversations.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="landing-code" aria-labelledby="embed-heading">
-      <div class="wrap landing-code-inner">
-        <div class="landing-code-copy">
-          <h2 id="embed-heading">Drop in. Ship today.</h2>
-          <p>Paste once on any site or SPA. The widget talks to your SiteChat API—CORS and keys handled from the dashboard.</p>
-          <a href="/login" class="btn btn-primary">Get embed code</a>
-        </div>
-        <div class="landing-code-block">
-          <div class="landing-code-header"><span>embed.html</span></div>
-          <pre class="landing-code-pre"><code><span class="tok-p">&lt;script</span> <span class="tok-a">src</span>=<span class="tok-s">"…/widget/chatbot.js"</span>
-  <span class="tok-a">data-site-id</span>=<span class="tok-s">"YOUR_SITE_ID"</span>
-  <span class="tok-a">data-api-url</span>=<span class="tok-s">"https://api.yours.com"</span>
-  <span class="tok-a">data-color</span>=<span class="tok-s">"#0d9488"</span><span class="tok-p">&gt;&lt;/script&gt;</span></code></pre>
-        </div>
-      </div>
-    </section>
-
+    <!-- ===================== HOW IT WORKS ===================== -->
     <section class="landing-dark" id="how-it-works">
       <div class="wrap">
         <header class="landing-section-head landing-section-head--light">
           <span class="landing-section-tag">Workflow</span>
-          <h2 class="landing-section-title">Three steps. Live in an afternoon.</h2>
-          <p class="landing-section-sub">Index once, ship the widget, then refine from real conversations.</p>
+          <h2 class="landing-section-title">Live in an afternoon. Really.</h2>
+          <p class="landing-section-sub">Three steps from zero to a smart support agent answering questions 24/7.</p>
         </header>
         <ol class="landing-timeline">
           <li class="landing-timeline-item">
-            <span class="landing-timeline-num">01</span>
-            <h3>Index</h3>
-            <p>Point at your domain or upload files. Scheduled re-crawls keep answers fresh.</p>
+            <div class="landing-timeline-num">01</div>
+            <div class="landing-timeline-content">
+              <h3>Train on your content</h3>
+              <p>Point SiteChat at your domain — it crawls every page automatically. Upload PDFs, docs, or paste Q&amp;A pairs. Scheduled re-crawls keep answers fresh whenever you update your site.</p>
+              <div class="landing-timeline-tags">
+                <span>URL crawl</span><span>PDF / DOCX</span><span>Auto re-index</span>
+              </div>
+            </div>
           </li>
           <li class="landing-timeline-item">
-            <span class="landing-timeline-num">02</span>
-            <h3>Configure</h3>
-            <p>Prompt, model, widget skin, security—preview before you publish.</p>
+            <div class="landing-timeline-num">02</div>
+            <div class="landing-timeline-content">
+              <h3>Customize &amp; embed</h3>
+              <p>Pick your LLM, set the system prompt, brand the widget with your colors. Copy one script tag and paste it into your site — that's it.</p>
+              <div class="landing-timeline-tags">
+                <span>Brand colors</span><span>One script tag</span><span>Live preview</span>
+              </div>
+            </div>
           </li>
           <li class="landing-timeline-item">
-            <span class="landing-timeline-num">03</span>
-            <h3>Learn</h3>
-            <p>Read transcripts, add Q&amp;A pairs, route hard questions to humans.</p>
+            <div class="landing-timeline-num">03</div>
+            <div class="landing-timeline-content">
+              <h3>Learn &amp; improve</h3>
+              <p>Read real transcripts, spot gaps, and add Q&amp;A overrides. Route hard questions to your team with one click. Your bot gets smarter every week.</p>
+              <div class="landing-timeline-tags">
+                <span>Transcripts</span><span>Q&amp;A training</span><span>Human handoff</span>
+              </div>
+            </div>
           </li>
         </ol>
       </div>
     </section>
 
+    <!-- ===================== EMBED CODE ===================== -->
+    <section class="landing-code" aria-labelledby="embed-heading">
+      <div class="wrap landing-code-inner">
+        <div class="landing-code-copy">
+          <span class="landing-section-tag">One line of code</span>
+          <h2 id="embed-heading">Drop in. Ship today.</h2>
+          <p>Paste once on any website, SPA, or e-commerce store. Widget configuration is managed from the dashboard — no redeployment needed.</p>
+          <a href="/login" class="btn btn-primary">Get your embed code</a>
+        </div>
+        <div class="landing-code-block">
+          <div class="landing-code-header">
+            <span>embed.html</span>
+            <button class="landing-code-copy-btn" data-copy type="button" aria-label="Copy code">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre class="landing-code-pre" id="embed-code"><code><span class="tok-p">&lt;script</span>
+  <span class="tok-a">src</span>=<span class="tok-s">"https://sitechat.in/widget/chatbot.js"</span>
+  <span class="tok-a">data-site-id</span>=<span class="tok-s">"YOUR_SITE_ID"</span>
+  <span class="tok-a">data-api-url</span>=<span class="tok-s">"https://api.sitechat.in"</span>
+  <span class="tok-a">data-color</span>=<span class="tok-s">"#0d9488"</span>
+<span class="tok-p">&gt;&lt;/script&gt;</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== WHY SITECHAT ===================== -->
+    <section class="landing-why" id="why-sitechat">
+      <div class="wrap">
+        <header class="landing-section-head">
+          <span class="landing-section-tag">Why SiteChat</span>
+          <h2 class="landing-section-title">The open-source alternative to expensive SaaS</h2>
+          <p class="landing-section-sub">Why pay monthly when you can self-host for free and keep full control of your data?</p>
+        </header>
+        <div class="landing-compare">
+          <table class="landing-compare-table" role="table">
+            <thead>
+              <tr>
+                <th scope="col">Feature</th>
+                <th scope="col" class="landing-compare-them">Typical SaaS<br><small>e.g. SiteGPT, Intercom AI</small></th>
+                <th scope="col" class="landing-compare-us">SiteChat <span class="landing-compare-badge">Open source</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Price</td>
+                <td class="landing-compare-them"><span class="cmp-no">$49 – $499/mo</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">Free forever</span></td>
+              </tr>
+              <tr>
+                <td>Data ownership</td>
+                <td class="landing-compare-them"><span class="cmp-no">Stored on vendor servers</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">100% on your infra</span></td>
+              </tr>
+              <tr>
+                <td>LLM flexibility</td>
+                <td class="landing-compare-them"><span class="cmp-no">Locked to their model</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">Ollama, OpenAI, Anthropic, Azure</span></td>
+              </tr>
+              <tr>
+                <td>Local / private LLMs</td>
+                <td class="landing-compare-them"><span class="cmp-no">Not available</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">Ollama — zero data exposure</span></td>
+              </tr>
+              <tr>
+                <td>Source citations</td>
+                <td class="landing-compare-them"><span class="cmp-partial">Sometimes</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">Every answer</span></td>
+              </tr>
+              <tr>
+                <td>Human handoff</td>
+                <td class="landing-compare-them"><span class="cmp-partial">Paid add-on</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">Built-in</span></td>
+              </tr>
+              <tr>
+                <td>Unlimited sites</td>
+                <td class="landing-compare-them"><span class="cmp-no">Per-site pricing</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">One deploy, unlimited sites</span></td>
+              </tr>
+              <tr>
+                <td>White-label</td>
+                <td class="landing-compare-them"><span class="cmp-no">Higher tier only</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">Always, no badge required</span></td>
+              </tr>
+              <tr>
+                <td>Source code access</td>
+                <td class="landing-compare-them"><span class="cmp-no">Closed source</span></td>
+                <td class="landing-compare-us"><span class="cmp-yes">MIT License on GitHub</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section class="landing-faq" id="faq">
+      <div class="wrap">
+        <header class="landing-section-head">
+          <span class="landing-section-tag">FAQ</span>
+          <h2 class="landing-section-title">Common questions</h2>
+        </header>
+        <div class="landing-faq-grid">
+          <details class="landing-faq-item" open>
+            <summary>Is SiteChat really free?</summary>
+            <p>Yes. SiteChat is open source under the MIT License. You self-host it on your own server — no per-message fees, no subscription, no usage caps. The only cost is your server and the LLM API calls (or run Ollama locally for $0).</p>
+          </details>
+          <details class="landing-faq-item">
+            <summary>Do I need technical skills to set it up?</summary>
+            <p>Basic command-line familiarity helps. You'll need Python 3.10+, MongoDB, and an Ollama or API-based LLM. The setup takes about 15–30 minutes following the README. Docker support is on the roadmap.</p>
+          </details>
+          <details class="landing-faq-item">
+            <summary>How is my data handled?</summary>
+            <p>Your data never leaves your infrastructure. Everything — crawled pages, documents, conversation history — is stored in your own MongoDB instance and your own vector store. With Ollama, even LLM inference stays on-premise.</p>
+          </details>
+          <details class="landing-faq-item">
+            <summary>Which LLMs are supported?</summary>
+            <p>Ollama (llama3, Mistral, Qwen, and any local model), OpenAI (GPT-4o, GPT-4), Anthropic (Claude), and Azure OpenAI. Switch providers by changing a single environment variable — no code changes required.</p>
+          </details>
+          <details class="landing-faq-item">
+            <summary>Can I use it for multiple websites?</summary>
+            <p>Yes. One SiteChat deployment supports unlimited sites. Each site gets its own knowledge base, widget configuration, and conversation history — managed from a single dashboard.</p>
+          </details>
+          <details class="landing-faq-item">
+            <summary>What content types can it learn from?</summary>
+            <p>Website pages (via crawler), PDFs, DOCX, plain text files, and manual Q&amp;A pairs. Scheduled re-crawls automatically update the knowledge base whenever your content changes.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FINAL CTA ===================== -->
     <section class="landing-cta">
       <div class="wrap">
         <div class="landing-cta-card">
+          <div class="landing-cta-glow" aria-hidden="true"></div>
           <div class="landing-cta-text">
             <h2>Your site, answering questions 24/7</h2>
-            <p>Spin up your first chatbot in minutes. No credit card for self-hosted.</p>
+            <p>Join the open-source community. Deploy in an afternoon, keep it forever — no subscriptions, no vendor lock-in.</p>
           </div>
           <div class="landing-cta-btns">
-            <a href="/login" class="btn btn-primary btn-lg">Get started</a>
-            <a href="/app" class="btn btn-ghost-light btn-lg">Dashboard</a>
+            <a href="/login" class="btn btn-primary btn-lg">Get started free</a>
+            <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer" class="btn btn-ghost-light btn-lg">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>
+              View on GitHub
+            </a>
           </div>
         </div>
       </div>
     </section>
+
   </main>
 
+  <!-- Footer -->
   <footer class="landing-footer">
     <div class="wrap">
       <div class="landing-footer-top">
@@ -239,15 +510,23 @@
             </span>
             <span class="landing-logo-text">Site<span>Chat</span></span>
           </a>
-          <p>Open-source friendly RAG chat for teams that outgrow generic widgets.</p>
+          <p>Open-source AI customer support for teams that want full control. Self-host on your infra, no recurring fees.</p>
         </div>
         <div class="landing-footer-cols">
           <div>
             <h4>Product</h4>
             <ul>
-              <li><a href="/demo">Demo</a></li>
+              <li><a href="/demo">Live demo</a></li>
               <li><a href="/app">Dashboard</a></li>
               <li><a href="/api/docs">API docs</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Open Source</h4>
+            <ul>
+              <li><a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://github.com/raksbisht/sitechat/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
+              <li><a href="https://github.com/raksbisht/sitechat/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></li>
             </ul>
           </div>
           <div>
@@ -260,47 +539,52 @@
         </div>
       </div>
       <div class="landing-footer-bottom">
-        <span>© SiteChat · MIT License</span>
-        <a href="https://github.com" rel="noopener noreferrer">GitHub</a>
+        <span>© 2025 SiteChat · <a href="https://github.com/raksbisht/sitechat/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></span>
+        <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align:-3px;margin-right:0.35em"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>GitHub
+        </a>
       </div>
     </div>
   </footer>
 
   <script>
     (function () {
+      // Mobile nav
       var toggle = document.getElementById('nav-toggle');
       var menu = document.getElementById('landing-nav-menu');
       var overlay = document.getElementById('nav-overlay');
-      if (!toggle || !menu) return;
-      function openNav() {
-        menu.classList.add('is-open');
-        overlay.classList.add('is-open');
-        overlay.hidden = false;
-        toggle.setAttribute('aria-expanded', 'true');
+      if (toggle && menu) {
+        function openNav() { menu.classList.add('is-open'); overlay.classList.add('is-open'); overlay.hidden = false; toggle.setAttribute('aria-expanded', 'true'); }
+        function closeNav() { menu.classList.remove('is-open'); overlay.classList.remove('is-open'); overlay.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+        toggle.addEventListener('click', function () { menu.classList.contains('is-open') ? closeNav() : openNav(); });
+        overlay.addEventListener('click', closeNav);
+        menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { if (window.matchMedia('(max-width: 899px)').matches) closeNav(); }); });
       }
-      function closeNav() {
-        menu.classList.remove('is-open');
-        overlay.classList.remove('is-open');
-        overlay.hidden = true;
-        toggle.setAttribute('aria-expanded', 'false');
-      }
-      toggle.addEventListener('click', function () {
-        if (menu.classList.contains('is-open')) closeNav();
-        else openNav();
-      });
-      overlay.addEventListener('click', closeNav);
-      menu.querySelectorAll('a').forEach(function (a) {
-        a.addEventListener('click', function () {
-          if (window.matchMedia('(max-width: 899px)').matches) closeNav();
-        });
-      });
+
+      // Scrolled header
       var header = document.querySelector('.landing-header');
-      function onScroll() {
-        if (!header) return;
-        header.classList.toggle('landing-header--scrolled', window.scrollY > 12);
-      }
+      function onScroll() { if (header) header.classList.toggle('landing-header--scrolled', window.scrollY > 12); }
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
+
+      // Copy embed code
+      var copyBtn = document.querySelector('[data-copy]');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var code = document.getElementById('embed-code');
+          if (!code) return;
+          var text = '<script\n  src="https://sitechat.in/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="https://api.sitechat.in"\n  data-color="#0d9488"\n><\/script>';
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(function () { copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy'; }, 2000);
+          });
+        });
+      }
+
+      // FAQ smooth open/close
+      document.querySelectorAll('.landing-faq-item').forEach(function (item) {
+        item.addEventListener('toggle', function () {});
+      });
     })();
   </script>
 </body>
