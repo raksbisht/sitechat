@@ -1,4 +1,6 @@
 /* SiteChat landing — redesigned */
+body { margin: 0; }
+
 .landing {
   --ink: #0c1222;
   --ink-soft: #334155;
