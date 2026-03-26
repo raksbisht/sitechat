@@ -11,11 +11,12 @@ from app.models.schemas import ChatRequest, ChatResponse, ConversationHistory, M
 from app.services.rag_engine import get_rag_engine
 from app.database import get_mongodb
 from app.config import settings
+from app.core.security import get_client_ip
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 # Rate limiter
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_client_ip)
 
 
 async def check_handoff_suggestion(site_id: str, answer: str, confidence: float) -> tuple[bool, str]:
@@ -59,7 +60,7 @@ async def chat(request: Request, body: ChatRequest):
     """
     try:
         rag_engine = get_rag_engine()
-        
+
         response = await rag_engine.chat(
             message=body.message,
             session_id=body.session_id,
@@ -93,7 +94,7 @@ async def chat_stream(request: Request, body: ChatRequest):
     """
     try:
         rag_engine = get_rag_engine()
-        
+
         async def event_generator():
             try:
                 async for chunk in rag_engine.chat_stream(

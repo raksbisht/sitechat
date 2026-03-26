@@ -1,13 +1,17 @@
 """
 Human Handoff API Routes.
 """
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from typing import Optional, List
 from datetime import datetime
 from loguru import logger
+from slowapi import Limiter
 
 from app.database import get_mongodb
 from app.routes.auth import require_auth
+from app.core.security import get_client_ip
+
+limiter = Limiter(key_func=get_client_ip)
 from app.core.site_access import (
     is_admin,
     is_agent,
@@ -28,39 +32,45 @@ router = APIRouter(tags=["handoff"])
 # ==================== Public Widget Endpoints ====================
 
 @router.post("/api/handoff", response_model=dict)
-async def create_handoff(request: HandoffRequest):
+@limiter.limit("5/minute")
+async def create_handoff(request: Request, body: HandoffRequest):
     """Create a new handoff request (called from widget)."""
+    # Honeypot check
+    if body.website:
+        logger.warning(f"Honeypot triggered on handoff create from {get_client_ip(request)}")
+        return {"handoff_id": "blocked", "status": "pending", "message": "Handoff request created. An agent will be with you shortly."}
+
     mongodb = await get_mongodb()
-    
-    existing = await mongodb.get_handoff_by_session(request.session_id, active_only=True)
+
+    existing = await mongodb.get_handoff_by_session(body.session_id, active_only=True)
     if existing:
         return {
             "handoff_id": existing["handoff_id"],
             "status": existing["status"],
             "message": "Handoff already exists for this session"
         }
-    
+
     ai_summary = None
-    if request.ai_conversation:
-        messages = request.ai_conversation[-10:]
+    if body.ai_conversation:
+        messages = body.ai_conversation[-10:]
         summary_parts = []
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", "")[:200]
             summary_parts.append(f"{role}: {content}")
         ai_summary = "\n".join(summary_parts)
-    
+
     handoff = await mongodb.create_handoff_session(
-        session_id=request.session_id,
-        site_id=request.site_id,
-        reason=request.reason,
-        visitor_email=request.visitor_email,
-        visitor_name=request.visitor_name,
-        ai_conversation=request.ai_conversation,
+        session_id=body.session_id,
+        site_id=body.site_id,
+        reason=body.reason,
+        visitor_email=body.visitor_email,
+        visitor_name=body.visitor_name,
+        ai_conversation=body.ai_conversation,
         ai_summary=ai_summary
     )
-    
-    logger.info(f"Created handoff {handoff['handoff_id']} for session {request.session_id}")
+
+    logger.info(f"Created handoff {handoff['handoff_id']} for session {body.session_id}")
     
     return {
         "handoff_id": handoff["handoff_id"],
@@ -103,9 +113,11 @@ async def get_handoff_messages(
 
 
 @router.post("/api/handoff/{handoff_id}/messages")
+@limiter.limit("30/minute")
 async def send_visitor_message(
+    request: Request,
     handoff_id: str,
-    request: HandoffMessageRequest
+    body: HandoffMessageRequest
 ):
     """Send a message as the visitor (public for widget)."""
     mongodb = await get_mongodb()
@@ -120,8 +132,8 @@ async def send_visitor_message(
     message = await mongodb.add_handoff_message(
         handoff_id=handoff_id,
         role="visitor",
-        content=request.content,
-        sender_name=request.sender_name or "Visitor"
+        content=body.content,
+        sender_name=body.sender_name or "Visitor"
     )
     
     return {"success": True, "message": message}

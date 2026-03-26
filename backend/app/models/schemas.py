@@ -245,6 +245,8 @@ class LeadCreate(BaseModel):
     email: Optional[str] = Field(None, description="Visitor email")
     name: Optional[str] = Field(None, description="Visitor name")
     source: str = Field(default="chat", description="Capture source")
+    # Honeypot — must be empty; bots tend to fill every field
+    website: Optional[str] = Field(None, description="Leave blank")
 
 
 class LeadListItem(BaseModel):
@@ -529,6 +531,8 @@ class HandoffRequest(BaseModel):
     visitor_email: Optional[str] = Field(None, description="Visitor's email")
     visitor_name: Optional[str] = Field(None, description="Visitor's name")
     ai_conversation: List[Dict[str, Any]] = Field(default_factory=list, description="Previous AI conversation")
+    # Honeypot — must be empty; bots tend to fill every field
+    website: Optional[str] = Field(None, description="Leave blank")
 
 
 class HandoffMessageRequest(BaseModel):

@@ -1,9 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from loguru import logger
+from slowapi import Limiter
 
 from app.database import get_mongodb
+from app.core.security import get_client_ip
+
+limiter = Limiter(key_func=get_client_ip)
 from app.services.auth import (
     AuthService, UserCreate, UserLogin, UserResponse, TokenResponse,
     UserRole, create_access_token, decode_token, user_to_response,
@@ -92,7 +96,8 @@ async def require_admin(user: dict = Depends(require_auth)) -> dict:
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin):
     mongodb = await get_mongodb()
     auth_service = AuthService(mongodb)
     

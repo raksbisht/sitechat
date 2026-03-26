@@ -1,11 +1,13 @@
 """
 Lead Generation API Routes.
 """
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 from typing import Optional
 from datetime import datetime
 from loguru import logger
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import csv
 import io
 
@@ -14,6 +16,9 @@ from app.routes.auth import require_auth
 from app.models.schemas import (
     LeadCreate, Lead, LeadListItem, LeadListResponse
 )
+from app.core.security import get_client_ip
+
+limiter = Limiter(key_func=get_client_ip)
 
 router = APIRouter(tags=["leads"])
 
@@ -21,35 +26,41 @@ router = APIRouter(tags=["leads"])
 # ==================== Public Widget Endpoints ====================
 
 @router.post("/api/leads", response_model=dict)
-async def capture_lead(request: LeadCreate):
+@limiter.limit("5/minute")
+async def capture_lead(request: Request, body: LeadCreate):
     """Capture a new lead (called from widget - no auth required)."""
+    # Honeypot check — bots fill hidden fields, humans don't
+    if body.website:
+        logger.warning(f"Honeypot triggered on lead capture from {get_client_ip(request)}")
+        return {"success": True, "lead_id": "blocked", "message": "Lead captured successfully"}
+
     mongodb = await get_mongodb()
-    
-    if not request.email and not request.name:
+
+    if not body.email and not body.name:
         raise HTTPException(
             status_code=400,
             detail="At least email or name is required"
         )
-    
-    existing = await mongodb.get_lead_by_session(request.site_id, request.session_id)
+
+    existing = await mongodb.get_lead_by_session(body.site_id, body.session_id)
     if existing:
         return {
             "success": True,
             "lead_id": existing["id"],
             "message": "Lead already captured for this session"
         }
-    
+
     lead_data = {
-        "site_id": request.site_id,
-        "session_id": request.session_id,
-        "email": request.email,
-        "name": request.name,
-        "source": request.source
+        "site_id": body.site_id,
+        "session_id": body.session_id,
+        "email": body.email,
+        "name": body.name,
+        "source": body.source
     }
-    
+
     lead = await mongodb.save_lead(lead_data)
-    
-    logger.info(f"Captured lead {lead['id']} for site {request.site_id}: {request.email or request.name}")
+
+    logger.info(f"Captured lead {lead['id']} for site {body.site_id}: {body.email or body.name}")
     
     return {
         "success": True,

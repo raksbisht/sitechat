@@ -16,7 +16,7 @@ def sample_handoff_data():
     return {
         "handoff_id": "handoff_001",
         "session_id": "session_123",
-        "site_id": "site_abc",
+        "site_id": "test_site_123",
         "status": "pending",
         "reason": "Need help with billing",
         "visitor_email": "visitor@example.com",

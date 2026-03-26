@@ -244,6 +244,15 @@ async def demo_page():
     return RedirectResponse(url="/#live-demo", status_code=301)
 
 
+@app.get("/landing-neo")
+async def landing_neo_page():
+    """Serve the neobrutalism landing page variant."""
+    path = os.path.join(frontend_path, "landing-neo.html")
+    if os.path.exists(path):
+        return FileResponse(path)
+    return {"error": "Page not found"}
+
+
 @app.get("/login")
 async def login_page():
     """Serve the login page."""

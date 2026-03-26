@@ -26,7 +26,7 @@ A production-ready **RAG (Retrieval Augmented Generation)** chatbot platform tha
 | ♾️ | **Unlimited Everything** | One deployment = unlimited sites, unlimited chatbots, unlimited conversations. No per-site fees, no usage caps. |
 | 🏠 | **Self-Hosted** | Your data stays on your servers. Full privacy and control over your customer interactions. |
 | 🔄 | **No Vendor Lock-in** | Swap between Ollama, OpenAI, Anthropic, or Azure with a single env var. |
-| 🚀 | **Production Ready** | Security headers, rate limiting, JWT auth, and 440+ tests included. |
+| 🚀 | **Production Ready** | Security headers, rate limiting, JWT auth, and 415+ tests included. |
 | 🎨 | **White-Label** | Fully customizable branding for the platform and chat widget. |
 | 📦 | **Easy Integration** | Single `<script>` tag to add chat to any website. |
 
@@ -248,6 +248,8 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 - **Headers** - X-Frame-Options, CSP, HSTS, X-XSS-Protection
 - **CORS** - Configurable origins, no wildcards in production
 - **Validation** - Content limits, input sanitization, user agent blocking
+- **Rate Limiting** - Per-IP limits on login, chat, lead capture, and handoff endpoints
+- **Spam Protection** - Honeypot fields on lead capture and handoff to silently block bots
 - **Environment Modes** - Development, staging, production with auto-warnings
 
 </details>
@@ -768,7 +770,7 @@ Restrict where your widget can be embedded:
 
 ## 🧪 Testing
 
-The project includes **440+ tests** across backend, frontend, and end-to-end test suites.
+The project includes **415+ tests** across backend, frontend, and end-to-end test suites.
 
 ### Quick Start
 

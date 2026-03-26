@@ -184,7 +184,7 @@ class Settings(BaseSettings):
     # Conversation settings
     # ===========================================
     CONVERSATION_WINDOW_SIZE: int = 10
-    
+
     # ===========================================
     # Backward Compatibility Aliases
     # ===========================================
