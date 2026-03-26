@@ -239,11 +239,9 @@ async def dashboard_app():
 
 @app.get("/demo")
 async def demo_page():
-    """Serve the widget demo page."""
-    demo_path = os.path.join(frontend_path, "demo.html")
-    if os.path.exists(demo_path):
-        return FileResponse(demo_path)
-    return {"error": "Demo page not found"}
+    """Redirect to landing page — the landing page is the demo."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/#live-demo", status_code=301)
 
 
 @app.get("/login")
