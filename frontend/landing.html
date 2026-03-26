@@ -117,30 +117,104 @@
         </div>
         <div class="landing-hero-visual-wrap">
           <div class="landing-hero-glow" aria-hidden="true"></div>
-          <div class="landing-browser" aria-hidden="true">
+          <div class="landing-browser">
             <div class="landing-browser-chrome">
               <span class="landing-browser-dots"><i></i><i></i><i></i></span>
-              <span class="landing-browser-url">yoursite.com</span>
+              <span class="landing-browser-url">sitechat.in</span>
             </div>
             <div class="landing-browser-body">
-              <div class="landing-browser-page">
+              <div class="landing-browser-page" aria-hidden="true">
                 <div class="landing-skel landing-skel-title"></div>
                 <div class="landing-skel landing-skel-line"></div>
                 <div class="landing-skel landing-skel-line short"></div>
                 <div class="landing-skel landing-skel-line"></div>
               </div>
-              <div class="landing-browser-chat">
-                <div class="landing-chat-bubble user">What's your refund policy?</div>
-                <div class="landing-chat-bubble bot">
-                  We offer a full refund within 30 days of purchase—no questions asked. Just contact support with your order ID.
-                  <cite>Help center · Returns &amp; Refunds</cite>
+              <div class="landing-browser-chat" id="hero-chat-panel">
+                <div class="landing-chat-messages" id="hero-chat-messages">
+                  <div class="landing-chat-bubble bot">
+                    Hi! Ask me anything about SiteChat.
+                  </div>
+                  <div class="landing-chat-typing" id="hero-chat-typing" aria-label="Thinking" style="display:none">
+                    <span></span><span></span><span></span>
+                  </div>
                 </div>
-                <div class="landing-chat-typing" aria-label="Bot is typing">
-                  <span></span><span></span><span></span>
-                </div>
+                <form class="landing-chat-input-row" id="hero-chat-form" autocomplete="off">
+                  <input
+                    type="text"
+                    id="hero-chat-input"
+                    class="landing-chat-input"
+                    placeholder="Ask something…"
+                    maxlength="400"
+                    aria-label="Chat message"
+                  />
+                  <button type="submit" class="landing-chat-send" aria-label="Send">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+                </form>
               </div>
             </div>
           </div>
+          <script>
+          (function () {
+            var SITE_ID = '713b6838215c';
+            var SESSION_ID = 'hero-' + Math.random().toString(36).slice(2);
+            var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+              ? 'http://' + location.host
+              : 'https://api.sitechat.in';
+
+            var form     = document.getElementById('hero-chat-form');
+            var input    = document.getElementById('hero-chat-input');
+            var messages = document.getElementById('hero-chat-messages');
+            var typing   = document.getElementById('hero-chat-typing');
+
+            function addBubble(text, role, sources) {
+              var div = document.createElement('div');
+              div.className = 'landing-chat-bubble ' + role;
+              div.textContent = text;
+              if (sources && sources.length) {
+                var cite = document.createElement('cite');
+                cite.textContent = sources.slice(0, 2).map(function (s) {
+                  return s.title || s.source || '';
+                }).filter(Boolean).join(' · ');
+                if (cite.textContent) div.appendChild(cite);
+              }
+              // insert before typing indicator so it stays at the bottom
+              messages.insertBefore(div, typing);
+              messages.scrollTop = messages.scrollHeight;
+            }
+
+            form.addEventListener('submit', function (e) {
+              e.preventDefault();
+              var text = input.value.trim();
+              if (!text) return;
+              input.value = '';
+              input.disabled = true;
+
+              addBubble(text, 'user');
+              typing.style.display = 'flex';
+              messages.scrollTop = messages.scrollHeight;
+
+              fetch(API_BASE + '/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, session_id: SESSION_ID, site_id: SITE_ID })
+              })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                typing.style.display = 'none';
+                addBubble(data.answer || 'Sorry, something went wrong.', 'bot', data.sources);
+              })
+              .catch(function () {
+                typing.style.display = 'none';
+                addBubble('Could not reach the server. Make sure SiteChat is running.', 'bot');
+              })
+              .finally(function () {
+                input.disabled = false;
+                input.focus();
+              });
+            });
+          })();
+          </script>
         </div>
       </div>
     </section>

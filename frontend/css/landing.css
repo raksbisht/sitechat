@@ -777,13 +777,11 @@
 }
 
 .landing-browser-chat {
-  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  justify-content: flex-end;
   background: var(--surface);
   border-top: 1px solid var(--line);
+  overflow: hidden;
 }
 
 @media (min-width: 520px) {
@@ -792,6 +790,20 @@
     border-left: 1px solid var(--line);
   }
 }
+
+/* scrollable message list */
+.landing-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 0;
+}
+
+.landing-chat-messages::-webkit-scrollbar { width: 3px; }
+.landing-chat-messages::-webkit-scrollbar-thumb { background: rgba(13,148,136,0.2); border-radius: 2px; }
 
 .landing-chat-bubble {
   max-width: 95%;
@@ -822,6 +834,58 @@
   color: var(--teal);
   font-family: var(--mono);
 }
+
+/* input row */
+.landing-chat-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--line);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.landing-chat-input {
+  flex: 1;
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  border-radius: 100px;
+  padding: 0.42rem 0.85rem;
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.landing-chat-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  background: #fff;
+}
+
+.landing-chat-input::placeholder { color: #94a3b8; }
+
+.landing-chat-input:disabled { opacity: 0.5; }
+
+.landing-chat-send {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--cyan));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.landing-chat-send:hover { opacity: 0.88; transform: scale(1.05); }
+.landing-chat-send:active { transform: scale(0.96); }
 
 /* Trust strip */
 .landing-trust {
@@ -1334,13 +1398,17 @@
 
 /* ——— Typing indicator ——— */
 .landing-chat-typing {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 4px;
   padding: 0.55rem 0.85rem;
   background: #f1f5f9;
   border-radius: 14px 14px 14px 4px;
   width: fit-content;
+}
+
+.landing-chat-typing[style*="flex"] {
+  display: flex !important;
 }
 
 .landing-chat-typing span {
