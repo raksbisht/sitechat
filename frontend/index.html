@@ -31,31 +31,24 @@
             </div>
             
             <nav class="sidebar-menu">
-                <div class="menu-label">Menu</div>
+                <!-- Core -->
                 <a href="#" class="menu-item active" data-view="sites" title="Sites">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1"/>
-                        <rect x="14" y="3" width="7" height="7" rx="1"/>
-                        <rect x="3" y="14" width="7" height="7" rx="1"/>
-                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
                     </svg>
                     <span>Sites</span>
                 </a>
-                <a href="#" class="menu-item" data-view="admin" title="Analytics">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                    </svg>
-                    <span>Analytics</span>
-                </a>
                 <a href="#" class="menu-item" data-view="conversations" title="Conversations">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                        <line x1="2" y1="10" x2="22" y2="10"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                     <span>Conversations</span>
                 </a>
                 <a href="#" class="menu-item" data-view="handoffs" title="Handoffs">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -64,43 +57,55 @@
                     <span>Handoffs</span>
                     <span class="menu-badge" id="handoff-badge" style="display: none;">0</span>
                 </a>
-                <a href="#" class="menu-item is-admin-only" data-view="agents" title="Support agents">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <a href="#" class="menu-item" data-view="admin" title="Analytics">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                        <line x1="2" y1="20" x2="22" y2="20"/>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+
+                <!-- Team -->
+                <a href="#" class="menu-item is-not-agent" data-view="team" title="Team">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
-                        <line x1="19" y1="8" x2="19" y2="14"/>
-                        <line x1="22" y1="11" x2="16" y2="11"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
-                    <span>Agents</span>
-                </a>
-                
-                <div class="menu-label">General</div>
-                <a href="#" class="menu-item" data-view="settings" title="Settings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-                    </svg>
-                    <span>Settings</span>
-                </a>
-                <a href="#" class="menu-item" data-view="help" title="Help">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
-                        <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    <span>Help</span>
+                    <span>Team</span>
                 </a>
             </nav>
-            
+
             <div class="sidebar-footer">
+                <div class="sidebar-utils">
+                    <a href="#" class="sidebar-util-link" data-view="settings">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                        </svg>
+                        Settings
+                    </a>
+                    <a href="#" class="sidebar-util-link" data-view="help">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        Help
+                    </a>
+                </div>
+                <!-- User identity -->
                 <div class="user-menu">
                     <div class="user-avatar" id="user-avatar">A</div>
                     <div class="user-info">
                         <span class="user-name" id="user-name">Admin</span>
                         <span class="user-role" id="user-role">admin</span>
                     </div>
-                    <button class="logout-btn" id="logout-btn" title="Logout">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="logout-btn" id="logout-btn" title="Sign out">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
                             <polyline points="16 17 21 12 16 7"/>
                             <line x1="21" y1="12" x2="9" y2="12"/>
@@ -307,6 +312,9 @@
                             <p class="page-subtitle">Monitor your chatbot performance and usage</p>
                         </div>
                         <div class="header-actions">
+                            <select class="analytics-site-select" id="analytics-site-filter">
+                                <option value="">All Sites</option>
+                            </select>
                             <button class="btn btn-secondary" id="refresh-stats">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="23 4 23 10 17 10"/>
@@ -318,155 +326,192 @@
                     </header>
                     
                     <div class="stats-row">
-                        <div class="stat-card primary">
-                            <div class="stat-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="2" y1="12" x2="22" y2="12"/>
-                                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-                                </svg>
+                        <div class="stat-card stat-card--teal">
+                            <div class="stat-card-top">
+                                <span class="stat-label">Total Conversations</span>
+                                <div class="stat-icon teal">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="stat-sites">0</span>
-                                <span class="stat-label">Total Sites</span>
-                                <span class="stat-change">
-                                    <span class="stat-change-dot"></span>
-                                    Active chatbots
-                                </span>
-                            </div>
+                            <span class="stat-value" id="stat-chats">0</span>
+                            <span class="stat-badge">All time</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon green">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                </svg>
+                        <div class="stat-card stat-card--green">
+                            <div class="stat-card-top">
+                                <span class="stat-label">Messages Today</span>
+                                <div class="stat-icon green">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M8 12h.01M12 12h.01M16 12h.01"/>
+                                        <path d="M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="stat-pages">0</span>
-                                <span class="stat-label">Pages Indexed</span>
-                                <span class="stat-change">
-                                    <span class="stat-change-dot"></span>
-                                    Crawled content
-                                </span>
-                            </div>
+                            <span class="stat-value" id="stat-msgs-today">0</span>
+                            <span class="stat-badge">Since midnight</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon purple">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                                    <line x1="3" y1="9" x2="21" y2="9"/>
-                                    <line x1="9" y1="21" x2="9" y2="9"/>
-                                </svg>
+                        <div class="stat-card stat-card--blue">
+                            <div class="stat-card-top">
+                                <span class="stat-label">Active Sites</span>
+                                <div class="stat-icon blue">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                                        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                                        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                                        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="stat-chunks">0</span>
-                                <span class="stat-label">Total Chunks</span>
-                                <span class="stat-change">
-                                    <span class="stat-change-dot"></span>
-                                    Vector embeddings
-                                </span>
-                            </div>
+                            <span class="stat-value" id="stat-active-sites">0</span>
+                            <span class="stat-badge">Ready &amp; indexed</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon orange">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
-                                </svg>
+                        <div class="stat-card stat-card--purple">
+                            <div class="stat-card-top">
+                                <span class="stat-label">Avg Messages / Chat</span>
+                                <div class="stat-icon purple">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                                    </svg>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <span class="stat-value" id="stat-chats">0</span>
-                                <span class="stat-label">Conversations</span>
-                                <span class="stat-change">
-                                    <span class="stat-change-dot"></span>
-                                    Total sessions
-                                </span>
+                            <span class="stat-value" id="stat-avg-msgs">0</span>
+                            <span class="stat-badge">Per session</span>
+                        </div>
+                        <div class="stat-card stat-card--orange">
+                            <div class="stat-card-top">
+                                <span class="stat-label">Satisfaction Rate</span>
+                                <div class="stat-icon orange">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/>
+                                        <path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/>
+                                    </svg>
+                                </div>
                             </div>
+                            <span class="stat-value" id="stat-satisfaction">—</span>
+                            <span class="stat-badge">Based on feedback</span>
+                        </div>
+                        <div class="stat-card stat-card--red">
+                            <div class="stat-card-top">
+                                <span class="stat-label">Total Handoffs</span>
+                                <div class="stat-icon red">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <span class="stat-value" id="stat-handoffs">0</span>
+                            <span class="stat-badge"><span id="stat-handoff-rate">0%</span> of conversations</span>
                         </div>
                     </div>
                     
-                    <!-- Analytics Charts Row -->
-                    <div class="analytics-grid">
-                        <div class="analytics-card">
-                            <div class="analytics-card-header">
-                                <h3>Conversation Trends</h3>
-                                <div class="analytics-period-select">
-                                    <button class="period-btn active" data-period="7d">7 Days</button>
-                                    <button class="period-btn" data-period="30d">30 Days</button>
+                    <!-- Trend Chart — full width -->
+                    <div class="analytics-card analytics-card-full">
+                        <div class="analytics-card-header">
+                            <div class="analytics-card-title">
+                                <div class="analytics-card-icon teal">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                                 </div>
+                                <h3>Conversation Trends</h3>
                             </div>
-                            <div class="chart-container">
-                                <canvas id="conversationsChart"></canvas>
-                            </div>
-                            <div class="analytics-summary" id="trend-summary">
-                                <span class="summary-item"><strong id="trend-total">0</strong> conversations</span>
-                                <span class="summary-item trend-up" id="trend-change">+0% from last period</span>
+                            <div class="analytics-period-select">
+                                <button class="period-btn active" data-period="7d">7D</button>
+                                <button class="period-btn" data-period="30d">30D</button>
+                                <button class="period-btn" data-period="90d">90D</button>
                             </div>
                         </div>
-                        
+                        <div class="chart-container">
+                            <canvas id="conversationsChart"></canvas>
+                        </div>
+                        <div class="analytics-summary" id="trend-summary">
+                            <span class="summary-item">
+                                <span class="summary-dot teal"></span>
+                                <strong id="trend-total">0</strong> conversations
+                            </span>
+                            <span class="summary-item">
+                                <span class="summary-dot teal-light"></span>
+                                <strong id="trend-messages">0</strong> messages
+                            </span>
+                            <span class="summary-item summary-change trend-up" id="trend-change">+0% from last period</span>
+                        </div>
+                    </div>
+
+                    <!-- 3-col bottom grid -->
+                    <div class="analytics-bottom-grid">
                         <div class="analytics-card">
                             <div class="analytics-card-header">
-                                <h3>Popular Questions</h3>
+                                <div class="analytics-card-title">
+                                    <div class="analytics-card-icon teal">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                                    </div>
+                                    <h3>Popular Questions</h3>
+                                </div>
                             </div>
                             <div class="popular-questions-list" id="popular-questions">
-                                <div class="empty-analytics">No data yet</div>
+                                <div class="empty-analytics">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3;margin-bottom:8px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                                    No question data yet
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="analytics-card-header">
+                                <div class="analytics-card-title">
+                                    <div class="analytics-card-icon purple">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                                    </div>
+                                    <h3>Top Sources</h3>
+                                </div>
+                            </div>
+                            <div class="sources-list" id="sources-list">
+                                <div class="empty-analytics">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3;margin-bottom:8px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                                    No source data yet
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="analytics-card-header">
+                                <div class="analytics-card-title">
+                                    <div class="analytics-card-icon blue">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                    </div>
+                                    <h3>Conversations by Site</h3>
+                                </div>
+                            </div>
+                            <div class="conversations-by-site-list" id="conversations-by-site">
+                                <div class="empty-analytics">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3;margin-bottom:8px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                                    No site data yet
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="analytics-grid">
-                        <div class="analytics-card">
-                            <div class="analytics-card-header">
-                                <h3>Top Sources</h3>
-                            </div>
-                            <div class="chart-container chart-sm">
-                                <canvas id="sourcesChart"></canvas>
-                            </div>
-                        </div>
-                        
-                        <div class="analytics-card">
-                            <div class="analytics-card-header">
+
+                    <!-- Recent Conversations — full width -->
+                    <div class="analytics-card analytics-card-full">
+                        <div class="analytics-card-header">
+                            <div class="analytics-card-title">
+                                <div class="analytics-card-icon teal">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+                                </div>
                                 <h3>Recent Conversations</h3>
                             </div>
-                            <div class="recent-conversations-list" id="recent-conversations">
-                                <div class="empty-analytics">No conversations yet</div>
+                            <span class="analytics-view-all" id="go-to-conversations" role="button" tabindex="0">View all</span>
+                        </div>
+                        <div class="recent-conversations-list" id="recent-conversations">
+                            <div class="empty-analytics">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3;margin-bottom:8px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+                                No conversations yet
                             </div>
                         </div>
                     </div>
                     
-                    <section class="settings-section">
-                        <h3 class="section-title">System Health</h3>
-                        <div class="health-list">
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">MongoDB Database</span>
-                                    <span class="health-desc">Primary data storage</span>
-                                </div>
-                                <span class="health-badge loading" id="health-mongodb">Checking</span>
-                            </div>
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">Vector Store (FAISS)</span>
-                                    <span class="health-desc">Semantic search index</span>
-                                </div>
-                                <span class="health-badge loading" id="health-vector">Checking</span>
-                            </div>
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">Ollama LLM (llama3.1:8b)</span>
-                                    <span class="health-desc">AI response generation</span>
-                                </div>
-                                <span class="health-badge loading" id="health-ollama">Checking</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-secondary" id="refresh-health">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="23 4 23 10 17 10"/>
-                                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-                            </svg>
-                            Refresh Status
-                        </button>
-                    </section>
                 </div>
             </div>
             
@@ -489,24 +534,50 @@
                                 <input type="text" id="conv-search-input" placeholder="Search conversations...">
                             </div>
                             <div class="conversations-filters">
-                                <select id="conv-site-filter" class="filter-select">
-                                    <option value="">All Sites</option>
-                                </select>
-                                <select id="conv-sort-select" class="filter-select">
-                                    <option value="updated_at-desc">Recent First</option>
-                                    <option value="updated_at-asc">Oldest First</option>
-                                    <option value="created_at-desc">Created (Recent)</option>
-                                    <option value="created_at-asc">Created (Oldest)</option>
-                                </select>
+                                <div class="conv-filters-row">
+                                    <select id="conv-site-filter" class="filter-select filter-select-auto">
+                                        <option value="">All Sites</option>
+                                    </select>
+                                    <select id="conv-sort-select" class="filter-select filter-select-auto">
+                                        <option value="updated_at-desc">Recent First</option>
+                                        <option value="updated_at-asc">Oldest First</option>
+                                        <option value="created_at-desc">Created (New)</option>
+                                        <option value="created_at-asc">Created (Old)</option>
+                                    </select>
+                                    <select id="conv-status-filter" class="filter-select filter-select-auto">
+                                        <option value="">All Statuses</option>
+                                        <option value="open">Open</option>
+                                        <option value="resolved">Resolved</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                    <select id="conv-priority-filter" class="filter-select filter-select-auto">
+                                        <option value="">All Priorities</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+                                <div class="conv-filters-row conv-date-row">
+                                    <span class="conv-date-label">From</span>
+                                    <input type="date" id="conv-date-from" class="filter-select conv-date-input">
+                                    <span class="conv-date-label">To</span>
+                                    <input type="date" id="conv-date-to" class="filter-select conv-date-input">
+                                </div>
                             </div>
                         </div>
-                        
+
                         <div class="conversations-bulk-actions" id="bulk-actions-bar" style="display: none;">
                             <div class="bulk-info">
                                 <input type="checkbox" id="select-all-convs" class="bulk-checkbox">
                                 <span id="selected-count">0 selected</span>
                             </div>
                             <div class="bulk-buttons">
+                                <select id="bulk-status-select" class="filter-select btn-sm" title="Change status of selected">
+                                    <option value="">Set Status...</option>
+                                    <option value="open">Open</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
                                 <button class="btn btn-sm btn-secondary" id="export-selected">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -564,6 +635,16 @@
                                     <span class="conversation-meta" id="detail-conv-meta"></span>
                                 </div>
                                 <div class="conversation-actions">
+                                    <select id="detail-status-select" class="filter-select conv-status-select" title="Change status">
+                                        <option value="open">Open</option>
+                                        <option value="resolved">Resolved</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                    <select id="detail-priority-select" class="filter-select conv-priority-select" title="Change priority">
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
                                     <button class="btn btn-sm btn-secondary" id="export-conv">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -599,12 +680,70 @@
                                     <span class="conv-stat-value" id="stat-negative">0</span>
                                     <span class="conv-stat-label">Negative</span>
                                 </div>
+                                <div class="conv-stat" id="stat-first-response-container">
+                                    <span class="conv-stat-value" id="stat-first-response">-</span>
+                                    <span class="conv-stat-label">First Response</span>
+                                </div>
+                                <div class="conv-stat" id="stat-resolution-container">
+                                    <span class="conv-stat-value" id="stat-resolution">-</span>
+                                    <span class="conv-stat-label">Resolution</span>
+                                </div>
                             </div>
-                            
+
+                            <!-- Visitor Info Panel -->
+                            <div class="conv-visitor-panel" id="conv-visitor-panel">
+                                <div class="conv-panel-header">
+                                    <span class="conv-panel-title">Visitor</span>
+                                    <button class="btn-icon" onclick="openEditVisitorModal()" title="Edit visitor info">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="conv-visitor-info" id="conv-visitor-info">
+                                    <span class="visitor-empty">No visitor info</span>
+                                </div>
+                                <div class="conv-tags-row" id="conv-tags-row">
+                                    <div class="conv-tags-list" id="conv-tags-list"></div>
+                                    <div class="conv-add-tag">
+                                        <input type="text" id="conv-tag-input" placeholder="Add tag..." maxlength="30">
+                                        <button onclick="addConvTag()" class="btn-icon-sm">+</button>
+                                    </div>
+                                </div>
+                                <div class="conv-rating-row">
+                                    <span class="conv-panel-label">Rating</span>
+                                    <div class="star-rating" id="conv-star-rating">
+                                        <span class="star" data-value="1">&#9733;</span>
+                                        <span class="star" data-value="2">&#9733;</span>
+                                        <span class="star" data-value="3">&#9733;</span>
+                                        <span class="star" data-value="4">&#9733;</span>
+                                        <span class="star" data-value="5">&#9733;</span>
+                                    </div>
+                                </div>
+                                <div class="conv-sentiment-row" id="conv-sentiment-row" style="display:none;">
+                                    <span class="conv-panel-label">Sentiment</span>
+                                    <span class="conv-sentiment-label" id="conv-sentiment-label"></span>
+                                </div>
+                                <div class="conv-context-row" id="conv-context-row" style="display:none;">
+                                    <span class="conv-panel-label">Page</span>
+                                    <a class="conv-page-url" id="conv-page-url" href="#" target="_blank"></a>
+                                </div>
+                            </div>
+
+                            <!-- Notes Panel -->
+                            <div class="conv-notes-panel" id="conv-notes-panel">
+                                <div class="conv-panel-header">
+                                    <span class="conv-panel-title">Internal Notes</span>
+                                    <button class="btn btn-sm btn-secondary" onclick="openAddNoteModal()">+ Add Note</button>
+                                </div>
+                                <div class="conv-notes-list" id="conv-notes-list">
+                                    <span class="visitor-empty">No notes yet</span>
+                                </div>
+                            </div>
+
                             <div class="conversation-transcript" id="conversation-transcript">
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
             
@@ -656,57 +795,79 @@
                     <!-- Right: Handoff Detail / Agent Chat -->
                     <div class="handoff-detail-panel" id="handoff-detail-panel">
                         <div class="handoff-detail-empty">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
                             </svg>
-                            <p>Select a handoff to view details</p>
+                            <p>No conversation selected</p>
+                            <span>Pick a handoff from the queue to start chatting</span>
                         </div>
-                        
+
                         <div class="handoff-detail-content hidden" id="handoff-detail-content">
-                            <div class="handoff-detail-header">
-                                <div class="handoff-visitor-info">
-                                    <div class="visitor-avatar">V</div>
-                                    <div>
-                                        <h3 id="handoff-visitor-name">Visitor</h3>
-                                        <span id="handoff-visitor-email" class="visitor-email"></span>
+                            <!-- Header -->
+                            <div class="hd-header">
+                                <div class="hd-visitor-row">
+                                    <div class="hd-avatar" id="hd-avatar">V</div>
+                                    <div class="hd-visitor-details">
+                                        <div class="hd-name-row">
+                                            <span class="hd-name" id="handoff-visitor-name">Visitor</span>
+                                            <span class="hd-badge" id="handoff-status-badge">pending</span>
+                                        </div>
+                                        <div class="hd-sub-row">
+                                            <span class="hd-email" id="handoff-visitor-email"></span>
+                                            <span class="hd-chip">
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                                <span id="handoff-wait-time">0m</span>
+                                            </span>
+                                            <span class="hd-chip">
+                                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                                <span id="handoff-site-name">Site</span>
+                                            </span>
+                                        </div>
+                                        <div class="hd-assign-row hidden" id="handoff-assign-row">
+                                            <label class="hd-assign-label" for="handoff-assign-select">Assign to agent</label>
+                                            <select id="handoff-assign-select" class="hd-assign-select"></select>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="handoff-actions">
-                                    <button class="btn btn-primary btn-sm" id="claim-handoff-btn">Claim</button>
-                                    <button class="btn btn-success btn-sm hidden" id="resolve-handoff-btn">Resolve</button>
+                                <div class="hd-actions">
+                                    <button class="hd-btn-accept" id="claim-handoff-btn" type="button">
+                                        <svg class="hd-btn-accept-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                                        <span class="hd-btn-accept-label">Accept</span>
+                                    </button>
+                                    <button class="hd-btn-resolve hidden" id="resolve-handoff-btn">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                                        Resolve
+                                    </button>
                                 </div>
                             </div>
-                            
-                            <div class="handoff-meta">
-                                <span class="handoff-meta-item">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <path d="M12 6v6l4 2"/>
-                                    </svg>
-                                    <span id="handoff-wait-time">0m waiting</span>
-                                </span>
-                                <span class="handoff-meta-item">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                                        <circle cx="12" cy="10" r="3"/>
-                                    </svg>
-                                    <span id="handoff-site-name">Site</span>
-                                </span>
-                                <span class="handoff-status-badge" id="handoff-status-badge">pending</span>
+
+                            <!-- AI Summary (collapsible) -->
+                            <div class="hd-summary hidden" id="handoff-ai-summary">
+                                <button class="hd-summary-toggle" id="hd-summary-toggle" type="button">
+                                    <span class="hd-summary-title">
+                                        <span class="hd-ai-pill">AI</span>
+                                        Conversation summary
+                                    </span>
+                                    <svg class="hd-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <div class="hd-summary-body ai-summary-content hidden"></div>
                             </div>
-                            
-                            <div class="handoff-ai-summary" id="handoff-ai-summary">
-                                <h4>AI Conversation Summary</h4>
-                                <div class="ai-summary-content"></div>
-                            </div>
-                            
-                            <div class="handoff-messages" id="handoff-messages">
-                            </div>
-                            
-                            <div class="handoff-input-wrapper" id="handoff-input-wrapper">
-                                <form class="handoff-input-form" id="handoff-input-form">
-                                    <input type="text" class="handoff-input" id="handoff-input" placeholder="Type your message...">
-                                    <button type="submit" class="btn btn-primary">Send</button>
+
+                            <!-- Chat messages -->
+                            <div class="hd-messages" id="handoff-messages"></div>
+
+                            <!-- Input bar -->
+                            <div class="hd-input-bar hidden" id="handoff-input-wrapper">
+                                <form class="hd-input-form" id="handoff-input-form">
+                                    <div class="hd-input-inner">
+                                        <textarea class="hd-textarea" id="handoff-input" placeholder="Type a message…" rows="1"></textarea>
+                                        <button type="submit" class="hd-send-btn" title="Send (Enter)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p class="hd-input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</p>
                                 </form>
                             </div>
                         </div>
@@ -716,199 +877,404 @@
             
             <!-- Settings View -->
             <div class="view" id="settings-view">
-                <div class="page-container">
-                    <header class="page-header">
-                        <div>
-                            <h1 class="page-title">Settings</h1>
-                            <p class="page-subtitle">Configure your chatbot preferences</p>
+                <div class="settings-layout">
+
+                    <!-- Settings Sidebar Nav -->
+                    <aside class="settings-sidebar">
+                        <div class="settings-nav-group">
+                            <span class="settings-nav-label">Account</span>
+                            <a href="#" class="settings-nav-item active" data-panel="profile">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                Profile
+                            </a>
                         </div>
-                    </header>
-                    
-                    <section class="settings-section">
-                        <h3 class="section-title">General Settings</h3>
-                        <div class="health-list">
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">API Endpoint</span>
-                                    <span class="health-desc">http://127.0.0.1:8000</span>
-                                </div>
-                                <span class="health-badge healthy">Connected</span>
-                            </div>
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">Auto-refresh</span>
-                                    <span class="health-desc">Automatically refresh site status</span>
-                                </div>
-                                <span class="health-badge healthy">Enabled</span>
-                            </div>
+                        <div class="settings-nav-group is-admin-only">
+                            <span class="settings-nav-label">Workspace</span>
+                            <a href="#" class="settings-nav-item" data-panel="branding">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                                </svg>
+                                Branding
+                            </a>
+                            <a href="#" class="settings-nav-item" data-panel="system">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+                                </svg>
+                                System
+                            </a>
                         </div>
-                    </section>
-                    
-                    <!-- White-label Settings -->
-                    <section class="settings-section" id="whitelabel-section">
-                        <h3 class="section-title">White-label Settings</h3>
-                        <p class="section-desc">Customize the branding of your dashboard and widget.</p>
-                        
-                        <form id="whitelabel-form" class="settings-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Application Name</label>
-                                    <input type="text" class="form-input" id="wl-app-name" placeholder="SiteChat">
+                    </aside>
+
+                    <!-- Settings Content -->
+                    <div class="settings-content">
+
+                        <!-- Profile Panel -->
+                        <div class="settings-panel active" id="settings-panel-profile">
+                            <div class="settings-panel-header">
+                                <h2>Profile</h2>
+                                <p>Update your display name and password.</p>
+                            </div>
+                            <form id="profile-form" class="settings-form" autocomplete="off">
+                                <div class="settings-card">
+                                    <p class="settings-card-title">Account info</p>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Display name</label>
+                                            <input type="text" class="form-input" id="profile-name" placeholder="Your name" autocomplete="name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-input" id="profile-email" disabled>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Primary Color</label>
-                                    <div class="color-input-wrapper">
-                                        <input type="color" class="color-input" id="wl-primary-color" value="#0D9488">
-                                        <input type="text" class="form-input color-text" id="wl-primary-color-text" placeholder="#0D9488">
+                                <div class="settings-card">
+                                    <p class="settings-card-title">Change password</p>
+                                    <p class="settings-card-hint">Leave blank to keep your current password.</p>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Current password</label>
+                                            <input type="password" class="form-input" id="profile-current-password" autocomplete="current-password" placeholder="••••••••">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">New password</label>
+                                            <input type="password" class="form-input" id="profile-new-password" autocomplete="new-password" placeholder="••••••••">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="profile-error" class="settings-error" style="display:none;"></div>
+                                <div id="profile-success" class="settings-success" style="display:none;">Changes saved.</div>
+                                <div class="settings-form-footer">
+                                    <button type="submit" class="btn btn-primary" id="profile-save-btn">Save changes</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Branding Panel -->
+                        <div class="settings-panel is-admin-only" id="settings-panel-branding">
+                            <div class="settings-panel-header">
+                                <h2>Branding</h2>
+                                <p>Customize how the dashboard looks — app name, logo, and accent color.</p>
+                            </div>
+                            <form id="whitelabel-form" class="settings-form">
+                                <div class="settings-card">
+                                    <p class="settings-card-title">Identity</p>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Application name</label>
+                                            <input type="text" class="form-input" id="wl-app-name" placeholder="SiteChat">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Primary color</label>
+                                            <div class="color-input-wrapper">
+                                                <input type="color" class="color-input" id="wl-primary-color" value="#0D9488">
+                                                <input type="text" class="form-input color-text" id="wl-primary-color-text" placeholder="#0D9488">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Logo URL</label>
+                                        <input type="url" class="form-input" id="wl-logo-url" placeholder="https://example.com/logo.png">
+                                    </div>
+                                </div>
+                                <div class="settings-form-footer">
+                                    <button type="button" class="btn btn-secondary" id="wl-reset-btn">Reset to defaults</button>
+                                    <button type="submit" class="btn btn-primary" id="wl-save-btn">Save changes</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- System Panel -->
+                        <div class="settings-panel is-admin-only" id="settings-panel-system">
+                            <div class="settings-panel-header">
+                                <h2>System</h2>
+                                <p>Status of backend services powering your chatbots.</p>
+                            </div>
+                            <div class="settings-card">
+                                <div class="settings-card-title-row">
+                                    <p class="settings-card-title">Service health</p>
+                                    <button class="btn btn-secondary btn-sm" id="refresh-health">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="23 4 23 10 17 10"/>
+                                            <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                </div>
+                                <div class="health-list">
+                                    <div class="health-row">
+                                        <div class="health-info">
+                                            <span class="health-name">MongoDB Database</span>
+                                            <span class="health-desc">Primary data storage</span>
+                                        </div>
+                                        <span class="health-badge loading" id="health-mongodb">Checking</span>
+                                    </div>
+                                    <div class="health-row">
+                                        <div class="health-info">
+                                            <span class="health-name">Vector Store (FAISS)</span>
+                                            <span class="health-desc">Semantic search index</span>
+                                        </div>
+                                        <span class="health-badge loading" id="health-vector">Checking</span>
+                                    </div>
+                                    <div class="health-row">
+                                        <div class="health-info">
+                                            <span class="health-name">Ollama LLM (llama3.1:8b)</span>
+                                            <span class="health-desc">AI response generation</span>
+                                        </div>
+                                        <span class="health-badge loading" id="health-ollama">Checking</span>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Logo URL</label>
-                                    <input type="url" class="form-input" id="wl-logo-url" placeholder="https://example.com/logo.png">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Favicon URL</label>
-                                    <input type="url" class="form-input" id="wl-favicon-url" placeholder="https://example.com/favicon.ico">
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Login Page Title</label>
-                                    <input type="text" class="form-input" id="wl-login-title" placeholder="SiteChat">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Login Page Subtitle</label>
-                                    <input type="text" class="form-input" id="wl-login-subtitle" placeholder="AI-Powered Customer Support">
-                                </div>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Support Email</label>
-                                    <input type="email" class="form-input" id="wl-support-email" placeholder="support@example.com">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Footer Text</label>
-                                    <input type="text" class="form-input" id="wl-footer-text" placeholder="© 2024 Your Company">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="toggle-label">
-                                    <input type="checkbox" id="wl-hide-branding">
-                                    <span class="toggle-switch"></span>
-                                    <span>Hide all SiteChat branding</span>
-                                </label>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" id="wl-reset-btn">Reset to Defaults</button>
-                                <button type="submit" class="btn btn-primary" id="wl-save-btn">Save Changes</button>
-                            </div>
-                        </form>
-                    </section>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-            
-            <!-- Support agents (admin) -->
-            <div class="view" id="agents-view">
+
+            <!-- Team management (admin: owners + agents | user: agents only) -->
+            <div class="view" id="team-view">
                 <div class="page-container">
                     <header class="page-header">
                         <div>
-                            <h1 class="page-title">Support agents</h1>
-                            <p class="page-subtitle">Create logins for people who handle live chat handoffs. Each agent only sees the sites you assign.</p>
+                            <h1 class="page-title">Team</h1>
+                            <p class="page-subtitle" id="team-subtitle">Manage your team members and their access.</p>
                         </div>
-                        <div class="header-actions">
-                            <button type="button" class="btn btn-primary" id="add-agent-btn">Add agent</button>
+                        <div class="header-actions" id="team-header-actions">
+                            <!-- Populated by JS based on active tab -->
                         </div>
                     </header>
-                    <section class="settings-section agent-form-panel" id="agent-form-panel">
-                        <h3 class="section-title" id="agent-form-title">Add support agent</h3>
-                        <p class="section-desc">Agents sign in with the email and password below. Assign at least one site so they can see handoffs.</p>
-                        <form id="agent-form" class="settings-form">
-                            <input type="hidden" id="agent-edit-id" value="">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="agent-name">Name</label>
-                                    <input type="text" class="form-input" id="agent-name" required autocomplete="name" minlength="2" maxlength="100" placeholder="Jane Doe">
+
+                    <!-- Tab bar -->
+                    <div class="team-tabs" id="team-tabs">
+                        <button type="button" class="team-tab is-admin-only" data-team-tab="owners" id="team-tab-owners">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            Site Owners
+                            <span class="team-tab-count" id="owners-count"></span>
+                        </button>
+                        <button type="button" class="team-tab" data-team-tab="agents" id="team-tab-agents">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                            Support Agents
+                            <span class="team-tab-count" id="agents-count"></span>
+                        </button>
+                    </div>
+
+                    <!-- Site Owners panel (admin only) -->
+                    <div class="team-panel" id="team-panel-owners">
+                        <div class="members-list-wrap">
+                            <div class="members-list-header">
+                                <span>Member</span>
+                                <span>Role</span>
+                                <span>Joined</span>
+                                <span></span>
+                            </div>
+                            <div class="team-panel-stats" id="owners-stats" style="display:none"></div>
+                            <div id="owners-list">
+                                <div class="members-loading" id="owners-loading">
+                                    <svg class="spinner" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.2"/><path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+                                    Loading…
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="agent-email">Email</label>
-                                    <input type="email" class="form-input" id="agent-email" required autocomplete="email" placeholder="jane@company.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Support Agents panel -->
+                    <div class="team-panel hidden" id="team-panel-agents">
+                        <div class="members-list-wrap">
+                            <div class="members-list-header members-list-header--agents">
+                                <span>Member</span>
+                                <span>Assigned sites</span>
+                                <span>Joined</span>
+                                <span></span>
+                            </div>
+                            <div class="team-panel-stats" id="agents-stats" style="display:none"></div>
+                            <div id="agents-list">
+                                <div class="members-loading" id="agents-loading-team">
+                                    <svg class="spinner" width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.2"/><path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+                                    Loading…
                                 </div>
                             </div>
-                            <div class="form-group" id="agent-password-group">
-                                <label class="form-label" for="agent-password">Password</label>
-                                <input type="password" class="form-input" id="agent-password" autocomplete="new-password" required minlength="8" placeholder="••••••••">
-                                <span class="form-hint" id="agent-password-hint">At least 8 characters, with upper, lower, and number or symbol.</span>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Assigned sites</label>
-                                <p class="section-desc" style="margin-top: 0;">Agent will only see handoffs for checked sites.</p>
-                                <div id="agent-sites-checkboxes" class="agent-sites-checkboxes"></div>
-                            </div>
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" id="cancel-agent-form">Clear</button>
-                                <button type="submit" class="btn btn-primary" id="save-agent-btn">Save agent</button>
-                            </div>
-                        </form>
-                    </section>
-                    <section class="settings-section" id="agents-page-section">
-                        <h3 class="section-title">Your agents</h3>
-                        <p class="text-muted" id="agents-loading">Loading agents…</p>
-                        <div class="agents-table-wrap" id="agents-table-wrap"></div>
-                    </section>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
+
             <!-- Help View -->
             <div class="view" id="help-view">
-                <div class="page-container">
-                    <header class="page-header">
+                <div class="page-container help-page">
+
+                    <!-- Hero banner -->
+                    <div class="help-hero">
+                        <div class="help-hero-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </div>
                         <div>
-                            <h1 class="page-title">Help & Documentation</h1>
-                            <p class="page-subtitle">Learn how to use SiteChat effectively</p>
+                            <h1 class="help-hero-title">How can we help?</h1>
+                            <p class="help-hero-sub">Documentation, guides, and answers to common questions.</p>
                         </div>
-                    </header>
-                    
-                    <section class="settings-section">
-                        <h3 class="section-title">Getting Started</h3>
-                        <div class="health-list">
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">1. Add a Site</span>
-                                    <span class="health-desc">Click "Add Site" to crawl a website or upload documents</span>
+                    </div>
+
+                    <!-- Getting started — card grid -->
+                    <div class="help-block">
+                        <h2 class="help-block-title">Getting started</h2>
+                        <div class="help-cards">
+                            <div class="help-card">
+                                <div class="help-card-icon" style="--hc:#0d9488">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
                                 </div>
+                                <span class="help-card-step">Step 1</span>
+                                <h3 class="help-card-title">Add a site</h3>
+                                <p class="help-card-desc">Click <strong>New site</strong> and choose to crawl a URL or upload documents (PDF, Word, text).</p>
                             </div>
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">2. Wait for Indexing</span>
-                                    <span class="health-desc">The system will crawl and index your content automatically</span>
+                            <div class="help-card">
+                                <div class="help-card-icon" style="--hc:#8b5cf6">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                                 </div>
+                                <span class="help-card-step">Step 2</span>
+                                <h3 class="help-card-title">Wait for indexing</h3>
+                                <p class="help-card-desc">SiteChat crawls and indexes your content automatically. A live indicator tracks progress.</p>
                             </div>
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">3. Test Your Chatbot</span>
-                                    <span class="health-desc">Use the Interactive Preview in Appearance settings</span>
+                            <div class="help-card">
+                                <div class="help-card-icon" style="--hc:#f59e0b">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                                 </div>
+                                <span class="help-card-step">Step 3</span>
+                                <h3 class="help-card-title">Preview &amp; tune</h3>
+                                <p class="help-card-desc">Open the site → <strong>Appearance</strong> tab and use the live preview to test responses before going live.</p>
                             </div>
-                            <div class="health-row">
-                                <div class="health-info">
-                                    <span class="health-name">4. Embed on Your Site</span>
-                                    <span class="health-desc">Copy the embed code and add it to your website</span>
+                            <div class="help-card">
+                                <div class="help-card-icon" style="--hc:#3b82f6">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                                </div>
+                                <span class="help-card-step">Step 4</span>
+                                <h3 class="help-card-title">Embed on your site</h3>
+                                <p class="help-card-desc">Copy the one-line script from the <strong>Embed</strong> tab and paste it before <code>&lt;/body&gt;</code>.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Two-column bottom section -->
+                    <div class="help-bottom">
+
+                        <!-- FAQ -->
+                        <div class="help-block">
+                            <h2 class="help-block-title">Frequently asked</h2>
+                            <div class="help-faq">
+                                <details class="faq-item">
+                                    <summary class="faq-q">
+                                        <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        How often is my site re-crawled?
+                                    </summary>
+                                    <p class="faq-a">By default, sites are not re-crawled automatically. Open a site → <strong>Crawl</strong> tab to enable a schedule (daily, weekly, or custom cron).</p>
+                                </details>
+                                <details class="faq-item">
+                                    <summary class="faq-q">
+                                        <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        How do I route a chat to a human agent?
+                                    </summary>
+                                    <p class="faq-a">Enable handoffs in a site's settings. When the bot can't answer, visitors can request a human. You'll see the request under <strong>Handoffs</strong> and can assign it to an agent.</p>
+                                </details>
+                                <details class="faq-item">
+                                    <summary class="faq-q">
+                                        <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        What file formats can I upload?
+                                    </summary>
+                                    <p class="faq-a">PDF, DOCX, DOC, TXT, MD, and CSV. Maximum 50 MB per file.</p>
+                                </details>
+                                <details class="faq-item">
+                                    <summary class="faq-q">
+                                        <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        How do I add a team member?
+                                    </summary>
+                                    <p class="faq-a">Go to <strong>Team</strong> in the sidebar. Admins can add site owners and agents; site owners can add agents for their own sites.</p>
+                                </details>
+                                <details class="faq-item">
+                                    <summary class="faq-q">
+                                        <svg class="faq-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        Can I customize the chat widget?
+                                    </summary>
+                                    <p class="faq-a">Yes — open a site → <strong>Appearance</strong> to change the widget color, position, welcome message, and bot avatar.</p>
+                                </details>
+                            </div>
+                        </div>
+
+                        <!-- Shortcuts -->
+                        <div class="help-block">
+                            <h2 class="help-block-title">Keyboard shortcuts</h2>
+                            <div class="help-shortcuts">
+                                <div class="shortcut-row">
+                                    <span class="shortcut-desc">Go to Sites</span>
+                                    <span class="shortcut-keys"><kbd>G</kbd><span class="kbd-sep">then</span><kbd>S</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-desc">Go to Conversations</span>
+                                    <span class="shortcut-keys"><kbd>G</kbd><span class="kbd-sep">then</span><kbd>C</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-desc">Go to Handoffs</span>
+                                    <span class="shortcut-keys"><kbd>G</kbd><span class="kbd-sep">then</span><kbd>H</kbd></span>
+                                </div>
+                                <div class="shortcut-row">
+                                    <span class="shortcut-desc">Open Settings</span>
+                                    <span class="shortcut-keys"><kbd>,</kbd></span>
                                 </div>
                             </div>
                         </div>
-                    </section>
+
+                    </div><!-- /.help-bottom -->
                 </div>
             </div>
         </main>
     </div>
     
+    <!-- Edit Visitor Modal -->
+    <div class="modal-backdrop" id="edit-visitor-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Visitor Info</h3>
+                <button class="modal-close" onclick="document.getElementById('edit-visitor-modal').classList.remove('active')">&#215;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Visitor Name</label>
+                    <input type="text" id="visitor-name-input" class="form-control" placeholder="Name">
+                </div>
+                <div class="form-group">
+                    <label>Visitor Email</label>
+                    <input type="email" id="visitor-email-input" class="form-control" placeholder="email@example.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('edit-visitor-modal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveVisitorInfo()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Note Modal -->
+    <div class="modal-backdrop" id="note-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="note-modal-title">Add Note</h3>
+                <button class="modal-close" onclick="document.getElementById('note-modal').classList.remove('active')">&#215;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <textarea id="note-content-input" class="form-control" rows="4" placeholder="Write your note here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('note-modal').classList.remove('active')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveNote()">Save Note</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Site Modal - Multi-step -->
     <div class="modal-backdrop" id="add-site-modal">
         <div class="modal modal-lg">
@@ -1244,11 +1610,11 @@
                             </div>
                             
                             <div class="form-divider"></div>
-                            <h4 class="form-section-title">White-label Options</h4>
-                            
+                            <h4 class="form-section-title">Widget branding</h4>
+
                             <div class="form-group form-checkbox">
                                 <input type="checkbox" id="config-hide-branding">
-                                <label for="config-hide-branding">Enable White-label</label>
+                                <label for="config-hide-branding">Customize widget branding</label>
                             </div>
                             
                             <div class="form-group whitelabel-fields" id="custom-branding-group">
@@ -2137,6 +2503,55 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Edit Team Member Modal -->
+    <div class="modal-backdrop" id="member-modal">
+        <div class="modal modal-member">
+            <div class="modal-header">
+                <div class="modal-header-inner">
+                    <div class="modal-type-badge" id="member-modal-badge">Site Owner</div>
+                    <h2 id="member-modal-title">Add site owner</h2>
+                </div>
+                <button class="modal-close" id="member-modal-close" aria-label="Close">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="member-form" class="settings-form" autocomplete="off" onsubmit="event.preventDefault()">
+                    <input type="hidden" id="member-edit-id">
+                    <input type="hidden" id="member-type">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="member-name">Name</label>
+                            <input type="text" class="form-input" id="member-name" required minlength="2" maxlength="100" placeholder="Jane Doe" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="member-email">Email</label>
+                            <input type="email" class="form-input" id="member-email" required placeholder="jane@company.com" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group" id="member-password-group">
+                        <label class="form-label" for="member-password">Password</label>
+                        <input type="password" class="form-input" id="member-password" minlength="8" placeholder="••••••••" autocomplete="new-password">
+                        <span class="form-hint" id="member-password-hint">Min. 8 characters.</span>
+                    </div>
+                    <div class="form-group" id="member-sites-group">
+                        <label class="form-label">Assigned sites</label>
+                        <div class="sites-select-header">
+                            <span class="form-hint">Agent will only see handoffs for the sites checked below.</span>
+                            <button type="button" class="sites-select-all-btn" id="sites-select-all-btn">Select all</button>
+                        </div>
+                        <div id="member-sites-checkboxes" class="agent-sites-checkboxes"></div>
+                    </div>
+                    <p class="modal-error" id="member-modal-error" style="display:none;"></p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="member-modal-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="member-modal-save">Save</button>
             </div>
         </div>
     </div>

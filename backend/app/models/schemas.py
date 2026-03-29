@@ -279,6 +279,14 @@ class ConversationListItem(BaseModel):
     updated_at: datetime = Field(..., description="Last update time")
     message_count: int = Field(0, description="Total messages in conversation")
     first_message: str = Field("", description="Preview of first message")
+    status: str = Field("open", description="Status: open, resolved, closed")
+    priority: str = Field("medium", description="Priority: high, medium, low")
+    tags: List[str] = Field(default_factory=list)
+    unread: bool = Field(True)
+    visitor_name: Optional[str] = Field(None)
+    visitor_email: Optional[str] = Field(None)
+    satisfaction_rating: Optional[int] = Field(None)
+    sentiment: Optional[float] = Field(None)
 
 
 class ConversationSearchItem(ConversationListItem):
@@ -294,6 +302,8 @@ class ConversationStats(BaseModel):
     positive_feedback: int = Field(0, description="Positive feedback count")
     negative_feedback: int = Field(0, description="Negative feedback count")
     avg_response_time_ms: float = Field(0, description="Average response time in ms")
+    first_response_time_ms: Optional[int] = Field(None)
+    resolution_time_ms: Optional[int] = Field(None)
 
 
 class MessageDetail(BaseModel):
@@ -307,6 +317,14 @@ class MessageDetail(BaseModel):
     response_time_ms: Optional[int] = Field(None, description="Response time in ms")
 
 
+class ConversationNote(BaseModel):
+    """An internal note on a conversation."""
+    note_id: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class ConversationDetail(BaseModel):
     """Full conversation detail with all messages."""
     session_id: str = Field(..., description="Session ID")
@@ -315,6 +333,18 @@ class ConversationDetail(BaseModel):
     updated_at: datetime = Field(..., description="Last update time")
     messages: List[MessageDetail] = Field(default_factory=list, description="All messages")
     stats: ConversationStats = Field(default_factory=ConversationStats, description="Conversation stats")
+    status: str = Field("open")
+    priority: str = Field("medium")
+    tags: List[str] = Field(default_factory=list)
+    unread: bool = Field(True)
+    visitor_name: Optional[str] = Field(None)
+    visitor_email: Optional[str] = Field(None)
+    page_url: Optional[str] = Field(None)
+    notes: List[ConversationNote] = Field(default_factory=list)
+    first_response_at: Optional[datetime] = Field(None)
+    resolved_at: Optional[datetime] = Field(None)
+    satisfaction_rating: Optional[int] = Field(None)
+    sentiment: Optional[float] = Field(None)
 
 
 class ConversationListResponse(BaseModel):
@@ -352,6 +382,44 @@ class ExportRequest(BaseModel):
     session_ids: Optional[List[str]] = Field(None, description="Specific session IDs to export")
     site_id: Optional[str] = Field(None, description="Export all from site")
     format: str = Field("json", description="Export format: json or csv")
+
+
+class UpdateStatusRequest(BaseModel):
+    status: str = Field(..., description="open, resolved, closed")
+
+
+class UpdatePriorityRequest(BaseModel):
+    priority: str = Field(..., description="high, medium, low")
+
+
+class UpdateTagsRequest(BaseModel):
+    tags: List[str] = Field(default_factory=list)
+
+
+class AddNoteRequest(BaseModel):
+    content: str = Field(..., min_length=1)
+
+
+class UpdateNoteRequest(BaseModel):
+    content: str = Field(..., min_length=1)
+
+
+class UpdateVisitorRequest(BaseModel):
+    visitor_name: Optional[str] = None
+    visitor_email: Optional[str] = None
+
+
+class SetRatingRequest(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+
+
+class AutoCloseRequest(BaseModel):
+    days_inactive: int = Field(7, ge=1, description="Close conversations inactive for this many days")
+
+
+class AutoCloseResponse(BaseModel):
+    closed_count: int
+    message: str
 
 
 # ==================== Proactive Chat Trigger Models ====================
@@ -545,6 +613,11 @@ class HandoffStatusUpdate(BaseModel):
     """Request model for updating handoff status."""
     status: str = Field(..., description="New status: active, resolved, abandoned")
     resolution_note: Optional[str] = Field(None, description="Note about resolution")
+
+
+class HandoffAssignRequest(BaseModel):
+    """Admin assigns a support agent to a handoff (pending or active)."""
+    agent_id: str = Field(..., min_length=1, description="User ID of the support agent")
 
 
 class HandoffListItem(BaseModel):

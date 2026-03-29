@@ -3,6 +3,7 @@ const API_BASE = window.location.origin + '/api';
 let sites = [];
 let currentSiteId = null;
 let currentUser = null;
+let currentAnalyticsSite = '';
 let sessionId = 'session-' + Math.random().toString(36).substring(2, 15);
 
 // File upload state
@@ -31,9 +32,9 @@ const elements = {
     siteDetailsPanel: document.getElementById('site-details-panel'),
     sidePanelOverlay: document.getElementById('side-panel-overlay'),
     closeDetailsPanel: document.getElementById('close-details-panel'),
-    statSites: document.getElementById('stat-sites'),
-    statPages: document.getElementById('stat-pages'),
-    statChunks: document.getElementById('stat-chunks'),
+    statMsgsToday: document.getElementById('stat-msgs-today'),
+    statAvgMsgs: document.getElementById('stat-avg-msgs'),
+    statSatisfaction: document.getElementById('stat-satisfaction'),
     healthMongodb: document.getElementById('health-mongodb'),
     healthVector: document.getElementById('health-vector'),
     healthOllama: document.getElementById('health-ollama'),
@@ -85,6 +86,9 @@ function checkAuth() {
         if (currentUser.role === 'admin') {
             document.body.classList.add('is-admin');
         }
+        if (currentUser.role === 'user') {
+            document.body.classList.add('is-user');
+        }
         if (currentUser.role === 'agent') {
             document.body.classList.add('is-agent');
         }
@@ -132,14 +136,53 @@ function setupNavigation() {
             item.classList.add('active');
         });
     });
+
+    document.querySelectorAll('.sidebar-util-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView(link.dataset.view);
+            document.querySelectorAll('.sidebar-util-link').forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+        });
+    });
+
+
+    // Keyboard shortcuts (g+s, g+c, g+h, comma)
+    let gPressed = false;
+    let gTimer = null;
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        if (e.key === ',' && !e.metaKey && !e.ctrlKey) {
+            switchView('settings');
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            return;
+        }
+        if (e.key === 'g') {
+            gPressed = true;
+            clearTimeout(gTimer);
+            gTimer = setTimeout(() => { gPressed = false; }, 1000);
+            return;
+        }
+        if (gPressed) {
+            gPressed = false;
+            clearTimeout(gTimer);
+            const map = { s: 'sites', c: 'conversations', h: 'handoffs' };
+            const view = map[e.key];
+            if (view) {
+                switchView(view);
+                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+                document.querySelector(`.menu-item[data-view="${view}"]`)?.classList.add('active');
+            }
+        }
+    });
 }
 
 function switchView(viewId) {
     if (currentUser?.role === 'agent' && !['handoffs', 'help'].includes(viewId)) {
         viewId = 'handoffs';
     }
-    if (viewId === 'agents' && currentUser?.role !== 'admin') {
-        viewId = 'sites';
+    if (viewId === 'team' && currentUser?.role === 'agent') {
+        viewId = 'handoffs';
     }
 
     const viewEl = document.getElementById(`${viewId}-view`);
@@ -150,6 +193,16 @@ function switchView(viewId) {
 
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     viewEl.classList.add('active');
+
+    document.querySelectorAll('.menu-item').forEach(i => {
+        i.classList.toggle('active', i.dataset.view === viewId);
+    });
+
+    // Close handoff SSE streams when navigating away
+    if (viewId !== 'handoffs') {
+        stopHandoffQueueStream();
+        stopMessageStream();
+    }
     
     if (viewId === 'sites') {
         loadSites();
@@ -157,17 +210,19 @@ function switchView(viewId) {
         updateSiteSelector();
     } else if (viewId === 'admin') {
         loadStats();
-        checkHealth();
         loadAnalytics();
     } else if (viewId === 'conversations') {
         initConversationsView();
     } else if (viewId === 'settings') {
+        initSettingsPanels();
+        initProfileSettings();
         initWhiteLabelSettings();
+        checkHealth();
     } else if (viewId === 'handoffs') {
         populateHandoffSiteFilter();
         initHandoffsView();
-    } else if (viewId === 'agents') {
-        initAgentsView();
+    } else if (viewId === 'team') {
+        initTeamView();
     }
 }
 
@@ -204,7 +259,7 @@ function setupEventListeners() {
     document.getElementById('website-form')?.addEventListener('submit', handleWebsiteSubmit);
     document.getElementById('documents-form')?.addEventListener('submit', handleDocumentsSubmit);
     document.getElementById('both-form')?.addEventListener('submit', handleBothSubmit);
-    document.getElementById('agent-form')?.addEventListener('submit', submitAgentForm);
+    // member-form submit is wired in initTeamView
     
     // File upload zones
     setupUploadZone('upload-zone', 'file-input', 'file-list', 'selectedFiles');
@@ -1193,11 +1248,11 @@ function getAppearanceTabContent() {
                 </div>
                 
                 <div class="form-divider"></div>
-                <h4 class="form-section-title">White-label Options</h4>
-                
+                <h4 class="form-section-title">Widget branding</h4>
+
                 <div class="form-group form-checkbox">
                     <input type="checkbox" id="config-hide-branding" ${appearance.hide_branding ? 'checked' : ''}>
-                    <label for="config-hide-branding">Enable White-label</label>
+                    <label for="config-hide-branding">Customize widget branding</label>
                 </div>
                 
                 <div class="form-group" id="custom-branding-group" style="${appearance.hide_branding ? '' : 'display:none'}">
@@ -2195,16 +2250,8 @@ function updateSendButton() {
 }
 
 async function loadStats() {
-    try {
-        const response = await fetch(`${API_BASE}/admin/stats`);
-        const stats = await response.json();
-        
-        elements.statSites.textContent = stats.total_sites || sites.length;
-        elements.statPages.textContent = stats.total_pages || 0;
-        elements.statChunks.textContent = stats.total_chunks || 0;
-    } catch (error) {
-        console.error('Failed to load stats:', error);
-    }
+    // System stats no longer displayed in the analytics stat row;
+    // engagement metrics are loaded via loadAnalyticsOverview() instead.
 }
 
 async function checkHealth() {
@@ -2247,30 +2294,72 @@ async function checkHealth() {
 // ==================== Analytics ====================
 
 let conversationsChart = null;
-let sourcesChart = null;
 let currentPeriod = '7d';
 
+function populateAnalyticsSiteFilter() {
+    const select = document.getElementById('analytics-site-filter');
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">All Sites</option>';
+    sites.forEach(site => {
+        const opt = document.createElement('option');
+        opt.value = site.id;
+        opt.textContent = site.name || site.url;
+        select.appendChild(opt);
+    });
+    select.value = current;
+    select.onchange = () => {
+        currentAnalyticsSite = select.value;
+        loadAllAnalytics();
+    };
+}
+
 async function loadAnalytics() {
+    populateAnalyticsSiteFilter();
+    const viewAllBtn = document.getElementById('go-to-conversations');
+    if (viewAllBtn) {
+        viewAllBtn.onclick = () => switchView('conversations');
+        viewAllBtn.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') switchView('conversations'); };
+    }
+    await loadAllAnalytics();
+}
+
+async function loadAllAnalytics() {
     await Promise.all([
         loadAnalyticsOverview(),
         loadConversationTrend(),
         loadPopularQuestions(),
         loadSourcesUsed(),
+        loadConversationsBySite(),
         loadRecentConversations()
     ]);
 }
 
 async function loadAnalyticsOverview() {
     try {
-        const response = await fetch(`${API_BASE}/analytics/overview`, {
+        const params = currentAnalyticsSite ? `?site_id=${encodeURIComponent(currentAnalyticsSite)}` : '';
+        const response = await fetch(`${API_BASE}/analytics/overview${params}`, {
             headers: getAuthHeaders()
         });
-        
+
         if (!response.ok) return;
-        
+
         const data = await response.json();
-        
+
         document.getElementById('stat-chats').textContent = data.total_conversations || 0;
+        if (elements.statMsgsToday) elements.statMsgsToday.textContent = data.messages_today || 0;
+        if (elements.statAvgMsgs) elements.statAvgMsgs.textContent = data.avg_messages_per_conversation || 0;
+        if (elements.statSatisfaction) {
+            elements.statSatisfaction.textContent = data.total_feedback > 0
+                ? `${data.satisfaction_rate}%`
+                : '—';
+        }
+        const activeSitesEl = document.getElementById('stat-active-sites');
+        if (activeSitesEl) activeSitesEl.textContent = data.active_sites || 0;
+        const handoffsEl = document.getElementById('stat-handoffs');
+        if (handoffsEl) handoffsEl.textContent = data.total_handoffs || 0;
+        const handoffRateEl = document.getElementById('stat-handoff-rate');
+        if (handoffRateEl) handoffRateEl.textContent = `${data.handoff_rate || 0}%`;
     } catch (error) {
         console.error('Failed to load analytics overview:', error);
     }
@@ -2278,7 +2367,8 @@ async function loadAnalyticsOverview() {
 
 async function loadConversationTrend() {
     try {
-        const response = await fetch(`${API_BASE}/analytics/conversations?period=${currentPeriod}`, {
+        const siteParam = currentAnalyticsSite ? `&site_id=${encodeURIComponent(currentAnalyticsSite)}` : '';
+        const response = await fetch(`${API_BASE}/analytics/conversations?period=${currentPeriod}${siteParam}`, {
             headers: getAuthHeaders()
         });
         
@@ -2288,6 +2378,8 @@ async function loadConversationTrend() {
         
         // Update summary
         document.getElementById('trend-total').textContent = data.total_conversations || 0;
+        const trendMsgs = document.getElementById('trend-messages');
+        if (trendMsgs) trendMsgs.textContent = data.total_messages || 0;
         const changeEl = document.getElementById('trend-change');
         const change = data.change_percentage || 0;
         if (change >= 0) {
@@ -2321,51 +2413,77 @@ function renderConversationsChart(data) {
     }
     
     conversationsChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [
                 {
                     label: 'Conversations',
                     data: conversations,
-                    backgroundColor: 'rgba(27, 94, 59, 0.8)',
-                    borderRadius: 6,
-                    barThickness: currentPeriod === '7d' ? 32 : 12
+                    borderColor: '#0d9488',
+                    backgroundColor: 'rgba(13, 148, 136, 0.08)',
+                    borderWidth: 2,
+                    pointRadius: currentPeriod === '7d' ? 4 : 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#0d9488',
+                    tension: 0.35,
+                    fill: true
                 },
                 {
                     label: 'Messages',
                     data: messages,
-                    backgroundColor: 'rgba(27, 94, 59, 0.3)',
-                    borderRadius: 6,
-                    barThickness: currentPeriod === '7d' ? 32 : 12
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20, 184, 166, 0.04)',
+                    borderWidth: 2,
+                    borderDash: [4, 4],
+                    pointRadius: currentPeriod === '7d' ? 4 : 2,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#14b8a6',
+                    tension: 0.35,
+                    fill: false
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: {
                     position: 'top',
                     align: 'end',
                     labels: {
-                        boxWidth: 12,
+                        boxWidth: 10,
+                        boxHeight: 2,
                         padding: 16,
-                        font: { size: 12 }
+                        font: { size: 12 },
+                        usePointStyle: true,
+                        pointStyle: 'line'
                     }
+                },
+                tooltip: {
+                    backgroundColor: '#1e293b',
+                    padding: 10,
+                    titleFont: { size: 12 },
+                    bodyFont: { size: 12 },
+                    cornerRadius: 8
                 }
             },
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { font: { size: 11 } }
+                    border: { display: false },
+                    ticks: { font: { size: 11 }, color: '#94a3b8' }
                 },
                 y: {
                     beginAtZero: true,
-                    grid: { color: '#f0f0f0' },
-                    ticks: { 
+                    grid: { color: '#f1f5f9', drawBorder: false },
+                    border: { display: false },
+                    ticks: {
                         font: { size: 11 },
-                        stepSize: 1
+                        color: '#94a3b8',
+                        stepSize: 1,
+                        padding: 8
                     }
                 }
             }
@@ -2375,7 +2493,8 @@ function renderConversationsChart(data) {
 
 async function loadPopularQuestions() {
     try {
-        const response = await fetch(`${API_BASE}/analytics/popular-questions?limit=5`, {
+        const siteParam = currentAnalyticsSite ? `&site_id=${encodeURIComponent(currentAnalyticsSite)}` : '';
+        const response = await fetch(`${API_BASE}/analytics/popular-questions?limit=5${siteParam}`, {
             headers: getAuthHeaders()
         });
         
@@ -2391,12 +2510,16 @@ async function loadPopularQuestions() {
             return;
         }
         
+        const maxCount = data[0]?.count || 1;
         container.innerHTML = data.map((q, idx) => `
             <div class="question-item">
                 <span class="question-rank">${idx + 1}</span>
                 <div class="question-content">
                     <div class="question-text">${escapeHtml(q.question)}</div>
-                    <div class="question-count">${q.count} times (${q.percentage}%)</div>
+                    <div class="question-bar-wrap">
+                        <div class="question-bar-fill" style="width:${Math.round((q.count / maxCount) * 100)}%"></div>
+                    </div>
+                    <div class="question-count">${q.count} times &middot; ${q.percentage}%</div>
                 </div>
             </div>
         `).join('');
@@ -2407,96 +2530,72 @@ async function loadPopularQuestions() {
 
 async function loadSourcesUsed() {
     try {
-        const response = await fetch(`${API_BASE}/analytics/sources-used?limit=6`, {
+        const siteParam = currentAnalyticsSite ? `&site_id=${encodeURIComponent(currentAnalyticsSite)}` : '';
+        const response = await fetch(`${API_BASE}/analytics/sources-used?limit=6${siteParam}`, {
             headers: getAuthHeaders()
         });
-        
+
         if (!response.ok) return;
-        
+
         const data = await response.json();
-        
-        renderSourcesChart(data);
+
+        renderSourcesList(data);
     } catch (error) {
         console.error('Failed to load sources used:', error);
     }
 }
 
-function renderSourcesChart(data) {
-    const ctx = document.getElementById('sourcesChart');
-    if (!ctx) return;
-    
+function renderSourcesList(data) {
+    const container = document.getElementById('sources-list');
+    if (!container) return;
+
     if (!data || data.length === 0) {
-        ctx.parentElement.innerHTML = '<div class="empty-analytics">No source data yet</div>';
+        container.innerHTML = '<div class="empty-analytics">No source data yet</div>';
         return;
     }
-    
-    const labels = data.map(d => {
+
+    const maxCount = data[0]?.citation_count || 1;
+    container.innerHTML = data.map(d => {
         const title = d.title || d.url;
-        return title.length > 30 ? title.substring(0, 30) + '...' : title;
-    });
-    const counts = data.map(d => d.citation_count);
-    
-    if (sourcesChart) {
-        sourcesChart.destroy();
-    }
-    
-    sourcesChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: counts,
-                backgroundColor: [
-                    'rgba(27, 94, 59, 0.9)',
-                    'rgba(27, 94, 59, 0.7)',
-                    'rgba(27, 94, 59, 0.5)',
-                    'rgba(27, 94, 59, 0.4)',
-                    'rgba(27, 94, 59, 0.3)',
-                    'rgba(27, 94, 59, 0.2)'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '60%',
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        boxWidth: 12,
-                        padding: 12,
-                        font: { size: 11 }
-                    }
-                }
-            }
-        }
-    });
+        const label = title.length > 45 ? title.substring(0, 45) + '…' : title;
+        const pct = Math.round((d.citation_count / maxCount) * 100);
+        return `
+            <div class="source-item">
+                <div class="source-item-header">
+                    <span class="source-title" title="${escapeHtml(title)}">${escapeHtml(label)}</span>
+                    <span class="source-count">${d.citation_count}</span>
+                </div>
+                <div class="source-bar-wrap">
+                    <div class="source-bar-fill" style="width:${pct}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 async function loadRecentConversations() {
     try {
-        const response = await fetch(`${API_BASE}/analytics/recent-conversations?limit=5`, {
+        const siteParam = currentAnalyticsSite ? `&site_id=${encodeURIComponent(currentAnalyticsSite)}` : '';
+        const response = await fetch(`${API_BASE}/analytics/recent-conversations?limit=5${siteParam}`, {
             headers: getAuthHeaders()
         });
-        
+
         if (!response.ok) return;
-        
+
         const data = await response.json();
-        
+
         const container = document.getElementById('recent-conversations');
         if (!container) return;
-        
+
         if (!data || data.length === 0) {
             container.innerHTML = '<div class="empty-analytics">No conversations yet</div>';
             return;
         }
-        
+
         container.innerHTML = data.map(conv => {
             const time = formatTimeAgo(new Date(conv.last_activity));
             return `
-                <div class="conversation-item">
+                <div class="conversation-item" data-session-id="${escapeHtml(conv.session_id)}" role="button" tabindex="0" title="Open conversation">
                     <div class="conversation-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
@@ -2505,16 +2604,69 @@ async function loadRecentConversations() {
                     <div class="conversation-content">
                         <div class="conversation-preview">${escapeHtml(conv.first_message || 'No message')}</div>
                         <div class="conversation-meta">
-                            <span>${conv.message_count} messages</span>
+                            <span>${conv.message_count} msgs</span>
                             <span>·</span>
                             <span>${time}</span>
+                            ${conv.has_feedback ? '<span>· <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="vertical-align:-1px;color:var(--success)"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/></svg></span>' : ''}
                         </div>
                     </div>
+                    <svg class="conv-item-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.conversation-item[data-session-id]').forEach(item => {
+            const open = async () => {
+                const sid = item.dataset.sessionId;
+                switchView('conversations');
+                // Wait for conversations list to load, then select
+                await new Promise(r => setTimeout(r, 50));
+                selectConversation(sid);
+            };
+            item.addEventListener('click', open);
+            item.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(); });
+        });
+    } catch (error) {
+        console.error('Failed to load recent conversations:', error);
+    }
+}
+
+async function loadConversationsBySite() {
+    try {
+        const response = await fetch(`${API_BASE}/analytics/conversations-by-site`, {
+            headers: getAuthHeaders()
+        });
+
+        const container = document.getElementById('conversations-by-site');
+        if (!container) return;
+
+        if (!response.ok) {
+            container.innerHTML = '<div class="empty-analytics">Unable to load data</div>';
+            return;
+        }
+
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="empty-analytics">No data yet</div>';
+            return;
+        }
+
+        const maxCount = data[0].conversation_count || 1;
+        container.innerHTML = data.map(row => {
+            const pct = Math.round((row.conversation_count / maxCount) * 100);
+            return `
+                <div class="site-stat-row">
+                    <div class="site-stat-name" title="${escapeHtml(row.site_name)}">${escapeHtml(row.site_name)}</div>
+                    <div class="site-stat-bar-wrap">
+                        <div class="site-stat-bar" style="width:${pct}%"></div>
+                    </div>
+                    <div class="site-stat-count">${row.conversation_count} <span class="site-stat-msgs">${row.message_count} msgs</span></div>
                 </div>
             `;
         }).join('');
     } catch (error) {
-        console.error('Failed to load recent conversations:', error);
+        console.error('Failed to load conversations by site:', error);
     }
 }
 
@@ -3016,6 +3168,11 @@ let conversationsState = {
     sortBy: 'updated_at',
     sortOrder: 'desc',
     searchQuery: '',
+    dateFrom: '',
+    dateTo: '',
+    statusFilter: '',
+    priorityFilter: '',
+    tagFilter: '',
     selectedIds: new Set(),
     currentConversation: null
 };
@@ -3063,7 +3220,27 @@ function setupConversationEventListeners() {
         });
         sortSelect._convListenerSet = true;
     }
-    
+
+    const dateFrom = document.getElementById('conv-date-from');
+    if (dateFrom && !dateFrom._convListenerSet) {
+        dateFrom.addEventListener('change', (e) => {
+            conversationsState.dateFrom = e.target.value;
+            conversationsState.page = 1;
+            loadConversations();
+        });
+        dateFrom._convListenerSet = true;
+    }
+
+    const dateTo = document.getElementById('conv-date-to');
+    if (dateTo && !dateTo._convListenerSet) {
+        dateTo.addEventListener('change', (e) => {
+            conversationsState.dateTo = e.target.value;
+            conversationsState.page = 1;
+            loadConversations();
+        });
+        dateTo._convListenerSet = true;
+    }
+
     const prevBtn = document.getElementById('prev-page');
     if (prevBtn && !prevBtn._convListenerSet) {
         prevBtn.addEventListener('click', () => {
@@ -3086,6 +3263,37 @@ function setupConversationEventListeners() {
         nextBtn._convListenerSet = true;
     }
     
+    const statusFilter = document.getElementById('conv-status-filter');
+    if (statusFilter && !statusFilter._convListenerSet) {
+        statusFilter.addEventListener('change', (e) => {
+            conversationsState.statusFilter = e.target.value;
+            conversationsState.page = 1;
+            loadConversations();
+        });
+        statusFilter._convListenerSet = true;
+    }
+
+    const priorityFilter = document.getElementById('conv-priority-filter');
+    if (priorityFilter && !priorityFilter._convListenerSet) {
+        priorityFilter.addEventListener('change', (e) => {
+            conversationsState.priorityFilter = e.target.value;
+            conversationsState.page = 1;
+            loadConversations();
+        });
+        priorityFilter._convListenerSet = true;
+    }
+
+    const bulkStatusSelect = document.getElementById('bulk-status-select');
+    if (bulkStatusSelect && !bulkStatusSelect._convListenerSet) {
+        bulkStatusSelect.addEventListener('change', async (e) => {
+            const status = e.target.value;
+            if (!status) return;
+            await bulkUpdateStatus(status);
+            e.target.value = '';
+        });
+        bulkStatusSelect._convListenerSet = true;
+    }
+
     const selectAllCheckbox = document.getElementById('select-all-convs');
     if (selectAllCheckbox && !selectAllCheckbox._convListenerSet) {
         selectAllCheckbox.addEventListener('change', (e) => {
@@ -3204,6 +3412,23 @@ async function loadConversations() {
             if (conversationsState.siteFilter) {
                 params.append('site_id', conversationsState.siteFilter);
             }
+            if (conversationsState.dateFrom) {
+                params.append('date_from', new Date(conversationsState.dateFrom).toISOString());
+            }
+            if (conversationsState.dateTo) {
+                const toDate = new Date(conversationsState.dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                params.append('date_to', toDate.toISOString());
+            }
+            if (conversationsState.statusFilter) {
+                params.append('status', conversationsState.statusFilter);
+            }
+            if (conversationsState.priorityFilter) {
+                params.append('priority', conversationsState.priorityFilter);
+            }
+            if (conversationsState.tagFilter) {
+                params.append('tag', conversationsState.tagFilter);
+            }
         }
         
         const response = await fetch(`${url}?${params.toString()}`, {
@@ -3264,14 +3489,25 @@ function renderConversationsList(conversations) {
         const timeAgo = formatTimeAgo(new Date(conv.updated_at));
         const preview = conv.matching_snippet || conv.first_message || 'No message preview';
         const siteName = sites.find(s => s.site_id === conv.site_id)?.name || conv.site_id || 'Unknown';
-        
+
+        const status = conv.status || 'open';
+        const priority = conv.priority || 'medium';
+        const unreadDot = conv.unread ? '<span class="conv-unread-dot"></span>' : '';
+        const statusBadge = `<span class="conv-status-badge status-${status}">${status}</span>`;
+        const priorityBadge = priority !== 'medium' ? `<span class="conv-priority-badge priority-${priority}">${priority}</span>` : '';
+        const visitorLabel = conv.visitor_name ? `<span class="conv-visitor-name">${escapeHtml(conv.visitor_name)}</span>` : '';
+
         item.innerHTML = `
-            <input type="checkbox" class="conv-checkbox" data-session-id="${conv.session_id}" 
+            <input type="checkbox" class="conv-checkbox" data-session-id="${conv.session_id}"
                    ${conversationsState.selectedIds.has(conv.session_id) ? 'checked' : ''}>
+            ${unreadDot}
             <div class="conv-list-content">
                 <div class="conv-list-header">
                     <span class="conv-list-title">${escapeHtml(siteName)}</span>
                     <span class="conv-list-time">${timeAgo}</span>
+                </div>
+                <div class="conv-list-badges">
+                    ${statusBadge}${priorityBadge}${visitorLabel}
                 </div>
                 <div class="conv-list-preview">${escapeHtml(preview)}</div>
                 <div class="conv-list-meta">
@@ -3363,7 +3599,7 @@ function updateConvCount() {
 
 async function selectConversation(sessionId) {
     conversationsState.currentConversation = sessionId;
-    
+
     document.querySelectorAll('.conv-list-item').forEach(item => {
         const checkbox = item.querySelector('.conv-checkbox');
         if (checkbox && checkbox.dataset.sessionId === sessionId) {
@@ -3372,8 +3608,19 @@ async function selectConversation(sessionId) {
             item.classList.remove('active');
         }
     });
-    
+
     await loadConversationDetail(sessionId);
+
+    // Mark as read
+    try {
+        await fetch(`${API_BASE}/conversations/${sessionId}/read`, {
+            method: 'PATCH',
+            headers: getAuthHeaders()
+        });
+        // Remove unread dot in list
+        const item = document.querySelector(`.conv-checkbox[data-session-id="${sessionId}"]`)?.closest('.conv-list-item');
+        if (item) item.querySelector('.conv-unread-dot')?.remove();
+    } catch(e) { /* silent */ }
 }
 
 async function loadConversationDetail(sessionId) {
@@ -3406,13 +3653,75 @@ async function loadConversationDetail(sessionId) {
         document.getElementById('detail-conv-meta').textContent = 
             `Started ${formatTimeAgo(new Date(conv.created_at))} • Session: ${conv.session_id.substring(0, 12)}...`;
         
+        // Store current conv data for visitor modal pre-fill
+        window._currentConvData = conv;
+
         // Update stats
         document.getElementById('stat-messages').textContent = conv.stats.message_count;
-        document.getElementById('stat-response-time').textContent = 
+        document.getElementById('stat-response-time').textContent =
             conv.stats.avg_response_time_ms > 0 ? `${Math.round(conv.stats.avg_response_time_ms)}ms` : '-';
         document.getElementById('stat-positive').textContent = conv.stats.positive_feedback;
         document.getElementById('stat-negative').textContent = conv.stats.negative_feedback;
-        
+        document.getElementById('stat-first-response').textContent =
+            conv.stats.first_response_time_ms ? formatDuration(conv.stats.first_response_time_ms) : '-';
+        document.getElementById('stat-resolution').textContent =
+            conv.stats.resolution_time_ms ? formatDuration(conv.stats.resolution_time_ms) : '-';
+
+        // Status / priority selects
+        const statusSelect = document.getElementById('detail-status-select');
+        const prioritySelect = document.getElementById('detail-priority-select');
+        if (statusSelect) {
+            statusSelect.value = conv.status || 'open';
+            // Replace element to clear old listeners
+            const newStatus = statusSelect.cloneNode(true);
+            statusSelect.parentNode.replaceChild(newStatus, statusSelect);
+            newStatus.value = conv.status || 'open';
+            newStatus.addEventListener('change', async (e) => {
+                await updateConvStatus(conv.session_id, e.target.value);
+            });
+        }
+        if (prioritySelect) {
+            prioritySelect.value = conv.priority || 'medium';
+            const newPriority = prioritySelect.cloneNode(true);
+            prioritySelect.parentNode.replaceChild(newPriority, prioritySelect);
+            newPriority.value = conv.priority || 'medium';
+            newPriority.addEventListener('change', async (e) => {
+                await updateConvPriority(conv.session_id, e.target.value);
+            });
+        }
+
+        // Visitor info
+        renderVisitorInfo(conv);
+
+        // Tags
+        window._currentTags = conv.tags || [];
+        renderConvTags(window._currentTags);
+
+        // Notes
+        renderConvNotes(conv.notes || []);
+
+        // Star rating
+        renderStarRating(conv.satisfaction_rating);
+
+        // Sentiment
+        if (conv.sentiment !== null && conv.sentiment !== undefined) {
+            document.getElementById('conv-sentiment-row').style.display = 'flex';
+            const label = conv.sentiment > 0.3 ? '\u{1F60A} Positive' : conv.sentiment < -0.3 ? '\u{1F61E} Negative' : '\u{1F610} Neutral';
+            document.getElementById('conv-sentiment-label').textContent = label;
+        } else {
+            document.getElementById('conv-sentiment-row').style.display = 'none';
+        }
+
+        // Page URL context
+        if (conv.page_url) {
+            document.getElementById('conv-context-row').style.display = 'flex';
+            const urlEl = document.getElementById('conv-page-url');
+            urlEl.href = conv.page_url;
+            urlEl.textContent = conv.page_url;
+        } else {
+            document.getElementById('conv-context-row').style.display = 'none';
+        }
+
         // Render transcript with Q&A support
         renderTranscript(conv.messages, conv.session_id, conv.site_id);
         
@@ -3523,6 +3832,253 @@ function renderTranscript(messages, sessionId = null, siteId = null) {
     });
     
     transcript.scrollTop = transcript.scrollHeight;
+}
+
+// ===== Conversation Feature Functions =====
+
+function formatDuration(ms) {
+    if (ms < 60000) return `${Math.round(ms / 1000)}s`;
+    if (ms < 3600000) return `${Math.round(ms / 60000)}m`;
+    return `${Math.round(ms / 3600000)}h`;
+}
+
+async function updateConvStatus(sessionId, status) {
+    try {
+        const res = await fetch(`${API_BASE}/conversations/${sessionId}/status`, {
+            method: 'PATCH',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!res.ok) throw new Error();
+        loadConversations();
+    } catch(e) {
+        alert('Failed to update status');
+    }
+}
+
+async function updateConvPriority(sessionId, priority) {
+    try {
+        const res = await fetch(`${API_BASE}/conversations/${sessionId}/priority`, {
+            method: 'PATCH',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ priority })
+        });
+        if (!res.ok) throw new Error();
+        loadConversations();
+    } catch(e) {
+        alert('Failed to update priority');
+    }
+}
+
+async function bulkUpdateStatus(status) {
+    const sessionIds = Array.from(conversationsState.selectedIds);
+    if (!sessionIds.length) return;
+    try {
+        await Promise.all(sessionIds.map(id =>
+            fetch(`${API_BASE}/conversations/${id}/status`, {
+                method: 'PATCH',
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            })
+        ));
+        conversationsState.selectedIds.clear();
+        updateBulkActionsBar();
+        loadConversations();
+    } catch(e) {
+        alert('Failed to update status for some conversations');
+    }
+}
+
+function renderVisitorInfo(conv) {
+    const el = document.getElementById('conv-visitor-info');
+    if (!el) return;
+    if (conv.visitor_name || conv.visitor_email) {
+        el.innerHTML = `
+            ${conv.visitor_name ? `<div class="visitor-field"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> ${escapeHtml(conv.visitor_name)}</div>` : ''}
+            ${conv.visitor_email ? `<div class="visitor-field"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg> <a href="mailto:${escapeHtml(conv.visitor_email)}">${escapeHtml(conv.visitor_email)}</a></div>` : ''}
+        `;
+    } else {
+        el.innerHTML = '<span class="visitor-empty">No visitor info</span>';
+    }
+}
+
+function renderConvTags(tags) {
+    const list = document.getElementById('conv-tags-list');
+    if (!list) return;
+    list.innerHTML = tags.map((tag, idx) => `
+        <span class="conv-tag-pill">
+            ${escapeHtml(tag)}
+            <button onclick="removeConvTagByIndex(${idx})" class="tag-remove">&times;</button>
+        </span>
+    `).join('');
+}
+
+window._currentTags = [];
+
+async function addConvTag() {
+    const input = document.getElementById('conv-tag-input');
+    if (!input) return;
+    const tag = input.value.trim();
+    if (!tag || window._currentTags.includes(tag)) return;
+    window._currentTags = [...window._currentTags, tag];
+    input.value = '';
+    await saveConvTags();
+    renderConvTags(window._currentTags);
+}
+
+async function removeConvTagByIndex(idx) {
+    window._currentTags = window._currentTags.filter((_, i) => i !== idx);
+    await saveConvTags();
+    renderConvTags(window._currentTags);
+}
+
+async function saveConvTags() {
+    const sessionId = conversationsState.currentConversation;
+    if (!sessionId) return;
+    try {
+        await fetch(`${API_BASE}/conversations/${sessionId}/tags`, {
+            method: 'PATCH',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tags: window._currentTags })
+        });
+    } catch(e) { /* silent */ }
+}
+
+window._notesStore = {};
+
+function renderConvNotes(notes) {
+    const list = document.getElementById('conv-notes-list');
+    if (!list) return;
+    if (!notes.length) {
+        list.innerHTML = '<span class="visitor-empty">No notes yet</span>';
+        window._notesStore = {};
+        return;
+    }
+    window._notesStore = {};
+    notes.forEach(note => { window._notesStore[note.note_id] = note.content; });
+    list.innerHTML = notes.map(note => `
+        <div class="conv-note-item" data-note-id="${note.note_id}">
+            <div class="conv-note-content">${escapeHtml(note.content)}</div>
+            <div class="conv-note-meta">
+                <span>${formatTimeAgo(new Date(note.created_at))}</span>
+                <div class="conv-note-actions">
+                    <button onclick="openEditNoteModal('${note.note_id}')" class="btn-link">Edit</button>
+                    <button onclick="deleteNote('${note.note_id}')" class="btn-link danger">Delete</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+let _editingNoteId = null;
+
+function openAddNoteModal() {
+    _editingNoteId = null;
+    const titleEl = document.getElementById('note-modal-title');
+    const inputEl = document.getElementById('note-content-input');
+    if (titleEl) titleEl.textContent = 'Add Note';
+    if (inputEl) inputEl.value = '';
+    document.getElementById('note-modal')?.classList.add('active');
+}
+
+function openEditNoteModal(noteId) {
+    _editingNoteId = noteId;
+    const titleEl = document.getElementById('note-modal-title');
+    const inputEl = document.getElementById('note-content-input');
+    if (titleEl) titleEl.textContent = 'Edit Note';
+    if (inputEl) inputEl.value = window._notesStore[noteId] || '';
+    document.getElementById('note-modal')?.classList.add('active');
+}
+
+async function saveNote() {
+    const contentEl = document.getElementById('note-content-input');
+    const content = contentEl ? contentEl.value.trim() : '';
+    if (!content) return;
+    const sessionId = conversationsState.currentConversation;
+    document.getElementById('note-modal')?.classList.remove('active');
+    try {
+        if (_editingNoteId) {
+            await fetch(`${API_BASE}/conversations/${sessionId}/notes/${_editingNoteId}`, {
+                method: 'PUT',
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+        } else {
+            await fetch(`${API_BASE}/conversations/${sessionId}/notes`, {
+                method: 'POST',
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+        }
+        loadConversationDetail(sessionId);
+    } catch(e) {
+        alert('Failed to save note');
+    }
+}
+
+async function deleteNote(noteId) {
+    if (!confirm('Delete this note?')) return;
+    const sessionId = conversationsState.currentConversation;
+    try {
+        await fetch(`${API_BASE}/conversations/${sessionId}/notes/${noteId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        loadConversationDetail(sessionId);
+    } catch(e) {
+        alert('Failed to delete note');
+    }
+}
+
+function openEditVisitorModal() {
+    const conv = window._currentConvData;
+    const nameEl = document.getElementById('visitor-name-input');
+    const emailEl = document.getElementById('visitor-email-input');
+    if (nameEl) nameEl.value = conv ? (conv.visitor_name || '') : '';
+    if (emailEl) emailEl.value = conv ? (conv.visitor_email || '') : '';
+    document.getElementById('edit-visitor-modal')?.classList.add('active');
+}
+
+async function saveVisitorInfo() {
+    const nameEl = document.getElementById('visitor-name-input');
+    const emailEl = document.getElementById('visitor-email-input');
+    const name = nameEl ? nameEl.value.trim() : '';
+    const email = emailEl ? emailEl.value.trim() : '';
+    const sessionId = conversationsState.currentConversation;
+    document.getElementById('edit-visitor-modal')?.classList.remove('active');
+    try {
+        await fetch(`${API_BASE}/conversations/${sessionId}/visitor`, {
+            method: 'PATCH',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ visitor_name: name || null, visitor_email: email || null })
+        });
+        loadConversationDetail(sessionId);
+    } catch(e) {
+        alert('Failed to save visitor info');
+    }
+}
+
+function renderStarRating(currentRating) {
+    const stars = document.querySelectorAll('#conv-star-rating .star');
+    stars.forEach(star => {
+        const val = parseInt(star.dataset.value);
+        star.classList.toggle('active', !!(currentRating && val <= currentRating));
+        star.onclick = () => setConvRating(val);
+    });
+}
+
+async function setConvRating(rating) {
+    const sessionId = conversationsState.currentConversation;
+    try {
+        await fetch(`${API_BASE}/conversations/${sessionId}/rating`, {
+            method: 'PATCH',
+            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating })
+        });
+        renderStarRating(rating);
+    } catch(e) {
+        alert('Failed to set rating');
+    }
 }
 
 // Export functionality
@@ -4438,14 +4994,113 @@ let handoffsState = {
     currentHandoff: null,
     siteFilter: '',
     statusFilter: '',
-    pollInterval: null,
-    messagePollInterval: null
+    queueES: null,
+    messageES: null,
+    lastRenderedMessagesSig: '',
+    /** First queue snapshot after opening Handoffs seeds known IDs (no flash for existing items). */
+    queueBaselineInitialized: false,
+    knownHandoffIds: new Set(),
+    /** handoff_id -> epoch ms when highlight ends (survives SSE re-renders). */
+    handoffHighlightExpiry: new Map(),
+    /** Cached GET /api/auth/agents (admin). */
+    agentCatalog: null,
 };
 
+const HANDOFF_HIGHLIGHT_MS = 3 * 60 * 1000; // 3 minutes — enough to notice and accept
+
 function initHandoffsView() {
+    handoffsState.queueBaselineInitialized = false;
+    handoffsState.knownHandoffIds = new Set();
+    handoffsState.handoffHighlightExpiry.clear();
+    handoffsState.agentCatalog = null;
     setupHandoffsEventListeners();
-    loadHandoffQueue();
-    startHandoffPolling();
+    startHandoffQueueStream();
+}
+
+function handoffShouldHighlight(handoffId) {
+    const exp = handoffsState.handoffHighlightExpiry.get(handoffId);
+    return Boolean(exp && exp > Date.now());
+}
+
+function setHandoffPanelSessionActive(active) {
+    const panel = document.getElementById('handoff-detail-panel');
+    const layout = document.querySelector('#handoffs-view .handoffs-layout');
+    if (panel) panel.classList.toggle('handoff-session-active', active);
+    if (layout) layout.classList.toggle('handoff-session-active', active);
+}
+
+async function ensureHandoffAgentCatalog() {
+    if (handoffsState.agentCatalog != null) return handoffsState.agentCatalog;
+    if (typeof currentUser === 'undefined' || currentUser?.role !== 'admin') return [];
+    try {
+        const r = await fetch(`${API_BASE}/auth/agents`, { headers: getAuthHeaders() });
+        if (!r.ok) return [];
+        handoffsState.agentCatalog = await r.json();
+        return handoffsState.agentCatalog;
+    } catch (e) {
+        console.error('Failed to load agents:', e);
+        return [];
+    }
+}
+
+async function populateHandoffAssignSelect(handoff) {
+    const row = document.getElementById('handoff-assign-row');
+    const sel = document.getElementById('handoff-assign-select');
+    if (!row || !sel) return;
+    if (typeof currentUser === 'undefined' || currentUser?.role !== 'admin') {
+        row.classList.add('hidden');
+        return;
+    }
+    if (handoff.status === 'resolved') {
+        row.classList.add('hidden');
+        return;
+    }
+    row.classList.remove('hidden');
+    const agents = await ensureHandoffAgentCatalog();
+    const siteId = handoff.site_id;
+    const eligible = agents.filter(a => (a.assigned_site_ids || []).includes(siteId));
+    const currentId = handoff.assigned_agent_id || '';
+    const opts = [
+        '<option value="">— Select agent —</option>',
+        ...eligible.map(a => {
+            const id = a.id;
+            const selected = String(id) === String(currentId) ? ' selected' : '';
+            return `<option value="${escapeHtml(String(id))}"${selected}>${escapeHtml(a.name || a.email)}</option>`;
+        })
+    ];
+    if (eligible.length === 0) {
+        opts.push('<option value="" disabled>No agents configured for this site</option>');
+    }
+    sel.innerHTML = opts.join('');
+}
+
+async function assignHandoffToAgent(agentId) {
+    const hid = handoffsState.currentHandoff?.handoff_id;
+    if (!hid || !agentId) return;
+    try {
+        const r = await fetch(`${API_BASE}/handoff/${hid}/assign`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ agent_id: agentId })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+            if (r.status === 403) {
+                alert('Only admins can assign agents.');
+                return;
+            }
+            const d = data.detail;
+            const msg = Array.isArray(d) ? d.map(x => x.msg || x).join(', ') : (d || 'Could not assign agent');
+            alert(msg);
+            return;
+        }
+        handoffsState.currentHandoff = data.handoff;
+        renderHandoffDetail(data.handoff);
+        loadHandoffQueue();
+    } catch (e) {
+        console.error('assignHandoffToAgent:', e);
+        alert('Could not assign agent.');
+    }
 }
 
 let handoffsListenersInitialized = false;
@@ -4463,14 +5118,14 @@ function setupHandoffsEventListeners() {
     if (siteFilter) {
         siteFilter.addEventListener('change', () => {
             handoffsState.siteFilter = siteFilter.value;
-            loadHandoffQueue();
+            startHandoffQueueStream();
         });
     }
-    
+
     if (statusFilter) {
         statusFilter.addEventListener('change', () => {
             handoffsState.statusFilter = statusFilter.value;
-            loadHandoffQueue();
+            startHandoffQueueStream();
         });
     }
     
@@ -4480,13 +5135,48 @@ function setupHandoffsEventListeners() {
             await sendAgentMessage();
         });
     }
-    
+
+    // Textarea: Enter = send, Shift+Enter = newline, auto-resize
+    const textarea = document.getElementById('handoff-input');
+    if (textarea) {
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAgentMessage();
+            }
+        });
+        textarea.addEventListener('input', () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        });
+    }
+
+    // AI summary toggle
+    const summaryToggle = document.getElementById('hd-summary-toggle');
+    if (summaryToggle) {
+        summaryToggle.addEventListener('click', () => {
+            const body = document.querySelector('.hd-summary-body');
+            const chevron = summaryToggle.querySelector('.hd-chevron');
+            if (body) body.classList.toggle('hidden');
+            if (chevron) chevron.classList.toggle('open');
+        });
+    }
+
     if (claimBtn) {
         claimBtn.addEventListener('click', () => claimHandoff());
     }
-    
+
     if (resolveBtn) {
         resolveBtn.addEventListener('click', () => resolveHandoff());
+    }
+
+    const assignSel = document.getElementById('handoff-assign-select');
+    if (assignSel) {
+        assignSel.addEventListener('change', async () => {
+            const v = assignSel.value;
+            if (!v || !handoffsState.currentHandoff) return;
+            await assignHandoffToAgent(v);
+        });
     }
 }
 
@@ -4536,6 +5226,19 @@ async function loadHandoffQueue() {
     }
 }
 
+/** Queue order from the API; open conversation pinned to top for scanning. */
+function handoffsDisplayOrder(handoffs) {
+    const openId = handoffsState.currentHandoff?.handoff_id;
+    if (!openId || !Array.isArray(handoffs) || handoffs.length < 2) {
+        return handoffs;
+    }
+    const idx = handoffs.findIndex(h => h.handoff_id === openId);
+    if (idx <= 0) return handoffs;
+    const copy = [...handoffs];
+    const [open] = copy.splice(idx, 1);
+    return [open, ...copy];
+}
+
 function renderHandoffQueue() {
     const container = document.getElementById('handoffs-list');
     if (!container) return;
@@ -4555,26 +5258,76 @@ function renderHandoffQueue() {
         `;
         return;
     }
-    
-    container.innerHTML = handoffsState.handoffs.map(h => `
-        <div class="handoff-item ${h.status} ${handoffsState.currentHandoff?.handoff_id === h.handoff_id ? 'selected' : ''}"
-             data-handoff-id="${h.handoff_id}">
-            <div class="handoff-item-header">
-                <span class="handoff-item-visitor">${escapeHtml(h.visitor_name || h.visitor_email || 'Visitor')}</span>
-                <span class="handoff-item-status ${h.status}">${h.status}</span>
-            </div>
-            <div class="handoff-item-preview">${escapeHtml(h.last_message_preview || 'No messages yet')}</div>
-            <div class="handoff-item-meta">
+
+    const ids = handoffsState.handoffs.map(h => h.handoff_id);
+    const now = Date.now();
+    for (const [hid, exp] of handoffsState.handoffHighlightExpiry) {
+        if (exp <= now) handoffsState.handoffHighlightExpiry.delete(hid);
+    }
+
+    if (!handoffsState.queueBaselineInitialized) {
+        handoffsState.knownHandoffIds = new Set(ids);
+        handoffsState.queueBaselineInitialized = true;
+    } else {
+        handoffsState.handoffs.forEach(h => {
+            if (!handoffsState.knownHandoffIds.has(h.handoff_id)) {
+                handoffsState.handoffHighlightExpiry.set(h.handoff_id, now + HANDOFF_HIGHLIGHT_MS);
+            }
+        });
+        ids.forEach(id => handoffsState.knownHandoffIds.add(id));
+    }
+
+    const displayHandoffs = handoffsDisplayOrder(handoffsState.handoffs);
+
+    container.innerHTML = displayHandoffs.map(h => {
+        const isOpen = handoffsState.currentHandoff?.handoff_id === h.handoff_id;
+        const highlight = handoffShouldHighlight(h.handoff_id) && !isOpen;
+        const showAcceptHint = highlight && h.status === 'pending';
+        const acceptIcon = `<svg class="handoff-item-accept-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`;
+        const metaRow = h.status === 'pending'
+            ? `<div class="handoff-item-meta handoff-item-meta--pending">
+                <div class="handoff-item-meta-main">
+                    <span class="handoff-item-time">${formatWaitTime(h.wait_time_seconds)}</span>
+                    ${h.assigned_agent_name ? `<span class="handoff-item-agent">${escapeHtml(h.assigned_agent_name)}</span>` : ''}
+                </div>
+                <button type="button" class="handoff-item-accept-btn" data-handoff-id="${h.handoff_id}">
+                    ${acceptIcon}
+                    <span class="handoff-item-accept-label">Accept</span>
+                </button>
+            </div>`
+            : `<div class="handoff-item-meta">
                 <span class="handoff-item-time">${formatWaitTime(h.wait_time_seconds)}</span>
                 ${h.assigned_agent_name ? `<span class="handoff-item-agent">${escapeHtml(h.assigned_agent_name)}</span>` : ''}
+            </div>`;
+        return `
+        <div class="handoff-item ${h.status} ${isOpen ? 'selected' : ''} ${highlight ? 'handoff-item-new' : ''}"
+             data-handoff-id="${h.handoff_id}"
+             ${isOpen ? 'aria-current="true"' : ''}>
+            <div class="handoff-item-header">
+                <span class="handoff-item-visitor">${escapeHtml(h.visitor_name || h.visitor_email || 'Visitor')}</span>
+                <div class="handoff-item-header-end">
+                    ${isOpen ? '<span class="handoff-item-open-pill">Open</span>' : ''}
+                    <span class="handoff-item-status ${h.status}">${h.status}</span>
+                </div>
             </div>
-        </div>
-    `).join('');
+            ${showAcceptHint ? `<div class="handoff-item-accept-hint" role="status">New request — waiting in queue.</div>` : ''}
+            <div class="handoff-item-preview">${escapeHtml(h.last_message_preview || 'No messages yet')}</div>
+            ${metaRow}
+        </div>`;
+    }).join('');
     
     container.querySelectorAll('.handoff-item').forEach(item => {
         item.addEventListener('click', () => {
             const handoffId = item.dataset.handoffId;
             selectHandoff(handoffId);
+        });
+    });
+
+    container.querySelectorAll('.handoff-item-accept-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.handoffId;
+            if (id) claimHandoffById(id, btn);
         });
     });
 }
@@ -4595,13 +5348,16 @@ async function selectHandoff(handoffId) {
         
         const handoff = await response.json();
         handoffsState.currentHandoff = handoff;
-        
+        handoffsState.lastRenderedMessagesSig = '';
+        handoffsState.handoffHighlightExpiry.delete(handoffId);
+
         document.querySelectorAll('.handoff-item').forEach(item => {
             item.classList.toggle('selected', item.dataset.handoffId === handoffId);
         });
-        
+        renderHandoffQueue();
+
         renderHandoffDetail(handoff);
-        startMessagePolling();
+        startMessageStream();
         
     } catch (error) {
         console.error('Failed to select handoff:', error);
@@ -4611,25 +5367,35 @@ async function selectHandoff(handoffId) {
 function renderHandoffDetail(handoff) {
     const emptyEl = document.querySelector('.handoff-detail-empty');
     const contentEl = document.getElementById('handoff-detail-content');
-    
+
     if (emptyEl) emptyEl.classList.add('hidden');
     if (contentEl) contentEl.classList.remove('hidden');
-    
-    document.getElementById('handoff-visitor-name').textContent = 
-        handoff.visitor_name || 'Visitor';
-    document.getElementById('handoff-visitor-email').textContent = 
-        handoff.visitor_email || '';
-    document.getElementById('handoff-wait-time').textContent = 
-        formatWaitTime(handoff.wait_time_seconds || 0) + ' waiting';
-    
+    setHandoffPanelSessionActive(true);
+
+    // Visitor name + avatar initials
+    const name = handoff.visitor_name || 'Visitor';
+    document.getElementById('handoff-visitor-name').textContent = name;
+    document.getElementById('handoff-visitor-email').textContent = handoff.visitor_email || '';
+    const avatarEl = document.getElementById('hd-avatar');
+    if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+
+    document.getElementById('handoff-wait-time').textContent =
+        formatWaitTime(handoff.wait_time_seconds || 0);
+
+    const siteNameEl = document.getElementById('handoff-site-name');
+    if (siteNameEl) {
+        const matchedSite = (typeof sites !== 'undefined' ? sites : []).find(s => s.site_id === handoff.site_id);
+        siteNameEl.textContent = matchedSite ? (matchedSite.name || matchedSite.url) : (handoff.site_id || 'Site');
+    }
+
     const statusBadge = document.getElementById('handoff-status-badge');
     statusBadge.textContent = handoff.status;
-    statusBadge.className = `handoff-status-badge ${handoff.status}`;
-    
+    statusBadge.className = `hd-badge ${handoff.status}`;
+
     const claimBtn = document.getElementById('claim-handoff-btn');
     const resolveBtn = document.getElementById('resolve-handoff-btn');
     const inputWrapper = document.getElementById('handoff-input-wrapper');
-    
+
     if (handoff.status === 'pending') {
         claimBtn.classList.remove('hidden');
         resolveBtn.classList.add('hidden');
@@ -4643,62 +5409,130 @@ function renderHandoffDetail(handoff) {
         resolveBtn.classList.add('hidden');
         inputWrapper.classList.add('hidden');
     }
-    
+
     const summaryEl = document.getElementById('handoff-ai-summary');
     if (handoff.ai_summary) {
         summaryEl.classList.remove('hidden');
-        summaryEl.querySelector('.ai-summary-content').innerHTML = 
-            `<pre>${escapeHtml(handoff.ai_summary)}</pre>`;
+        const bodyEl = summaryEl.querySelector('.ai-summary-content');
+        bodyEl.innerHTML = `<pre>${escapeHtml(handoff.ai_summary)}</pre>`;
     } else {
         summaryEl.classList.add('hidden');
     }
-    
+
     renderHandoffMessages(handoff.messages || []);
+    void populateHandoffAssignSelect(handoff);
 }
 
 function renderHandoffMessages(messages) {
     const container = document.getElementById('handoff-messages');
     if (!container) return;
-    
-    container.innerHTML = messages.map(msg => `
-        <div class="handoff-message ${msg.role}">
-            <div class="handoff-message-avatar ${msg.role}">
-                ${msg.role === 'agent' ? 'A' : 'V'}
+
+    const currentHandoffId = handoffsState.currentHandoff?.handoff_id || '';
+    const normalizedMessages = Array.isArray(messages) ? messages : [];
+    const messageSig = `${currentHandoffId}:${normalizedMessages.length}:${normalizedMessages.map(m =>
+        `${m.id || ''}:${m.timestamp || ''}:${m.role || ''}:${m.sender_name || ''}:${m.content || ''}`
+    ).join('|')}`;
+    if (handoffsState.lastRenderedMessagesSig === messageSig) return;
+    handoffsState.lastRenderedMessagesSig = messageSig;
+
+    if (normalizedMessages.length === 0) {
+        container.innerHTML = `
+            <div class="hd-messages-empty">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
+                </svg>
+                No messages yet
+            </div>`;
+        return;
+    }
+
+    let lastDate = null;
+    const items = normalizedMessages.map(msg => {
+        const ts = new Date(msg.timestamp);
+        const dateStr = ts.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const timeStr = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isAgent = msg.role === 'agent';
+        const sender = escapeHtml(msg.sender_name || (isAgent ? 'Agent' : 'Visitor'));
+
+        let separator = '';
+        if (dateStr !== lastDate) {
+            lastDate = dateStr;
+            separator = `<div class="hd-date-separator">${dateStr}</div>`;
+        }
+
+        return `${separator}
+        <div class="hd-msg ${isAgent ? 'agent' : 'visitor'}">
+            <div class="hd-msg-meta">
+                <span class="hd-msg-sender">${sender}</span>
+                <span class="hd-msg-time">${timeStr}</span>
             </div>
-            <div class="handoff-message-content">
-                <div class="handoff-message-header">
-                    <span class="handoff-message-sender">${escapeHtml(msg.sender_name || (msg.role === 'agent' ? 'Agent' : 'Visitor'))}</span>
-                    <span class="handoff-message-time">${new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-                <div class="handoff-message-text">${escapeHtml(msg.content)}</div>
-            </div>
-        </div>
-    `).join('');
-    
+            <div class="hd-msg-bubble">${escapeHtml(msg.content)}</div>
+        </div>`;
+    }).join('');
+
+    container.innerHTML = items;
     container.scrollTop = container.scrollHeight;
 }
 
-async function claimHandoff() {
-    if (!handoffsState.currentHandoff) return;
-    
+async function claimHandoffById(handoffId, sourceBtn = null) {
+    const labelEl = sourceBtn?.querySelector('.handoff-item-accept-label, .hd-btn-accept-label');
+    const iconEl = sourceBtn?.querySelector('.handoff-item-accept-icon, .hd-btn-accept-icon');
+    const prevLabel = labelEl ? labelEl.textContent : null;
+
+    const setClaimBusy = (busy) => {
+        document.querySelectorAll('.handoff-item-accept-btn').forEach(b => {
+            b.disabled = busy;
+            b.setAttribute('aria-busy', busy ? 'true' : 'false');
+        });
+        const detailBtn = document.getElementById('claim-handoff-btn');
+        if (detailBtn) {
+            detailBtn.disabled = busy;
+            detailBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
+        }
+    };
+
+    setClaimBusy(true);
+    if (labelEl) labelEl.textContent = '…';
+    if (iconEl) iconEl.classList.add('hidden');
+
     try {
-        const response = await fetch(`${API_BASE}/handoff/${handoffsState.currentHandoff.handoff_id}/status`, {
+        const response = await fetch(`${API_BASE}/handoff/${handoffId}/status`, {
             method: 'PUT',
             headers: getAuthHeaders(),
             body: JSON.stringify({ status: 'active' })
         });
-        
+
         if (!response.ok) throw new Error('Failed to claim handoff');
-        
+
         const data = await response.json();
+        handoffsState.lastRenderedMessagesSig = '';
         handoffsState.currentHandoff = data.handoff;
+        handoffsState.handoffHighlightExpiry.delete(handoffId);
+
+        document.querySelectorAll('.handoff-item').forEach(item => {
+            item.classList.toggle('selected', item.dataset.handoffId === handoffId);
+        });
+
         renderHandoffDetail(data.handoff);
         loadHandoffQueue();
-        
+        startMessageStream();
     } catch (error) {
         console.error('Failed to claim handoff:', error);
         alert('Failed to claim handoff. Please try again.');
+    } finally {
+        setClaimBusy(false);
+        if (labelEl && prevLabel !== null && document.contains(labelEl)) {
+            labelEl.textContent = prevLabel;
+        }
+        if (iconEl && document.contains(iconEl)) {
+            iconEl.classList.remove('hidden');
+        }
     }
+}
+
+async function claimHandoff() {
+    if (!handoffsState.currentHandoff) return;
+    await claimHandoffById(handoffsState.currentHandoff.handoff_id, document.getElementById('claim-handoff-btn'));
 }
 
 async function resolveHandoff() {
@@ -4715,13 +5549,14 @@ async function resolveHandoff() {
         
         if (!response.ok) throw new Error('Failed to resolve handoff');
         
-        stopMessagePolling();
+        stopMessageStream();
         handoffsState.currentHandoff = null;
         
         const emptyEl = document.querySelector('.handoff-detail-empty');
         const contentEl = document.getElementById('handoff-detail-content');
         if (emptyEl) emptyEl.classList.remove('hidden');
         if (contentEl) contentEl.classList.add('hidden');
+        setHandoffPanelSessionActive(false);
         
         loadHandoffQueue();
         
@@ -4737,8 +5572,9 @@ async function sendAgentMessage() {
     const input = document.getElementById('handoff-input');
     const content = input.value.trim();
     if (!content) return;
-    
+
     input.value = '';
+    input.style.height = 'auto';
     
     try {
         const response = await fetch(`${API_BASE}/handoff/${handoffsState.currentHandoff.handoff_id}/agent-message`, {
@@ -4756,57 +5592,125 @@ async function sendAgentMessage() {
         }
         handoffsState.currentHandoff.messages.push(data.message);
         renderHandoffMessages(handoffsState.currentHandoff.messages);
-        
+
+        if (data.handoff_status && data.handoff_status !== handoffsState.currentHandoff.status) {
+            handoffsState.currentHandoff.status = data.handoff_status;
+            handoffsState.currentHandoff.assigned_agent_name = data.assigned_agent_name || handoffsState.currentHandoff.assigned_agent_name;
+            renderHandoffDetail(handoffsState.currentHandoff);
+        }
+
     } catch (error) {
         console.error('Failed to send message:', error);
         alert('Failed to send message. Please try again.');
     }
 }
 
-function startHandoffPolling() {
-    stopHandoffPolling();
-    handoffsState.pollInterval = setInterval(loadHandoffQueue, 10000);
+function startHandoffQueueStream() {
+    stopHandoffQueueStream();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    let url = `${API_BASE}/handoff/queue/stream?token=${encodeURIComponent(token)}`;
+    if (handoffsState.siteFilter) url += `&site_id=${encodeURIComponent(handoffsState.siteFilter)}`;
+    if (handoffsState.statusFilter) url += `&status=${encodeURIComponent(handoffsState.statusFilter)}`;
+
+    const es = new EventSource(url);
+    handoffsState.queueES = es;
+
+    es.onmessage = (e) => {
+        try {
+            const data = JSON.parse(e.data);
+            handoffsState.handoffs = data.handoffs || [];
+
+            const pendingEl = document.getElementById('pending-count');
+            const activeEl = document.getElementById('active-count');
+            if (pendingEl) pendingEl.textContent = data.pending_count || 0;
+            if (activeEl) activeEl.textContent = data.active_count || 0;
+
+            const badge = document.getElementById('handoff-badge');
+            if (badge) {
+                const count = data.pending_count || 0;
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+
+            renderHandoffQueue();
+        } catch (err) {
+            console.error('Queue SSE parse error:', err);
+        }
+    };
+
+    es.addEventListener('error', (e) => {
+        if (e.data) {
+            try {
+                const err = JSON.parse(e.data);
+                console.error('Queue SSE error event:', err.error);
+            } catch (_) {}
+        }
+        // Browser auto-reconnects on connection drops; nothing to do here.
+    });
 }
 
-function stopHandoffPolling() {
-    if (handoffsState.pollInterval) {
-        clearInterval(handoffsState.pollInterval);
-        handoffsState.pollInterval = null;
+function stopHandoffQueueStream() {
+    if (handoffsState.queueES) {
+        handoffsState.queueES.close();
+        handoffsState.queueES = null;
     }
 }
 
-function startMessagePolling() {
-    stopMessagePolling();
+function startMessageStream() {
+    stopMessageStream();
     if (!handoffsState.currentHandoff) return;
-    
-    handoffsState.messagePollInterval = setInterval(async () => {
-        if (!handoffsState.currentHandoff) return;
-        
+
+    const url = `${API_BASE}/handoff/${handoffsState.currentHandoff.handoff_id}/stream`;
+    const es = new EventSource(url);
+    handoffsState.messageES = es;
+
+    es.onmessage = (e) => {
         try {
-            const response = await fetch(`${API_BASE}/handoff/${handoffsState.currentHandoff.handoff_id}/full`, {
-                headers: getAuthHeaders()
-            });
-            
-            if (response.ok) {
-                const handoff = await response.json();
-                handoffsState.currentHandoff = handoff;
-                renderHandoffMessages(handoff.messages || []);
-                
-                if (handoff.status === 'resolved') {
-                    stopMessagePolling();
-                    renderHandoffDetail(handoff);
+            const data = JSON.parse(e.data);
+            const incomingMessages = Array.isArray(data.messages) ? data.messages : [];
+            const existingMessages = handoffsState.currentHandoff?.messages || [];
+            const hasExisting = Array.isArray(existingMessages) && existingMessages.length > 0;
+            const shouldSkipTransientEmpty = incomingMessages.length === 0 && hasExisting;
+
+            // Ignore brief empty snapshots from SSE polling to avoid message flicker/reset.
+            if (!shouldSkipTransientEmpty) {
+                if (handoffsState.currentHandoff) {
+                    handoffsState.currentHandoff.messages = incomingMessages;
                 }
+                renderHandoffMessages(incomingMessages);
             }
-        } catch (error) {
-            console.error('Failed to poll messages:', error);
+
+            if (data.status && data.status !== handoffsState.currentHandoff.status) {
+                handoffsState.currentHandoff.status = data.status;
+                handoffsState.currentHandoff.assigned_agent_name = data.agent_name || handoffsState.currentHandoff.assigned_agent_name;
+                renderHandoffDetail(handoffsState.currentHandoff);
+            }
+
+            if (data.status === 'resolved') {
+                stopMessageStream();
+                renderHandoffDetail(handoffsState.currentHandoff);
+            }
+        } catch (err) {
+            console.error('Message SSE parse error:', err);
         }
-    }, 3000);
+    };
+
+    es.addEventListener('error', (e) => {
+        if (e.data) {
+            try {
+                const err = JSON.parse(e.data);
+                if (err.error === 'Handoff not found') stopMessageStream();
+            } catch (_) {}
+        }
+    });
 }
 
-function stopMessagePolling() {
-    if (handoffsState.messagePollInterval) {
-        clearInterval(handoffsState.messagePollInterval);
-        handoffsState.messagePollInterval = null;
+function stopMessageStream() {
+    if (handoffsState.messageES) {
+        handoffsState.messageES.close();
+        handoffsState.messageES = null;
     }
 }
 
@@ -5313,20 +6217,12 @@ function populateWhiteLabelForm(config) {
         'wl-primary-color': config.primary_color || '#0D9488',
         'wl-primary-color-text': config.primary_color || '#0D9488',
         'wl-logo-url': config.logo_url || '',
-        'wl-favicon-url': config.favicon_url || '',
-        'wl-login-title': config.login_title || 'SiteChat',
-        'wl-login-subtitle': config.login_subtitle || 'AI-Powered Customer Support',
-        'wl-support-email': config.support_email || '',
-        'wl-footer-text': config.footer_text || ''
     };
-    
+
     Object.entries(fields).forEach(([id, value]) => {
         const el = document.getElementById(id);
         if (el) el.value = value;
     });
-    
-    const hideEl = document.getElementById('wl-hide-branding');
-    if (hideEl) hideEl.checked = config.hide_sitechat_branding === true;
 }
 
 function applyWhiteLabelBranding(config) {
@@ -5371,12 +6267,6 @@ async function saveWhiteLabelConfig() {
             app_name: document.getElementById('wl-app-name')?.value || 'SiteChat',
             primary_color: document.getElementById('wl-primary-color')?.value || '#0D9488',
             logo_url: document.getElementById('wl-logo-url')?.value || null,
-            favicon_url: document.getElementById('wl-favicon-url')?.value || null,
-            login_title: document.getElementById('wl-login-title')?.value || 'SiteChat',
-            login_subtitle: document.getElementById('wl-login-subtitle')?.value || 'AI-Powered Customer Support',
-            support_email: document.getElementById('wl-support-email')?.value || null,
-            footer_text: document.getElementById('wl-footer-text')?.value || null,
-            hide_sitechat_branding: document.getElementById('wl-hide-branding')?.checked || false
         };
         
         const response = await fetch(`${API_BASE}/platform/whitelabel`, {
@@ -5462,232 +6352,517 @@ function initWhiteLabelSettings() {
     loadWhiteLabelConfig();
 }
 
-// ----- Support agents (admin only; dedicated Agents page) -----
-let agentsPageListenersBound = false;
+// ==================== Settings Panels ====================
 
-function initAgentsView() {
-    if (currentUser?.role !== 'admin') return;
-
-    const addBtn = document.getElementById('add-agent-btn');
-    if (!agentsPageListenersBound) {
-        agentsPageListenersBound = true;
-        document.getElementById('add-agent-btn')?.addEventListener('click', () => showAgentForm(null, { scroll: true }));
-        document.getElementById('cancel-agent-form')?.addEventListener('click', resetAgentForm);
-    }
-
-    const preservedSites = Array.from(
-        document.querySelectorAll('#agent-sites-checkboxes input[name="agent-site"]:checked')
-    ).map(cb => cb.value);
-
-    loadSupportAgentsTable();
-    renderAgentSiteCheckboxes(preservedSites);
+let settingsPanelsInit = false;
+function initSettingsPanels() {
+    if (settingsPanelsInit) return;
+    settingsPanelsInit = true;
+    document.querySelectorAll('.settings-nav-item[data-panel]').forEach(item => {
+        item.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+            const panel = document.getElementById(`settings-panel-${item.dataset.panel}`);
+            if (panel) panel.classList.add('active');
+        });
+    });
 }
 
-/**
- * @param {object | null} editAgent
- * @param {{ scroll?: boolean }} [opts]
- */
-function showAgentForm(editAgent, opts = {}) {
-    const scroll = opts.scroll !== false;
-    const title = document.getElementById('agent-form-title');
-    const pwd = document.getElementById('agent-password');
-    const pwdGroup = document.getElementById('agent-password-group');
-    const pwdHint = document.getElementById('agent-password-hint');
-    const emailInput = document.getElementById('agent-email');
-    document.getElementById('agent-edit-id').value = editAgent?.id || '';
+// ==================== Profile Settings ====================
 
-    if (editAgent) {
-        if (title) title.textContent = 'Edit support agent';
-        document.getElementById('agent-name').value = editAgent.name || '';
-        if (emailInput) {
-            emailInput.value = editAgent.email || '';
-            emailInput.disabled = true;
-        }
-        pwd.required = false;
-        pwd.value = '';
-        pwdHint.textContent = 'Leave blank to keep the current password.';
-        if (pwdGroup) pwdGroup.style.display = '';
-    } else {
-        if (title) title.textContent = 'Add support agent';
-        document.getElementById('agent-name').value = '';
-        if (emailInput) {
-            emailInput.value = '';
-            emailInput.disabled = false;
-        }
-        pwd.required = true;
-        pwd.value = '';
-        pwdHint.textContent = 'At least 8 characters, with upper, lower, and number or symbol.';
-        if (pwdGroup) pwdGroup.style.display = '';
-    }
-
-    renderAgentSiteCheckboxes(editAgent?.assigned_site_ids || []);
-
-    if (scroll) {
-        document.getElementById('agent-form-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-}
-
-function resetAgentForm() {
-    showAgentForm(null, { scroll: false });
-}
-
-function renderAgentSiteCheckboxes(selectedIds) {
-    const wrap = document.getElementById('agent-sites-checkboxes');
-    if (!wrap) return;
-    const selected = new Set(selectedIds || []);
-    if (!sites.length) {
-        wrap.innerHTML = '<p class="text-muted">Add at least one site first, then assign it here.</p>';
+let profileListenerBound = false;
+function initProfileSettings() {
+    const form = document.getElementById('profile-form');
+    if (!form || profileListenerBound) {
+        // Still re-fill current values in case user data changed
+        const nameEl = document.getElementById('profile-name');
+        const emailEl = document.getElementById('profile-email');
+        if (nameEl && currentUser?.name) nameEl.value = currentUser.name;
+        if (emailEl && currentUser?.email) emailEl.value = currentUser.email;
         return;
     }
-    wrap.innerHTML = sites.map(s => {
-        const id = s.site_id;
-        const label = s.name || s.url || id;
-        const checked = selected.has(id) ? 'checked' : '';
-        return `<label class="agent-site-row"><input type="checkbox" name="agent-site" value="${escapeHtml(id)}" ${checked}><span>${escapeHtml(label)}</span></label>`;
-    }).join('');
-}
+    profileListenerBound = true;
 
-async function loadSupportAgentsTable() {
-    const wrap = document.getElementById('agents-table-wrap');
-    const loading = document.getElementById('agents-loading');
-    if (!wrap || currentUser?.role !== 'admin') return;
+    // Pre-fill name and email from currentUser
+    const nameEl = document.getElementById('profile-name');
+    const emailEl = document.getElementById('profile-email');
+    if (nameEl && currentUser?.name) nameEl.value = currentUser.name;
+    if (emailEl && currentUser?.email) emailEl.value = currentUser.email;
 
-    try {
-        if (loading) loading.style.display = '';
-        const response = await fetch(`${API_BASE}/auth/agents`, { headers: getAuthHeaders() });
-        if (!response.ok) throw new Error('Failed to load agents');
-        const agents = await response.json();
-        if (loading) loading.style.display = 'none';
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errEl = document.getElementById('profile-error');
+        const okEl = document.getElementById('profile-success');
+        const saveBtn = document.getElementById('profile-save-btn');
+        errEl.style.display = 'none';
+        okEl.style.display = 'none';
 
-        if (!agents.length) {
-            wrap.innerHTML = '<p class="text-muted">No support agents yet. Add one to handle live handoffs.</p>';
+        const name = nameEl?.value?.trim();
+        const currentPw = document.getElementById('profile-current-password')?.value;
+        const newPw = document.getElementById('profile-new-password')?.value;
+
+        const body = {};
+        if (name && name !== currentUser?.name) body.name = name;
+        if (newPw) {
+            body.current_password = currentPw;
+            body.new_password = newPw;
+        }
+
+        if (!Object.keys(body).length) {
+            errEl.textContent = 'No changes to save.';
+            errEl.style.display = '';
             return;
         }
 
-        wrap.innerHTML = `
-            <table class="data-table">
-                <thead>
-                    <tr><th>Name</th><th>Email</th><th>Sites</th><th></th></tr>
-                </thead>
-                <tbody>
-                    ${agents.map(a => `
-                        <tr data-agent-id="${escapeHtml(a.id)}">
-                            <td>${escapeHtml(a.name)}</td>
-                            <td>${escapeHtml(a.email)}</td>
-                            <td>${(a.assigned_site_ids || []).length}</td>
-                            <td>
-                                <button type="button" class="btn btn-secondary btn-sm edit-agent-btn">Edit</button>
-                                <button type="button" class="btn btn-danger btn-sm delete-agent-btn">Remove</button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>`;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+        try {
+            const res = await fetch(`${API_BASE}/auth/me`, {
+                method: 'PATCH',
+                headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                errEl.textContent = data.detail || 'Failed to save changes.';
+                errEl.style.display = '';
+                return;
+            }
+            // Update currentUser in memory and sidebar display
+            currentUser = { ...currentUser, ...data };
+            if (data.name) {
+                document.getElementById('user-name').textContent = data.name;
+                document.getElementById('user-avatar').textContent = avatarInitials(data.name);
+            }
+            // Clear password fields
+            document.getElementById('profile-current-password').value = '';
+            document.getElementById('profile-new-password').value = '';
+            okEl.style.display = '';
+            setTimeout(() => { okEl.style.display = 'none'; }, 3000);
+        } catch {
+            errEl.textContent = 'Network error. Please try again.';
+            errEl.style.display = '';
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save changes';
+        }
+    });
+}
 
-        wrap.querySelectorAll('.edit-agent-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tr = btn.closest('tr');
-                const id = tr?.dataset.agentId;
-                const rowAgent = agents.find(x => x.id === id);
-                if (rowAgent) showAgentForm(rowAgent, { scroll: true });
+// ==================== Team Management ====================
+
+let teamListenersBound = false;
+let activeTeamTab = 'agents'; // default; admins start on 'owners'
+
+function initTeamView() {
+    if (currentUser?.role === 'agent') return;
+
+    // Decide default tab
+    if (!teamListenersBound) {
+        activeTeamTab = currentUser?.role === 'admin' ? 'owners' : 'agents';
+    }
+
+    if (!teamListenersBound) {
+        teamListenersBound = true;
+
+        // Tab switching
+        document.querySelectorAll('.team-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                activeTeamTab = tab.dataset.teamTab;
+                document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.team-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById(`team-panel-${activeTeamTab}`)?.classList.remove('hidden');
+                updateTeamHeader();
+                loadActiveTab();
             });
         });
-        wrap.querySelectorAll('.delete-agent-btn').forEach(btn => {
+
+        // Modal controls
+        document.getElementById('member-modal-close')?.addEventListener('click', closeMemberModal);
+        document.getElementById('member-modal-cancel')?.addEventListener('click', closeMemberModal);
+        document.getElementById('member-modal-save')?.addEventListener('click', submitMemberForm);
+        document.getElementById('member-modal')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeMemberModal();
+        });
+
+        // Select-all toggle for site checkboxes
+        document.getElementById('sites-select-all-btn')?.addEventListener('click', () => {
+            const boxes = document.querySelectorAll('#member-sites-checkboxes input[name="member-site"]');
+            const allChecked = Array.from(boxes).every(b => b.checked);
+            boxes.forEach(b => { b.checked = !allChecked; });
+            updateSelectAllLabel();
+        });
+    }
+
+    // Activate correct tab
+    document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.team-panel').forEach(p => p.classList.add('hidden'));
+    const activeTabEl = document.getElementById(`team-tab-${activeTeamTab}`);
+    if (activeTabEl) activeTabEl.classList.add('active');
+    document.getElementById(`team-panel-${activeTeamTab}`)?.classList.remove('hidden');
+
+    updateTeamHeader();
+    loadActiveTab();
+}
+
+function updateTeamHeader() {
+    const actions = document.getElementById('team-header-actions');
+    const subtitle = document.getElementById('team-subtitle');
+    if (!actions) return;
+    if (activeTeamTab === 'owners') {
+        subtitle.textContent = 'Site owners can create and manage their own sites and support agents.';
+        actions.innerHTML = `<button type="button" class="btn btn-primary" id="team-add-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add site owner
+        </button>`;
+    } else {
+        subtitle.textContent = 'Support agents handle live chat handoffs. Each agent only sees the sites you assign.';
+        actions.innerHTML = `<button type="button" class="btn btn-primary" id="team-add-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add agent
+        </button>`;
+    }
+    document.getElementById('team-add-btn')?.addEventListener('click', () => openMemberModal(activeTeamTab, null));
+}
+
+function loadActiveTab() {
+    if (activeTeamTab === 'owners') loadTeamOwners();
+    else loadTeamAgents();
+}
+
+// ----- Avatar helpers -----
+const AVATAR_COLORS = ['#0d9488','#3b82f6','#8b5cf6','#f97316','#10b981','#f59e0b','#ef4444','#06b6d4'];
+function avatarColor(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h << 5) - h);
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+function avatarInitials(name) {
+    const parts = (name || '?').trim().split(/\s+/);
+    return parts.length >= 2 ? parts[0][0] + parts[1][0] : parts[0].slice(0, 2);
+}
+
+// ----- Site Owners (admin only) -----
+async function loadTeamOwners() {
+    const list = document.getElementById('owners-list');
+    const countEl = document.getElementById('owners-count');
+    if (!list) return;
+    list.innerHTML = `<div class="members-loading"><svg class="spinner" width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.2"/><path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg> Loading…</div>`;
+    try {
+        const res = await fetch(`${API_BASE}/auth/users`, { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error();
+        const all = await res.json();
+        const owners = all.filter(u => u.role !== 'agent');
+        if (countEl) countEl.textContent = owners.length;
+
+        // Stats bar
+        const statsEl = document.getElementById('owners-stats');
+        if (statsEl && owners.length) {
+            const adminCount = owners.filter(u => u.role === 'admin').length;
+            const userCount = owners.filter(u => u.role === 'user').length;
+            statsEl.style.display = '';
+            statsEl.innerHTML = `
+                <span class="team-panel-stat"><span class="team-panel-stat-num">${owners.length}</span> total</span>
+                <span class="team-panel-stat-sep"></span>
+                <span class="team-panel-stat"><span class="team-panel-stat-num">${adminCount}</span> admin${adminCount !== 1 ? 's' : ''}</span>
+                <span class="team-panel-stat-sep"></span>
+                <span class="team-panel-stat"><span class="team-panel-stat-num">${userCount}</span> site owner${userCount !== 1 ? 's' : ''}</span>`;
+        } else if (statsEl) {
+            statsEl.style.display = 'none';
+        }
+
+        if (!owners.length) {
+            list.innerHTML = `<div class="members-empty">
+                <div class="members-empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <p>No site owners yet.</p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openMemberModal('owners',null)">Add first site owner</button>
+            </div>`;
+            return;
+        }
+        const roleLabels = { admin: 'Admin', user: 'Site Owner' };
+        const rolePillClass = { admin: 'role-admin', user: 'role-user' };
+        list.innerHTML = owners.map(u => {
+            const initials = avatarInitials(u.name);
+            const color = avatarColor(u.email);
+            const joined = new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const canDelete = u.id !== currentUser.id && u.role !== 'admin';
+            return `<div class="member-row" data-member-id="${escapeHtml(u.id)}" data-member-type="owner">
+                <div class="member-identity">
+                    <div class="member-avatar" style="background:${color}">${escapeHtml(initials)}</div>
+                    <div class="member-details">
+                        <span class="member-name">${escapeHtml(u.name)}</span>
+                        <span class="member-email">${escapeHtml(u.email)}</span>
+                    </div>
+                </div>
+                <div><span class="role-badge ${rolePillClass[u.role] || ''}">${escapeHtml(roleLabels[u.role] || u.role)}</span></div>
+                <div class="member-date">${joined}</div>
+                <div class="member-actions">
+                    ${canDelete ? `<button class="btn btn-ghost btn-sm delete-member-btn" title="Delete user">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+        list.querySelectorAll('.delete-member-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const tr = btn.closest('tr');
-                const id = tr?.dataset.agentId;
-                if (!id || !confirm('Remove this agent? They will no longer be able to log in.')) return;
-                const del = await fetch(`${API_BASE}/auth/agents/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
-                if (!del.ok) {
-                    alert('Could not remove agent');
-                    return;
-                }
-                loadSupportAgentsTable();
+                const row = btn.closest('[data-member-id]');
+                const id = row?.dataset.memberId;
+                if (!id || !confirm('Delete this user? Their sites and agents will be transferred to you.')) return;
+                btn.disabled = true;
+                const del = await fetch(`${API_BASE}/auth/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                if (!del.ok) { alert('Could not delete user'); btn.disabled = false; return; }
+                loadTeamOwners();
             });
         });
-    } catch (e) {
-        console.error(e);
-        if (loading) loading.style.display = 'none';
-        wrap.innerHTML = '<p class="text-muted">Could not load agents.</p>';
+    } catch {
+        list.innerHTML = `<div class="members-empty"><p>Could not load users.</p></div>`;
     }
 }
 
-function formatAgentApiError(data) {
-    if (!data || typeof data !== 'object') return '';
+// ----- Support Agents -----
+async function loadTeamAgents() {
+    const list = document.getElementById('agents-list');
+    const countEl = document.getElementById('agents-count');
+    if (!list) return;
+    list.innerHTML = `<div class="members-loading"><svg class="spinner" width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.2"/><path d="M12 2a10 10 0 0110 10" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg> Loading…</div>`;
+    try {
+        const res = await fetch(`${API_BASE}/auth/agents`, { headers: getAuthHeaders() });
+        if (!res.ok) throw new Error();
+        const agents = await res.json();
+        if (countEl) countEl.textContent = agents.length;
+
+        // Stats bar
+        const statsEl = document.getElementById('agents-stats');
+        if (statsEl && agents.length) {
+            const allSiteIds = new Set(agents.flatMap(a => a.assigned_site_ids || []));
+            statsEl.style.display = '';
+            statsEl.innerHTML = `
+                <span class="team-panel-stat"><span class="team-panel-stat-num">${agents.length}</span> agent${agents.length !== 1 ? 's' : ''}</span>
+                <span class="team-panel-stat-sep"></span>
+                <span class="team-panel-stat"><span class="team-panel-stat-num">${allSiteIds.size}</span> site${allSiteIds.size !== 1 ? 's' : ''} covered</span>`;
+        } else if (statsEl) {
+            statsEl.style.display = 'none';
+        }
+
+        if (!agents.length) {
+            list.innerHTML = `<div class="members-empty">
+                <div class="members-empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+                <p>No support agents yet.</p>
+                <button type="button" class="btn btn-primary btn-sm" onclick="openMemberModal('agents',null)">Add first agent</button>
+            </div>`;
+            return;
+        }
+        // Build site name lookup
+        const siteMap = Object.fromEntries((sites || []).map(s => [s.site_id, s.name || s.url || s.site_id]));
+        list.innerHTML = agents.map(a => {
+            const initials = avatarInitials(a.name);
+            const color = avatarColor(a.email);
+            const joined = new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            const siteIds = a.assigned_site_ids || [];
+            const siteBadges = siteIds.length
+                ? siteIds.map(id => `<span class="member-site-badge" title="${escapeHtml(siteMap[id] || id)}">${escapeHtml(siteMap[id] || id)}</span>`).join('')
+                : '<span class="member-no-sites">No sites assigned</span>';
+            return `<div class="member-row member-row--agents" data-member-id="${escapeHtml(a.id)}" data-member-type="agent">
+                <div class="member-identity">
+                    <div class="member-avatar" style="background:${color}">${escapeHtml(initials)}</div>
+                    <div class="member-details">
+                        <span class="member-name">${escapeHtml(a.name)}</span>
+                        <span class="member-email">${escapeHtml(a.email)}</span>
+                    </div>
+                </div>
+                <div class="member-sites-badges">${siteBadges}</div>
+                <div class="member-date">${joined}</div>
+                <div class="member-actions">
+                    <button class="btn btn-ghost btn-sm edit-member-btn" title="Edit agent">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn btn-ghost btn-sm delete-member-btn" title="Remove agent">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+        list.querySelectorAll('.edit-member-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('[data-member-id]');
+                const id = row?.dataset.memberId;
+                const agent = agents.find(a => a.id === id);
+                if (agent) openMemberModal('agents', agent);
+            });
+        });
+        list.querySelectorAll('.delete-member-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const row = btn.closest('[data-member-id]');
+                const id = row?.dataset.memberId;
+                if (!id || !confirm('Remove this agent? They will no longer be able to log in.')) return;
+                btn.disabled = true;
+                const del = await fetch(`${API_BASE}/auth/agents/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                if (!del.ok) { alert('Could not remove agent'); btn.disabled = false; return; }
+                loadTeamAgents();
+            });
+        });
+    } catch {
+        list.innerHTML = `<div class="members-empty"><p>Could not load agents.</p></div>`;
+    }
+}
+
+// ----- Add / Edit Modal -----
+function openMemberModal(type, member) {
+    const modal = document.getElementById('member-modal');
+    const badge = document.getElementById('member-modal-badge');
+    const title = document.getElementById('member-modal-title');
+    const sitesGroup = document.getElementById('member-sites-group');
+    const emailEl = document.getElementById('member-email');
+    const pwd = document.getElementById('member-password');
+    const pwdHint = document.getElementById('member-password-hint');
+
+    document.getElementById('member-edit-id').value = member?.id || '';
+    document.getElementById('member-type').value = type;
+    document.getElementById('member-name').value = member?.name || '';
+
+    if (type === 'owners') {
+        badge.textContent = 'Site Owner';
+        badge.style.color = 'var(--blue)';
+        title.textContent = member ? 'Edit site owner' : 'Add site owner';
+        sitesGroup.style.display = 'none';
+    } else {
+        badge.textContent = 'Support Agent';
+        badge.style.color = 'var(--primary)';
+        title.textContent = member ? 'Edit support agent' : 'Add support agent';
+        sitesGroup.style.display = '';
+        renderMemberSiteCheckboxes(member?.assigned_site_ids || []);
+    }
+
+    if (member) {
+        emailEl.value = member.email || '';
+        emailEl.disabled = true;
+        pwd.required = false;
+        pwd.value = '';
+        pwdHint.textContent = 'Leave blank to keep the current password.';
+    } else {
+        emailEl.value = '';
+        emailEl.disabled = false;
+        pwd.required = true;
+        pwd.value = '';
+        pwdHint.textContent = 'Min. 8 characters.';
+    }
+
+    const errEl = document.getElementById('member-modal-error');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+    modal?.classList.add('active');
+    document.getElementById('member-name').focus();
+}
+
+function closeMemberModal() {
+    document.getElementById('member-modal')?.classList.remove('active');
+}
+
+function updateSelectAllLabel() {
+    const btn = document.getElementById('sites-select-all-btn');
+    if (!btn) return;
+    const boxes = document.querySelectorAll('#member-sites-checkboxes input[name="member-site"]');
+    if (!boxes.length) return;
+    const allChecked = Array.from(boxes).every(b => b.checked);
+    btn.textContent = allChecked ? 'Deselect all' : 'Select all';
+}
+
+function renderMemberSiteCheckboxes(selectedIds) {
+    const wrap = document.getElementById('member-sites-checkboxes');
+    if (!wrap) return;
+    const selected = new Set(selectedIds || []);
+    if (!sites.length) {
+        wrap.innerHTML = '<p class="form-hint">Add at least one site first.</p>';
+        document.getElementById('sites-select-all-btn')?.style && (document.getElementById('sites-select-all-btn').style.display = 'none');
+        return;
+    }
+    const selectAllBtn = document.getElementById('sites-select-all-btn');
+    if (selectAllBtn) selectAllBtn.style.display = '';
+    wrap.innerHTML = sites.map(s => {
+        const checked = selected.has(s.site_id) ? 'checked' : '';
+        return `<label class="agent-site-row">
+            <input type="checkbox" name="member-site" value="${escapeHtml(s.site_id)}" ${checked}>
+            <span>${escapeHtml(s.name || s.url || s.site_id)}</span>
+        </label>`;
+    }).join('');
+    wrap.querySelectorAll('input[name="member-site"]').forEach(cb => {
+        cb.addEventListener('change', updateSelectAllLabel);
+    });
+    updateSelectAllLabel();
+}
+
+function formatMemberApiError(data) {
+    if (!data) return 'Save failed. Please try again.';
     const d = data.detail;
     if (typeof d === 'string') return d;
     if (Array.isArray(d)) {
-        return d
-            .map((item) => (typeof item === 'object' && item !== null ? item.msg || JSON.stringify(item) : String(item)))
-            .filter(Boolean)
-            .join(' ');
+        return d.map(i => {
+            if (typeof i === 'object') return i.msg?.replace(/^Value error, /i, '') || '';
+            return String(i);
+        }).filter(Boolean).join(' ');
     }
-    return data.message || '';
+    return data.message || 'Save failed. Please try again.';
 }
 
-async function submitAgentForm(e) {
-    e.preventDefault();
-    if (currentUser?.role !== 'admin') {
-        alert('Only administrators can manage support agents.');
-        return;
-    }
+async function submitMemberForm() {
+    const editId = document.getElementById('member-edit-id').value;
+    const type = document.getElementById('member-type').value;
+    const name = document.getElementById('member-name').value.trim();
+    const email = document.getElementById('member-email').value.trim();
+    const password = document.getElementById('member-password').value;
 
-    const form = document.getElementById('agent-form');
-    if (form && typeof form.reportValidity === 'function' && !form.reportValidity()) {
-        return;
-    }
+    const showModalErr = (msg) => {
+        const el = document.getElementById('member-modal-error');
+        if (el) { el.textContent = msg; el.style.display = ''; }
+    };
 
-    const editIdEl = document.getElementById('agent-edit-id');
-    const nameEl = document.getElementById('agent-name');
-    const emailEl = document.getElementById('agent-email');
-    const pwdEl = document.getElementById('agent-password');
-    if (!editIdEl || !nameEl || !emailEl || !pwdEl) {
-        console.error('Agent form fields missing from DOM');
-        return;
-    }
+    if (!name || (!editId && !email)) { showModalErr('Please fill in all required fields.'); return; }
+    if (!editId && !password) { showModalErr('Password is required.'); return; }
 
-    const editId = editIdEl.value;
-    const name = nameEl.value.trim();
-    const email = emailEl.value.trim();
-    const password = pwdEl.value;
-    const boxes = document.querySelectorAll('#agent-sites-checkboxes input[name="agent-site"]:checked');
-    const assigned_site_ids = Array.from(boxes).map(b => b.value);
-
-    const saveBtn = document.getElementById('save-agent-btn');
-    if (saveBtn) {
-        saveBtn.disabled = true;
-    }
+    const saveBtn = document.getElementById('member-modal-save');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
 
     try {
-        if (editId) {
-            const body = { name, assigned_site_ids };
-            if (password) body.password = password;
-            const res = await fetch(`${API_BASE}/auth/agents/${editId}`, {
-                method: 'PATCH',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(formatAgentApiError(err) || 'Update failed');
-            }
-        } else {
-            const res = await fetch(`${API_BASE}/auth/agents`, {
+        if (type === 'owners') {
+            // Create new owner (edit not supported yet — email is the key)
+            const res = await fetch(`${API_BASE}/auth/users`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ name, email, password, assigned_site_ids })
+                body: JSON.stringify({ name, email, password })
             });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(formatAgentApiError(err) || 'Could not create agent');
+            if (!res.ok) throw new Error(formatMemberApiError(await res.json().catch(() => ({}))));
+        } else {
+            const boxes = document.querySelectorAll('#member-sites-checkboxes input[name="member-site"]:checked');
+            const assigned_site_ids = Array.from(boxes).map(b => b.value);
+            if (editId) {
+                const body = { name, assigned_site_ids };
+                if (password) body.password = password;
+                const res = await fetch(`${API_BASE}/auth/agents/${editId}`, {
+                    method: 'PATCH',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error(formatMemberApiError(await res.json().catch(() => ({}))));
+            } else {
+                const res = await fetch(`${API_BASE}/auth/agents`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ name, email, password, assigned_site_ids })
+                });
+                if (!res.ok) throw new Error(formatMemberApiError(await res.json().catch(() => ({}))));
             }
         }
-        resetAgentForm();
-        loadSupportAgentsTable();
+        closeMemberModal();
+        loadActiveTab();
     } catch (err) {
-        alert(err.message || 'Save failed');
+        const msg = err.message || 'Save failed. Please try again.';
+        const errEl = document.getElementById('member-modal-error');
+        if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
+        else alert(msg);
     } finally {
-        if (saveBtn) saveBtn.disabled = false;
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
     }
 }
 

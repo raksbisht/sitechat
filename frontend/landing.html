@@ -870,27 +870,81 @@
               handoffBtn.innerHTML = ICON_AGENT + '<span>Agent connected</span><div class="sitechat-handoff-tip">A real person has joined</div>';
             }
 
-            setIdle();
+            function syncStateFromWidget() {
+              var inHandoffMode = header.classList.contains('handoff-mode');
+              var subtitle = header.querySelector('.sitechat-header-text p');
+              var isConnected = subtitle && subtitle.textContent.indexOf('Chatting') !== -1;
+
+              if (isConnected) {
+                setConnected();
+                return;
+              }
+              if (inHandoffMode) {
+                setRequesting();
+                return;
+              }
+              setIdle();
+            }
+
+            syncStateFromWidget();
+
+            var resetTimer = null;
+
+            function scheduleReset() {
+              clearTimeout(resetTimer);
+              // If handoff-mode isn't added within 12s the request likely failed — reset
+              resetTimer = setTimeout(function() {
+                if (handoffBtn.getAttribute('data-state') === 'requesting') {
+                  setIdle();
+                }
+              }, 12000);
+            }
 
             handoffBtn.addEventListener('click', function(e) {
-              // Let the widget handle the actual handoff logic, just track visual state
               var state = handoffBtn.getAttribute('data-state');
               if (state === 'idle') {
                 setRequesting();
+                scheduleReset();
+                // let the widget's own handler fire to create the handoff
               } else if (state === 'requesting') {
+                // user is cancelling — stop event so widget doesn't start a new handoff
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                clearTimeout(resetTimer);
                 setIdle();
               }
             }, true); // capture phase so we run before widget's own handler
 
-            // Watch for widget entering/leaving handoff-mode
+            // Watch for widget entering/leaving handoff-mode (class change only)
             var headerObserver = new MutationObserver(function() {
-              if (header.classList.contains('handoff-mode')) {
-                setConnected();
-              } else if (handoffBtn.getAttribute('data-state') === 'connected') {
-                setIdle();
+              if (!header.classList.contains('handoff-mode')) {
+                // handoff-mode removed = session resolved — restore button
+                if (handoffBtn.getAttribute('data-state') === 'connected' ||
+                    handoffBtn.getAttribute('data-state') === 'requesting') {
+                  handoffBtn.style.display = '';
+                  setIdle();
+                }
+              } else {
+                // handoff-mode just added = pending — clear the reset timer,
+                // but do NOT call setConnected() yet (agent hasn't accepted)
+                clearTimeout(resetTimer);
               }
             });
             headerObserver.observe(header, { attributes: true, attributeFilter: ['class'] });
+
+            // Watch the subtitle text — widget sets "Chatting with X" only when
+            // an agent actually claims the session (pending → active)
+            var subtitle = header.querySelector('.sitechat-header-text p');
+            if (subtitle) {
+              var subtitleObserver = new MutationObserver(function() {
+                if (header.classList.contains('handoff-mode') &&
+                    subtitle.textContent.indexOf('Chatting') !== -1) {
+                  setConnected();
+                }
+              });
+              subtitleObserver.observe(subtitle, { childList: true, characterData: true, subtree: true });
+            }
           }
         });
         observer.observe(document.body, { childList: true, subtree: true });

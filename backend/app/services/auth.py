@@ -44,6 +44,34 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        from app.core.security import sanitize_input
+        v = sanitize_input(v, max_length=100)
+        if len(v) < 2:
+            raise ValueError("Name must be at least 2 characters")
+        return v
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        from app.core.security import validate_password
+        is_valid, error_message = validate_password(v)
+        if not is_valid:
+            raise ValueError(error_message)
+        return v
+
+
 class AgentCreate(BaseModel):
     email: EmailStr
     password: str
@@ -180,6 +208,28 @@ class AuthService:
         if hasattr(self._provider, 'get_all_users'):
             return await self._provider.get_all_users()
         return []
+
+    async def update_profile(self, user_id: str, data: "ProfileUpdate") -> Optional[dict]:
+        user = await self._provider.get_user_by_id(user_id)
+        if not user:
+            return None
+
+        updates: dict = {"updated_at": datetime.utcnow()}
+
+        if data.name:
+            updates["name"] = data.name
+
+        if data.new_password:
+            if not data.current_password:
+                raise ValueError("Current password required to set a new password")
+            if not verify_password(data.current_password, user.get("password_hash", "")):
+                raise ValueError("Current password is incorrect")
+            updates["password_hash"] = get_password_hash(data.new_password)
+
+        if hasattr(self._provider, "update_user"):
+            await self._provider.update_user(user_id, updates)
+
+        return await self._provider.get_user_by_id(user_id)
     
     async def update_user_role(self, user_id: str, role: UserRole) -> bool:
         # Use provider interface if available
@@ -193,24 +243,29 @@ class AuthService:
             return await self._provider.delete_user(user_id)
         return False
 
-    async def _sites_belong_to_admin(self, admin_id: str, site_ids: List[str]) -> bool:
+    async def _sites_belong_to_caller(self, caller: dict, site_ids: List[str]) -> bool:
+        """Check all site_ids are accessible by the caller.
+        Admins can assign agents to any site. Users can only assign to their own sites."""
         if not site_ids:
             return True
+        if caller.get("role") == UserRole.ADMIN.value:
+            return True
+        caller_id = str(caller["_id"])
         for sid in site_ids:
             if not hasattr(self._provider, "get_site"):
                 return False
             site = await self._provider.get_site(sid)
-            if not site or site.get("user_id") != admin_id:
+            if not site or site.get("user_id") != caller_id:
                 return False
         return True
 
-    async def create_support_agent(self, admin: dict, data: AgentCreate) -> Optional[dict]:
-        """Create a handoff agent user scoped to admin's sites."""
-        admin_id = str(admin["_id"])
+    async def create_support_agent(self, caller: dict, data: AgentCreate) -> Optional[dict]:
+        """Create a handoff agent scoped to the caller (admin or site owner)."""
+        caller_id = str(caller["_id"])
         existing = await self._provider.get_user_by_email(data.email)
         if existing:
             return None
-        if not await self._sites_belong_to_admin(admin_id, data.assigned_site_ids):
+        if not await self._sites_belong_to_caller(caller, data.assigned_site_ids):
             raise ValueError("One or more sites are invalid or not owned by you")
 
         user_doc = {
@@ -218,7 +273,7 @@ class AuthService:
             "name": data.name,
             "password_hash": get_password_hash(data.password),
             "role": UserRole.AGENT.value,
-            "owner_id": admin_id,
+            "owner_id": caller_id,
             "assigned_site_ids": list(data.assigned_site_ids),
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
@@ -226,25 +281,30 @@ class AuthService:
         user_id = await self._provider.create_user(user_doc)
         return await self._provider.get_user_by_id(user_id)
 
-    async def list_support_agents(self, admin: dict) -> list:
-        admin_id = str(admin["_id"])
+    async def list_support_agents(self, caller: dict) -> list:
+        """List agents. Admins see all platform agents; users see only their own."""
+        if caller.get("role") == UserRole.ADMIN.value:
+            if hasattr(self._provider, "list_all_agents"):
+                return await self._provider.list_all_agents()
+        caller_id = str(caller["_id"])
         if hasattr(self._provider, "list_users_agents_for_owner"):
-            return await self._provider.list_users_agents_for_owner(admin_id)
+            return await self._provider.list_users_agents_for_owner(caller_id)
         return []
 
-    async def update_support_agent(self, admin: dict, agent_id: str, data: AgentUpdate) -> Optional[dict]:
-        admin_id = str(admin["_id"])
+    async def update_support_agent(self, caller: dict, agent_id: str, data: AgentUpdate) -> Optional[dict]:
+        caller_id = str(caller["_id"])
         agent = await self._provider.get_user_by_id(agent_id)
         if not agent or agent.get("role") != UserRole.AGENT.value:
             return None
-        if agent.get("owner_id") != admin_id:
+        # Admin can update any agent; users can only update agents they own
+        if caller.get("role") != UserRole.ADMIN.value and agent.get("owner_id") != caller_id:
             return None
 
         updates = {}
         if data.name is not None:
             updates["name"] = data.name
         if data.assigned_site_ids is not None:
-            if not await self._sites_belong_to_admin(admin_id, data.assigned_site_ids):
+            if not await self._sites_belong_to_caller(caller, data.assigned_site_ids):
                 raise ValueError("One or more sites are invalid or not owned by you")
             updates["assigned_site_ids"] = list(data.assigned_site_ids)
         if data.password:
@@ -257,14 +317,28 @@ class AuthService:
             await self._provider.update_user(agent_id, updates)
         return await self._provider.get_user_by_id(agent_id)
 
-    async def delete_support_agent(self, admin: dict, agent_id: str) -> bool:
-        admin_id = str(admin["_id"])
+    async def delete_support_agent(self, caller: dict, agent_id: str) -> bool:
+        caller_id = str(caller["_id"])
         agent = await self._provider.get_user_by_id(agent_id)
         if not agent or agent.get("role") != UserRole.AGENT.value:
             return False
-        if agent.get("owner_id") != admin_id:
+        # Admin can delete any agent; users can only delete agents they own
+        if caller.get("role") != UserRole.ADMIN.value and agent.get("owner_id") != caller_id:
             return False
         return await self.delete_user(agent_id)
+
+    async def delete_user_with_transfer(self, user_id: str, admin_id: str) -> bool:
+        """Delete a user, transferring their sites and agents to the admin."""
+        user = await self._provider.get_user_by_id(user_id)
+        if not user:
+            return False
+        if hasattr(self._provider, "transfer_sites_to_user"):
+            transferred_sites = await self._provider.transfer_sites_to_user(user_id, admin_id)
+            logger.info(f"Transferred {transferred_sites} sites from user {user_id} to admin {admin_id}")
+        if hasattr(self._provider, "transfer_agents_to_user"):
+            transferred_agents = await self._provider.transfer_agents_to_user(user_id, admin_id)
+            logger.info(f"Transferred {transferred_agents} agents from user {user_id} to admin {admin_id}")
+        return await self.delete_user(user_id)
     
     async def ensure_admin_exists(self):
         """

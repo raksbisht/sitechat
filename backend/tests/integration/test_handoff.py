@@ -414,6 +414,80 @@ class TestUpdateHandoffStatus:
         assert response.status_code == 500
 
 
+class TestAssignHandoff:
+    """PUT /api/handoff/{handoff_id}/assign — admin routes chat to an agent."""
+
+    @pytest.mark.asyncio
+    async def test_assign_handoff_success(self, admin_client, mock_database, mock_admin_user, sample_handoff_data):
+        agent_uid = mock_database.seed_user({
+            "user_id": "agent_assign_1",
+            "email": "agent_assign@test.com",
+            "name": "Agent Assign",
+            "role": "agent",
+            "owner_id": mock_admin_user["_id"],
+            "assigned_site_ids": ["test_site_123"],
+            "password_hash": "$2b$12$test_hash",
+        })
+        h = {**sample_handoff_data}
+        h["created_at"] = datetime.utcnow()
+        h["updated_at"] = datetime.utcnow()
+        mock_database._handoffs[h["handoff_id"]] = h
+
+        response = await admin_client.put(
+            f"/api/handoff/{h['handoff_id']}/assign",
+            json={"agent_id": agent_uid},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["handoff"]["assigned_agent_name"] == "Agent Assign"
+        assert data["handoff"]["assigned_agent_id"] == agent_uid
+
+    @pytest.mark.asyncio
+    async def test_assign_handoff_forbidden_non_admin(self, authenticated_client, mock_database, mock_admin_user, sample_handoff_data):
+        agent_uid = mock_database.seed_user({
+            "user_id": "agent_assign_2",
+            "email": "agent2@test.com",
+            "name": "Agent Two",
+            "role": "agent",
+            "owner_id": mock_admin_user["_id"],
+            "assigned_site_ids": ["test_site_123"],
+            "password_hash": "$2b$12$test_hash",
+        })
+        h = {**sample_handoff_data}
+        h["created_at"] = datetime.utcnow()
+        h["updated_at"] = datetime.utcnow()
+        mock_database._handoffs[h["handoff_id"]] = h
+
+        response = await authenticated_client.put(
+            f"/api/handoff/{h['handoff_id']}/assign",
+            json={"agent_id": agent_uid},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_assign_handoff_resolved_rejected(self, admin_client, mock_database, mock_admin_user, sample_handoff_data):
+        agent_uid = mock_database.seed_user({
+            "user_id": "agent_assign_3",
+            "email": "agent3@test.com",
+            "name": "Agent Three",
+            "role": "agent",
+            "owner_id": mock_admin_user["_id"],
+            "assigned_site_ids": ["test_site_123"],
+            "password_hash": "$2b$12$test_hash",
+        })
+        h = {**sample_handoff_data, "status": "resolved"}
+        h["created_at"] = datetime.utcnow()
+        h["updated_at"] = datetime.utcnow()
+        mock_database._handoffs[h["handoff_id"]] = h
+
+        response = await admin_client.put(
+            f"/api/handoff/{h['handoff_id']}/assign",
+            json={"agent_id": agent_uid},
+        )
+        assert response.status_code == 400
+
+
 class TestHandoffQueue:
     """Tests for GET /api/sites/{site_id}/handoff/queue endpoint."""
     

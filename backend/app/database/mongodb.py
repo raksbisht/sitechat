@@ -1,7 +1,8 @@
 """
 MongoDB connection and operations for conversations, pages, and memory.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
+import uuid as _uuid_module
 from typing import List, Optional, Dict, Any, Tuple
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from loguru import logger
@@ -103,11 +104,25 @@ class MongoDB:
             {
                 "$push": {"messages": message},
                 "$set": update_set,
-                "$setOnInsert": {"created_at": datetime.utcnow()}
+                "$setOnInsert": {
+                    "created_at": datetime.utcnow(),
+                    "status": "open",
+                    "priority": "medium",
+                    "tags": [],
+                    "unread": True,
+                    "notes": []
+                }
             },
             upsert=True
         )
-        
+
+        # Track first assistant response time
+        if role == "assistant":
+            await self.db.conversations.update_one(
+                {"session_id": session_id, "first_response_at": {"$exists": False}},
+                {"$set": {"first_response_at": datetime.utcnow()}}
+            )
+
         return message["message_id"]
     
     async def add_message_feedback(
@@ -186,23 +201,33 @@ class MongoDB:
         sort_by: str = "updated_at",
         order: int = -1,
         date_from: datetime = None,
-        date_to: datetime = None
+        date_to: datetime = None,
+        status: str = None,
+        priority: str = None,
+        tag: str = None
     ) -> Tuple[List[Dict], int]:
         """Get paginated conversations with filters."""
         query = {}
-        
+
         if site_id:
             query["site_id"] = site_id
-        
+
         if date_from or date_to:
             query["created_at"] = {}
             if date_from:
                 query["created_at"]["$gte"] = date_from
             if date_to:
                 query["created_at"]["$lte"] = date_to
-        
+
+        if status:
+            query["status"] = status
+        if priority:
+            query["priority"] = priority
+        if tag:
+            query["tags"] = tag
+
         total = await self.db.conversations.count_documents(query)
-        
+
         skip = (page - 1) * limit
         cursor = self.db.conversations.find(
             query,
@@ -211,7 +236,14 @@ class MongoDB:
                 "site_id": 1,
                 "created_at": 1,
                 "updated_at": 1,
-                "messages": {"$slice": 1}
+                "messages": {"$slice": 1},
+                "status": 1,
+                "priority": 1,
+                "tags": 1,
+                "unread": 1,
+                "visitor_name": 1,
+                "visitor_email": 1,
+                "satisfaction_rating": 1
             }
         ).sort(sort_by, order).skip(skip).limit(limit)
         
@@ -248,15 +280,43 @@ class MongoDB:
         response_times = [m.get("response_time_ms") for m in messages if m.get("response_time_ms")]
         avg_response_time = sum(response_times) / len(response_times) if response_times else 0
         
-        conv["stats"] = {
+        stats = {
             "message_count": len(messages),
             "user_messages": sum(1 for m in messages if m.get("role") == "user"),
             "assistant_messages": sum(1 for m in messages if m.get("role") == "assistant"),
             "positive_feedback": positive_feedback,
             "negative_feedback": negative_feedback,
-            "avg_response_time_ms": round(avg_response_time, 2)
+            "avg_response_time_ms": round(avg_response_time, 2),
+            "first_response_time_ms": None,
+            "resolution_time_ms": None
         }
-        
+
+        # Calculate sentiment from feedback ratio
+        if positive_feedback + negative_feedback > 0:
+            conv["sentiment"] = round(
+                (positive_feedback - negative_feedback) / (positive_feedback + negative_feedback), 2
+            )
+        else:
+            conv["sentiment"] = None
+
+        # First response time (time from first user message to first assistant message)
+        messages_sorted = sorted(messages, key=lambda m: m.get("timestamp", datetime.utcnow()))
+        first_user = next((m for m in messages_sorted if m.get("role") == "user"), None)
+        first_assistant = next((m for m in messages_sorted if m.get("role") == "assistant"), None)
+        if first_user and first_assistant:
+            user_ts = first_user.get("timestamp")
+            asst_ts = first_assistant.get("timestamp")
+            if user_ts and asst_ts:
+                diff = (asst_ts - user_ts).total_seconds() * 1000
+                stats["first_response_time_ms"] = max(0, int(diff))
+
+        # Resolution time
+        if conv.get("resolved_at") and conv.get("created_at"):
+            diff = (conv["resolved_at"] - conv["created_at"]).total_seconds() * 1000
+            stats["resolution_time_ms"] = max(0, int(diff))
+
+        conv["stats"] = stats
+
         return conv
     
     async def search_conversations(
@@ -270,8 +330,7 @@ class MongoDB:
         search_filter = {}
         
         if query:
-            escaped_query = re.escape(query)
-            search_filter["messages.content"] = {"$regex": escaped_query, "$options": "i"}
+            search_filter["$text"] = {"$search": query}
         
         if site_id:
             search_filter["site_id"] = site_id
@@ -286,7 +345,14 @@ class MongoDB:
                 "site_id": 1,
                 "created_at": 1,
                 "updated_at": 1,
-                "messages": 1
+                "messages": 1,
+                "status": 1,
+                "priority": 1,
+                "tags": 1,
+                "unread": 1,
+                "visitor_name": 1,
+                "visitor_email": 1,
+                "satisfaction_rating": 1
             }
         ).sort("updated_at", -1).skip(skip).limit(limit)
         
@@ -341,6 +407,90 @@ class MongoDB:
         
         return conversations
     
+    # ==================== Conversation Feature Methods ====================
+
+    async def update_conversation_status(self, session_id: str, status: str) -> bool:
+        update = {"status": status, "updated_at": datetime.utcnow()}
+        if status in ("resolved", "closed"):
+            update["resolved_at"] = datetime.utcnow()
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id}, {"$set": update}
+        )
+        return result.matched_count > 0
+
+    async def update_conversation_priority(self, session_id: str, priority: str) -> bool:
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id},
+            {"$set": {"priority": priority, "updated_at": datetime.utcnow()}}
+        )
+        return result.matched_count > 0
+
+    async def update_conversation_tags(self, session_id: str, tags: list) -> bool:
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id},
+            {"$set": {"tags": tags, "updated_at": datetime.utcnow()}}
+        )
+        return result.matched_count > 0
+
+    async def add_conversation_note(self, session_id: str, content: str) -> dict:
+        note = {
+            "note_id": str(_uuid_module.uuid4()),
+            "content": content,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        await self.db.conversations.update_one(
+            {"session_id": session_id},
+            {"$push": {"notes": note}, "$set": {"updated_at": datetime.utcnow()}}
+        )
+        return note
+
+    async def update_conversation_note(self, session_id: str, note_id: str, content: str) -> bool:
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id, "notes.note_id": note_id},
+            {"$set": {"notes.$.content": content, "notes.$.updated_at": datetime.utcnow()}}
+        )
+        return result.modified_count > 0
+
+    async def delete_conversation_note(self, session_id: str, note_id: str) -> bool:
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id},
+            {"$pull": {"notes": {"note_id": note_id}}}
+        )
+        return result.modified_count > 0
+
+    async def update_conversation_visitor(self, session_id: str, visitor_name: str = None, visitor_email: str = None) -> bool:
+        update = {"updated_at": datetime.utcnow()}
+        if visitor_name is not None:
+            update["visitor_name"] = visitor_name
+        if visitor_email is not None:
+            update["visitor_email"] = visitor_email
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id}, {"$set": update}
+        )
+        return result.matched_count > 0
+
+    async def mark_conversation_read(self, session_id: str) -> bool:
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id}, {"$set": {"unread": False}}
+        )
+        return result.matched_count > 0
+
+    async def set_conversation_rating(self, session_id: str, rating: int) -> bool:
+        result = await self.db.conversations.update_one(
+            {"session_id": session_id},
+            {"$set": {"satisfaction_rating": rating, "updated_at": datetime.utcnow()}}
+        )
+        return result.matched_count > 0
+
+    async def auto_close_inactive_conversations(self, days_inactive: int = 7) -> int:
+        cutoff = datetime.utcnow() - timedelta(days=days_inactive)
+        result = await self.db.conversations.update_many(
+            {"updated_at": {"$lt": cutoff}, "status": {"$in": ["open", None]}},
+            {"$set": {"status": "closed", "resolved_at": datetime.utcnow()}}
+        )
+        return result.modified_count
+
     # ==================== Pages ====================
     
     async def save_page(
@@ -560,7 +710,7 @@ class MongoDB:
         return result.deleted_count > 0
     
     async def list_users_agents_for_owner(self, owner_id: str) -> List[Dict]:
-        """Support agents created by this admin (owner_id)."""
+        """Support agents created by this owner (owner_id)."""
         cursor = self.db.users.find(
             {"role": "agent", "owner_id": owner_id}
         ).sort("created_at", -1)
@@ -568,6 +718,30 @@ class MongoDB:
         for u in users:
             u["_id"] = str(u["_id"])
         return users
+
+    async def list_all_agents(self) -> List[Dict]:
+        """List all support agents across all owners (admin use)."""
+        cursor = self.db.users.find({"role": "agent"}).sort("created_at", -1)
+        users = await cursor.to_list(length=500)
+        for u in users:
+            u["_id"] = str(u["_id"])
+        return users
+
+    async def transfer_sites_to_user(self, from_user_id: str, to_user_id: str) -> int:
+        """Reassign all sites owned by from_user_id to to_user_id. Returns count."""
+        result = await self.db.sites.update_many(
+            {"user_id": from_user_id},
+            {"$set": {"user_id": to_user_id, "updated_at": datetime.utcnow()}}
+        )
+        return result.modified_count
+
+    async def transfer_agents_to_user(self, from_owner_id: str, to_owner_id: str) -> int:
+        """Reassign all agents owned by from_owner_id to to_owner_id. Returns count."""
+        result = await self.db.users.update_many(
+            {"role": "agent", "owner_id": from_owner_id},
+            {"$set": {"owner_id": to_owner_id, "updated_at": datetime.utcnow()}}
+        )
+        return result.modified_count
     
     # ==================== Site Management ====================
     
@@ -908,12 +1082,32 @@ class MongoDB:
         active_count = await self.db.handoff_sessions.count_documents({**base, "status": "active"})
         
         skip = (page - 1) * limit
-        cursor = self.db.handoff_sessions.find(query).sort([
-            ("status", 1),
-            ("created_at", 1)
-        ]).skip(skip).limit(limit)
-        
-        handoffs = await cursor.to_list(length=limit)
+        pipeline = [
+            {"$match": query},
+            {
+                "$addFields": {
+                    "_status_rank": {
+                        "$switch": {
+                            "branches": [
+                                {"case": {"$eq": ["$status", "pending"]}, "then": 0},
+                                {"case": {"$eq": ["$status", "active"]}, "then": 1},
+                                {"case": {"$eq": ["$status", "resolved"]}, "then": 2},
+                                {"case": {"$eq": ["$status", "abandoned"]}, "then": 3},
+                            ],
+                            "default": 99,
+                        }
+                    }
+                }
+            },
+            # Keep queue groups stable (pending before active), but show most recently
+            # updated chats first within each group.
+            {"$sort": {"_status_rank": 1, "updated_at": -1, "created_at": -1}},
+            {"$skip": skip},
+            {"$limit": limit},
+            {"$project": {"_status_rank": 0}},
+        ]
+
+        handoffs = await self.db.handoff_sessions.aggregate(pipeline).to_list(length=limit)
         now = datetime.utcnow()
         
         for h in handoffs:
@@ -959,6 +1153,27 @@ class MongoDB:
         )
         
         if result.modified_count > 0:
+            return await self.get_handoff_session(handoff_id)
+        return None
+    
+    async def assign_handoff_agent(
+        self,
+        handoff_id: str,
+        agent_id: str,
+        agent_name: str,
+    ) -> Optional[Dict]:
+        """Set assigned agent without changing status (admin routing)."""
+        result = await self.db.handoff_sessions.update_one(
+            {"handoff_id": handoff_id},
+            {
+                "$set": {
+                    "assigned_agent_id": agent_id,
+                    "assigned_agent_name": agent_name,
+                    "updated_at": datetime.utcnow(),
+                }
+            },
+        )
+        if result.matched_count > 0:
             return await self.get_handoff_session(handoff_id)
         return None
     
@@ -1078,7 +1293,7 @@ class MongoDB:
         tz_name = bh.get("timezone", "UTC")
         try:
             tz = pytz.timezone(tz_name)
-        except:
+        except Exception:
             tz = pytz.UTC
         
         now = datetime.now(tz)
@@ -1110,7 +1325,7 @@ class MongoDB:
                 return {"available": True, "is_within_hours": True}
             else:
                 if now < start_time:
-                    next_available = start_time.strftime("%H:%M")
+                    next_available = f"Today at {start_time.strftime('%H:%M')}"
                 else:
                     next_day = self._find_next_working_day(schedule, day_key)
                     next_available = next_day
@@ -1121,7 +1336,7 @@ class MongoDB:
                     "offline_message": bh.get("offline_message"),
                     "next_available": next_available
                 }
-        except:
+        except Exception:
             return {"available": True, "is_within_hours": True}
     
     def _find_next_working_day(self, schedule: Dict, current_day: str) -> str:

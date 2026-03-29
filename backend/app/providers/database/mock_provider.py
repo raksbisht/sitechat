@@ -326,7 +326,34 @@ class MockDatabaseProvider(BaseDatabaseProvider):
         ]
         out.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
         return out
-    
+
+    async def list_all_agents(self) -> List[Dict]:
+        out = [
+            {**u, "_id": uid}
+            for uid, u in self._users.items()
+            if u.get("role") == "agent"
+        ]
+        out.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        return out
+
+    async def transfer_sites_to_user(self, from_user_id: str, to_user_id: str) -> int:
+        count = 0
+        for site in self._sites.values():
+            if site.get("user_id") == from_user_id:
+                site["user_id"] = to_user_id
+                site["updated_at"] = datetime.utcnow()
+                count += 1
+        return count
+
+    async def transfer_agents_to_user(self, from_owner_id: str, to_owner_id: str) -> int:
+        count = 0
+        for user in self._users.values():
+            if user.get("role") == "agent" and user.get("owner_id") == from_owner_id:
+                user["owner_id"] = to_owner_id
+                user["updated_at"] = datetime.utcnow()
+                count += 1
+        return count
+
     # ===========================================
     # Crawl Job Operations
     # ===========================================
@@ -631,6 +658,21 @@ class MockDatabaseProvider(BaseDatabaseProvider):
         
         return True
     
+    async def assign_handoff_agent(
+        self,
+        handoff_id: str,
+        agent_id: str,
+        agent_name: str,
+    ) -> Optional[Dict]:
+        """Assign agent without changing status."""
+        if handoff_id not in self._handoffs:
+            return None
+        handoff = self._handoffs[handoff_id]
+        handoff["assigned_agent_id"] = agent_id
+        handoff["assigned_agent_name"] = agent_name
+        handoff["updated_at"] = datetime.utcnow()
+        return {**handoff, "_id": handoff_id}
+    
     async def get_handoff_queue(
         self,
         site_id: Optional[str] = None,
@@ -647,7 +689,14 @@ class MockDatabaseProvider(BaseDatabaseProvider):
         else:
             handoffs = [h for h in handoffs if h.get("status") in ["pending", "active"]]
         
-        handoffs.sort(key=lambda x: (x.get("status", ""), x.get("created_at", datetime.min)))
+        status_order = {"pending": 0, "active": 1, "resolved": 2, "abandoned": 3}
+        handoffs.sort(
+            key=lambda x: (
+                status_order.get(x.get("status", ""), 99),
+                -(x.get("updated_at", datetime.min).timestamp() if x.get("updated_at") else datetime.min.timestamp()),
+                -(x.get("created_at", datetime.min).timestamp() if x.get("created_at") else datetime.min.timestamp()),
+            )
+        )
         
         return [{**h, "_id": h["handoff_id"]} for h in handoffs[:100]]
     

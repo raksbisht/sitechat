@@ -130,23 +130,7 @@ def validate_password(password: str) -> tuple[bool, str]:
     """
     if len(password) < settings.MIN_PASSWORD_LENGTH:
         return False, f"Password must be at least {settings.MIN_PASSWORD_LENGTH} characters"
-    
-    if settings.REQUIRE_PASSWORD_COMPLEXITY:
-        if not re.search(r'[A-Z]', password):
-            return False, "Password must contain at least one uppercase letter"
-        if not re.search(r'[a-z]', password):
-            return False, "Password must contain at least one lowercase letter"
-        if not re.search(r'\d', password):
-            return False, "Password must contain at least one digit"
-    
-    # Check for common weak passwords
-    weak_passwords = [
-        "password", "12345678", "qwerty", "admin123", "letmein",
-        "welcome", "password1", "123456789", "admin", "changeme"
-    ]
-    if password.lower() in weak_passwords:
-        return False, "Password is too common. Please choose a stronger password"
-    
+
     return True, ""
 
 

@@ -26,6 +26,17 @@ class AnalyticsOverview(BaseModel):
     positive_feedback: int = Field(0, description="Positive feedback count")
     satisfaction_rate: float = Field(0.0, description="Satisfaction rate (0-100)")
     active_sites: int = Field(0, description="Number of active sites")
+    total_handoffs: int = Field(0, description="Total handoff sessions")
+    resolved_handoffs: int = Field(0, description="Resolved handoff sessions")
+    handoff_rate: float = Field(0.0, description="Handoff rate as % of conversations")
+
+
+class SiteConversationStat(BaseModel):
+    """Per-site conversation count."""
+    site_id: str
+    site_name: str
+    conversation_count: int
+    message_count: int
 
 
 class DailyStats(BaseModel):
@@ -127,7 +138,17 @@ async def get_analytics_overview(
         
         # Get active sites count
         sites_count = await mongodb.db.sites.count_documents({"status": "ready"})
-        
+
+        # Get handoff stats
+        handoff_query = {}
+        if site_id:
+            handoff_query["site_id"] = site_id
+        total_handoffs = await mongodb.db.handoff_sessions.count_documents(handoff_query)
+        resolved_handoffs = await mongodb.db.handoff_sessions.count_documents(
+            {**handoff_query, "status": "resolved"}
+        )
+        handoff_rate = round((total_handoffs / total_conversations * 100) if total_conversations > 0 else 0.0, 1)
+
         return AnalyticsOverview(
             total_conversations=total_conversations,
             total_messages=total_messages,
@@ -137,7 +158,10 @@ async def get_analytics_overview(
             total_feedback=total_feedback,
             positive_feedback=positive_feedback,
             satisfaction_rate=round(satisfaction_rate, 1),
-            active_sites=sites_count
+            active_sites=sites_count,
+            total_handoffs=total_handoffs,
+            resolved_handoffs=resolved_handoffs,
+            handoff_rate=handoff_rate,
         )
         
     except Exception as e:
@@ -413,4 +437,51 @@ async def get_recent_conversations(
         
     except Exception as e:
         logger.error(f"Recent conversations error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/conversations-by-site", response_model=List[SiteConversationStat])
+async def get_conversations_by_site():
+    """
+    Get conversation and message counts grouped by site.
+    """
+    try:
+        mongodb = await get_mongodb()
+
+        # Aggregate conversations grouped by site_id
+        pipeline = [
+            {"$group": {
+                "_id": "$site_id",
+                "conversation_count": {"$sum": 1},
+                "message_count": {"$sum": {"$size": {"$ifNull": ["$messages", []]}}}
+            }},
+            {"$sort": {"conversation_count": -1}},
+            {"$limit": 20}
+        ]
+        rows = await mongodb.db.conversations.aggregate(pipeline).to_list(length=20)
+
+        # Fetch site names in bulk
+        site_ids = [r["_id"] for r in rows if r["_id"]]
+        sites_map: dict = {}
+        if site_ids:
+            cursor = mongodb.db.sites.find(
+                {"site_id": {"$in": site_ids}},
+                {"site_id": 1, "name": 1}
+            )
+            async for site in cursor:
+                sites_map[site["site_id"]] = site.get("name", site["site_id"])
+
+        result = []
+        for row in rows:
+            sid = row["_id"] or ""
+            result.append(SiteConversationStat(
+                site_id=sid,
+                site_name=sites_map.get(sid, sid or "Unknown"),
+                conversation_count=row["conversation_count"],
+                message_count=row["message_count"],
+            ))
+        return result
+
+    except Exception as e:
+        logger.error(f"Conversations by site error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
