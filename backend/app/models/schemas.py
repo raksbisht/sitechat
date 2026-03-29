@@ -609,6 +609,11 @@ class HandoffMessageRequest(BaseModel):
     sender_name: Optional[str] = Field(None, description="Sender's display name")
 
 
+class HandoffAbandonRequest(BaseModel):
+    """Visitor abandons handoff (widget); session_id must match the handoff."""
+    session_id: str = Field(..., min_length=1, description="Widget session ID that created the handoff")
+
+
 class HandoffStatusUpdate(BaseModel):
     """Request model for updating handoff status."""
     status: str = Field(..., description="New status: active, resolved, abandoned")
@@ -631,10 +636,18 @@ class HandoffListItem(BaseModel):
     reason: str = Field(...)
     message_count: int = Field(0, description="Number of messages")
     last_message_preview: str = Field("", description="Preview of last message")
+    assigned_agent_id: Optional[str] = Field(
+        None,
+        description="Admin routing hint while pending; queue still visible to all agents on the site until claimed",
+    )
     assigned_agent_name: Optional[str] = Field(None)
     created_at: datetime = Field(...)
     updated_at: datetime = Field(...)
     wait_time_seconds: int = Field(0, description="Time waiting for agent")
+    visitor_queue_signals: int = Field(
+        0,
+        description="Increments when visitor taps connect-again while still pending (dashboard highlight)",
+    )
 
 
 class HandoffQueueResponse(BaseModel):

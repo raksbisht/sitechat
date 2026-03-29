@@ -27,11 +27,27 @@ from app.core.site_access import (
 from app.services.auth import AuthService, UserRole
 from app.models.schemas import (
     HandoffRequest, HandoffSession, HandoffMessage, HandoffMessageRequest,
+    HandoffAbandonRequest,
     HandoffStatusUpdate, HandoffAssignRequest, HandoffListItem, HandoffQueueResponse,
     HandoffAvailabilityResponse, HandoffConfig, BusinessHoursConfig
 )
 
 router = APIRouter(tags=["handoff"])
+
+
+def _queue_sse_identity_hash(handoffs: List[dict]) -> str:
+    """Include updated_at + visitor_queue_signals so visitor re-requests still trigger an SSE push."""
+    parts = []
+    for h in handoffs:
+        hid = h.get("handoff_id") or ""
+        u = h.get("updated_at")
+        if isinstance(u, datetime):
+            u = u.isoformat()
+        else:
+            u = str(u or "")
+        sig = int(h.get("visitor_queue_signals") or 0)
+        parts.append(f"{hid}:{u}:{sig}")
+    return "|".join(parts)
 
 
 async def _get_user_from_token(token: str) -> Optional[dict]:
@@ -65,6 +81,9 @@ async def create_handoff(request: Request, body: HandoffRequest):
 
     existing = await mongodb.get_handoff_by_session(body.session_id, active_only=True)
     if existing:
+        # Visitor tapped "connect to agent" again while still pending — bump queue ordering + dashboard "new" signal.
+        if existing.get("status") == "pending":
+            await mongodb.bump_handoff_visitor_requeue_pending(existing["handoff_id"])
         return {
             "handoff_id": existing["handoff_id"],
             "status": existing["status"],
@@ -149,6 +168,9 @@ async def send_visitor_message(
     
     if handoff["status"] == "resolved":
         raise HTTPException(status_code=400, detail="This conversation has been resolved")
+
+    if handoff["status"] == "abandoned":
+        raise HTTPException(status_code=400, detail="This conversation has ended")
     
     message = await mongodb.add_handoff_message(
         handoff_id=handoff_id,
@@ -158,6 +180,41 @@ async def send_visitor_message(
     )
     
     return {"success": True, "message": message}
+
+
+@router.post("/api/handoff/{handoff_id}/abandon")
+@limiter.limit("10/minute")
+async def abandon_handoff_public(
+    request: Request,
+    handoff_id: str,
+    body: HandoffAbandonRequest,
+):
+    """
+    Mark a handoff as abandoned when the visitor leaves (closes widget or navigates away).
+    Requires matching session_id; only pending or active handoffs are updated.
+    """
+    mongodb = await get_mongodb()
+
+    handoff = await mongodb.get_handoff_session(handoff_id)
+    if not handoff:
+        raise HTTPException(status_code=404, detail="Handoff not found")
+
+    if handoff.get("session_id") != body.session_id:
+        raise HTTPException(status_code=403, detail="Invalid session for this handoff")
+
+    status = handoff.get("status")
+    if status in ("resolved", "abandoned"):
+        return {"success": True, "status": status, "unchanged": True}
+
+    if status not in ("pending", "active"):
+        raise HTTPException(status_code=400, detail="Handoff cannot be abandoned")
+
+    updated = await mongodb.update_handoff_status(handoff_id=handoff_id, status="abandoned")
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to abandon handoff")
+
+    logger.info(f"Handoff {handoff_id} abandoned by visitor (session {body.session_id})")
+    return {"success": True, "status": "abandoned"}
 
 
 @router.get("/api/sites/{site_id}/handoff/availability", response_model=HandoffAvailabilityResponse)
@@ -185,7 +242,11 @@ async def get_handoff_queue(
     limit: int = Query(20, ge=1, le=100),
     user: dict = Depends(require_auth)
 ):
-    """Get handoff queue for a site, or all sites (admin / site owners / assigned agents)."""
+    """Get handoff queue for a site, or all sites (admin / site owners / assigned agents).
+
+    Support agents see unassigned handoffs (open pool) and handoffs explicitly assigned to them
+    via PUT /api/handoff/{id}/assign. Admins and site owners see all handoffs for the site(s).
+    """
     mongodb = await get_mongodb()
     
     status_list = [status] if status else None
@@ -214,6 +275,7 @@ async def get_handoff_queue(
                 status=status_list,
                 page=page,
                 limit=limit,
+                agent_queue_user_id=str(user["_id"]),
             )
         else:
             sites = await mongodb.list_sites(user_id=str(user["_id"]))
@@ -238,12 +300,14 @@ async def get_handoff_queue(
             raise HTTPException(status_code=404, detail="Site not found")
         if not can_view_site(user, site):
             raise HTTPException(status_code=403, detail="Access denied")
+        agent_uid = str(user["_id"]) if is_agent(user) else None
         handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
             site_id=site_id,
             site_ids=None,
             status=status_list,
             page=page,
             limit=limit,
+            agent_queue_user_id=agent_uid,
         )
     
     return HandoffQueueResponse(
@@ -299,6 +363,9 @@ async def update_handoff_status(
     site = await mongodb.get_site(handoff["site_id"])
     if not can_access_handoff_session(user, handoff["site_id"], site):
         raise HTTPException(status_code=403, detail="Access denied")
+
+    if handoff["status"] == "abandoned":
+        raise HTTPException(status_code=400, detail="Handoff was abandoned by the visitor")
     
     agent_id = None
     agent_name = None
@@ -344,6 +411,9 @@ async def assign_handoff_to_agent(
 
     if handoff.get("status") == "resolved":
         raise HTTPException(status_code=400, detail="Cannot reassign a resolved handoff")
+
+    if handoff.get("status") == "abandoned":
+        raise HTTPException(status_code=400, detail="Cannot reassign an abandoned handoff")
 
     site = await mongodb.get_site(handoff["site_id"])
     if not can_manage_site(caller, site):
@@ -398,6 +468,9 @@ async def send_agent_message(
     
     if handoff["status"] == "resolved":
         raise HTTPException(status_code=400, detail="Cannot message a resolved handoff")
+
+    if handoff["status"] == "abandoned":
+        raise HTTPException(status_code=400, detail="Cannot message an abandoned handoff")
     
     if handoff["status"] == "pending":
         await mongodb.update_handoff_status(
@@ -500,7 +573,10 @@ async def stream_handoff_queue(
     site_id: Optional[str] = Query(None),
     status: Optional[str] = Query(None, pattern="^(pending|active|resolved|abandoned)$"),
 ):
-    """SSE stream of queue updates for the agent dashboard. Auth via ?token= query param."""
+    """SSE stream of queue updates for the agent dashboard. Auth via ?token= query param.
+
+    Same visibility rules as GET .../handoff/queue: agents see unassigned items and items assigned to them.
+    """
     user = await _get_user_from_token(token)
     if not user:
         async def _unauth():
@@ -526,7 +602,12 @@ async def stream_handoff_queue(
                             yield f"event: error\ndata: {json.dumps({'error': 'Access denied'})}\n\n"
                             break
                         handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
-                            site_id=effective_site_id, site_ids=None, status=status_list, page=1, limit=50
+                            site_id=effective_site_id,
+                            site_ids=None,
+                            status=status_list,
+                            page=1,
+                            limit=50,
+                            agent_queue_user_id=str(user["_id"]) if is_agent(user) else None,
                         )
                     elif is_admin(user):
                         handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
@@ -538,7 +619,12 @@ async def stream_handoff_queue(
                             handoffs, total, pending_count, active_count = [], 0, 0, 0
                         else:
                             handoffs, total, pending_count, active_count = await mongodb.get_handoff_queue(
-                                site_id=None, site_ids=sids, status=status_list, page=1, limit=50
+                                site_id=None,
+                                site_ids=sids,
+                                status=status_list,
+                                page=1,
+                                limit=50,
+                                agent_queue_user_id=str(user["_id"]),
                             )
                     else:
                         sites_list = await mongodb.list_sites(user_id=str(user["_id"]))
@@ -550,7 +636,7 @@ async def stream_handoff_queue(
                                 site_id=None, site_ids=sids, status=status_list, page=1, limit=50
                             )
 
-                    current_hash = f"{pending_count}:{active_count}:{','.join(h.get('handoff_id', '') for h in handoffs)}"
+                    current_hash = f"{pending_count}:{active_count}:{_queue_sse_identity_hash(handoffs)}"
                     if current_hash != last_hash:
                         last_hash = current_hash
 

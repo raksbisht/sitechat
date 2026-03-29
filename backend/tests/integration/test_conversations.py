@@ -15,7 +15,7 @@ def sample_conversation():
     """Sample conversation data for testing."""
     return {
         "session_id": "session_123",
-        "site_id": "site_abc",
+        "site_id": "test_site_123",
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
         "messages": [
@@ -49,7 +49,7 @@ def sample_conversation_list_item():
     """Sample conversation list item."""
     return {
         "session_id": "session_123",
-        "site_id": "site_abc",
+        "site_id": "test_site_123",
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
         "message_count": 5,
@@ -82,7 +82,7 @@ class TestListConversations:
             return_value=([sample_conversation_list_item], 1)
         )
         
-        response = await authenticated_client.get("/api/conversations?site_id=site_abc")
+        response = await authenticated_client.get("/api/conversations?site_id=test_site_123")
         
         assert response.status_code == 200
         data = response.json()
@@ -175,7 +175,7 @@ class TestSearchConversations:
         """Test searching conversations."""
         search_result = {
             "session_id": "session_123",
-            "site_id": "site_abc",
+            "site_id": "test_site_123",
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "match_preview": "...billing question...",
@@ -197,7 +197,7 @@ class TestSearchConversations:
         """Test searching conversations with site filter."""
         mock_mongodb.search_conversations = AsyncMock(return_value=([], 0))
         
-        response = await authenticated_client.get("/api/conversations/search?q=help&site_id=site_abc")
+        response = await authenticated_client.get("/api/conversations/search?q=help&site_id=test_site_123")
         
         assert response.status_code == 200
     
@@ -311,7 +311,7 @@ class TestGetConversation:
         """Test conversation detail includes feedback."""
         conversation_with_feedback = {
             "session_id": "session_456",
-            "site_id": "site_abc",
+            "site_id": "test_site_123",
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "messages": [
@@ -341,6 +341,7 @@ class TestDeleteConversation:
     @pytest.mark.asyncio
     async def test_delete_conversation_success(self, authenticated_client, mock_mongodb, sample_conversation):
         """Test deleting a conversation."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conversation)
         mock_mongodb.clear_conversation = AsyncMock(return_value=True)
         
         response = await authenticated_client.delete(
@@ -368,6 +369,13 @@ class TestBulkDeleteConversations:
     @pytest.mark.asyncio
     async def test_bulk_delete_success(self, authenticated_client, mock_mongodb):
         """Test bulk deleting conversations."""
+        mock_mongodb.get_conversation_full = AsyncMock(
+            side_effect=lambda sid: {
+                "session_id": sid,
+                "site_id": "test_site_123",
+                "messages": [],
+            }
+        )
         mock_mongodb.delete_conversations_bulk = AsyncMock(return_value=3)
         
         response = await authenticated_client.post(
@@ -383,6 +391,12 @@ class TestBulkDeleteConversations:
     @pytest.mark.asyncio
     async def test_bulk_delete_partial(self, authenticated_client, mock_mongodb):
         """Test bulk delete when some conversations don't exist."""
+        def _full(sid):
+            if sid == "nonexistent":
+                return None
+            return {"session_id": sid, "site_id": "test_site_123", "messages": []}
+
+        mock_mongodb.get_conversation_full = AsyncMock(side_effect=_full)
         mock_mongodb.delete_conversations_bulk = AsyncMock(return_value=2)
         
         response = await authenticated_client.post(
@@ -390,13 +404,12 @@ class TestBulkDeleteConversations:
             json={"session_ids": ["exists_1", "exists_2", "nonexistent"]}
         )
         
-        assert response.status_code == 200
-        data = response.json()
-        assert data["deleted_count"] == 2
+        assert response.status_code == 404
     
     @pytest.mark.asyncio
     async def test_bulk_delete_none_found(self, authenticated_client, mock_mongodb):
         """Test bulk delete when no conversations found."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
         mock_mongodb.delete_conversations_bulk = AsyncMock(return_value=0)
         
         response = await authenticated_client.post(
@@ -404,9 +417,7 @@ class TestBulkDeleteConversations:
             json={"session_ids": ["nonexistent_1", "nonexistent_2"]}
         )
         
-        assert response.status_code == 200
-        data = response.json()
-        assert data["deleted_count"] == 0
+        assert response.status_code == 404
     
     @pytest.mark.asyncio
     async def test_bulk_delete_empty_list(self, authenticated_client, mock_mongodb):
@@ -426,6 +437,7 @@ class TestExportConversations:
     @pytest.mark.asyncio
     async def test_export_conversations_json(self, authenticated_client, mock_mongodb, sample_conversation):
         """Test exporting conversations as JSON."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conversation)
         mock_mongodb.get_conversations_for_export = AsyncMock(return_value=[sample_conversation])
         
         response = await authenticated_client.post(
@@ -440,6 +452,7 @@ class TestExportConversations:
     @pytest.mark.asyncio
     async def test_export_conversations_csv(self, authenticated_client, mock_mongodb, sample_conversation):
         """Test exporting conversations as CSV."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conversation)
         mock_mongodb.get_conversations_for_export = AsyncMock(return_value=[sample_conversation])
         
         response = await authenticated_client.post(
@@ -458,7 +471,7 @@ class TestExportConversations:
         
         response = await authenticated_client.post(
             "/api/conversations/export",
-            json={"site_id": "site_abc", "format": "json"}
+            json={"site_id": "test_site_123", "format": "json"}
         )
         
         assert response.status_code == 200
@@ -476,8 +489,9 @@ class TestExportConversations:
         assert response.status_code == 404
     
     @pytest.mark.asyncio
-    async def test_export_conversations_invalid_format(self, authenticated_client, mock_mongodb):
+    async def test_export_conversations_invalid_format(self, authenticated_client, mock_mongodb, sample_conversation):
         """Test export with invalid format."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conversation)
         mock_mongodb.get_conversations_for_export = AsyncMock(return_value=[{}])
         
         response = await authenticated_client.post(
@@ -493,7 +507,7 @@ class TestExportConversations:
         """Test CSV export includes all messages as rows."""
         conversation_with_messages = {
             "session_id": "session_123",
-            "site_id": "site_abc",
+            "site_id": "test_site_123",
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "messages": [
@@ -503,6 +517,7 @@ class TestExportConversations:
             ]
         }
         
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=conversation_with_messages)
         mock_mongodb.get_conversations_for_export = AsyncMock(
             return_value=[conversation_with_messages]
         )
@@ -522,12 +537,13 @@ class TestExportConversations:
         """Test CSV export with conversation having no messages."""
         conversation_no_messages = {
             "session_id": "session_empty",
-            "site_id": "site_abc",
+            "site_id": "test_site_123",
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "messages": []
         }
         
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=conversation_no_messages)
         mock_mongodb.get_conversations_for_export = AsyncMock(
             return_value=[conversation_no_messages]
         )
@@ -591,7 +607,7 @@ class TestConversationStats:
         """Test conversation with empty stats object."""
         conversation_empty_stats = {
             "session_id": "session_789",
-            "site_id": "site_abc",
+            "site_id": "test_site_123",
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "messages": [],
@@ -644,9 +660,625 @@ class TestConversationFiltering:
     async def test_combined_filters(self, authenticated_client, mock_mongodb):
         """Test combining multiple filters."""
         mock_mongodb.get_conversations_paginated = AsyncMock(return_value=([], 0))
-        
+
         response = await authenticated_client.get(
-            "/api/conversations?site_id=site_abc&sort_by=created_at&order=desc&page=1&limit=50"
+            "/api/conversations?site_id=test_site_123&sort_by=created_at&order=desc&page=1&limit=50"
         )
-        
+
         assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_filter_by_status(self, authenticated_client, mock_mongodb):
+        """Test filtering conversations by status."""
+        mock_mongodb.get_conversations_paginated = AsyncMock(return_value=([], 0))
+
+        response = await authenticated_client.get("/api/conversations?status=open")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_filter_by_priority(self, authenticated_client, mock_mongodb):
+        """Test filtering conversations by priority."""
+        mock_mongodb.get_conversations_paginated = AsyncMock(return_value=([], 0))
+
+        response = await authenticated_client.get("/api/conversations?priority=high")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_filter_by_tag(self, authenticated_client, mock_mongodb):
+        """Test filtering conversations by tag."""
+        mock_mongodb.get_conversations_paginated = AsyncMock(return_value=([], 0))
+
+        response = await authenticated_client.get("/api/conversations?tag=billing")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_filter_invalid_status(self, authenticated_client):
+        """Test that invalid status value returns 400."""
+        response = await authenticated_client.get("/api/conversations?status=unknown")
+
+        assert response.status_code == 400
+        assert "status" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_filter_invalid_priority(self, authenticated_client):
+        """Test that invalid priority value returns 400."""
+        response = await authenticated_client.get("/api/conversations?priority=critical")
+
+        assert response.status_code == 400
+        assert "priority" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_invalid_sort_by(self, authenticated_client):
+        """Test that invalid sort_by field returns 400."""
+        response = await authenticated_client.get("/api/conversations?sort_by=invalid_field")
+
+        assert response.status_code == 400
+        assert "sort_by" in response.json()["detail"].lower()
+
+
+class TestUpdateConversationStatus:
+    """Tests for PATCH /api/conversations/{session_id}/status endpoint."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_status_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating conversation status."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_status = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/status",
+            json={"status": "resolved"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "resolved"
+        assert data["session_id"] == sample_conv["session_id"]
+
+    @pytest.mark.asyncio
+    async def test_update_status_invalid_value(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test that invalid status value returns 400."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/status",
+            json={"status": "unknown"},
+        )
+
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_update_status_not_found(self, authenticated_client, mock_mongodb):
+        """Test updating status when conversation does not exist."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.patch(
+            "/api/conversations/nonexistent/status",
+            json={"status": "closed"},
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_update_status_all_valid_values(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test all valid status values are accepted."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_status = AsyncMock(return_value=True)
+
+        for status in ("open", "resolved", "closed"):
+            response = await authenticated_client.patch(
+                f"/api/conversations/{sample_conv['session_id']}/status",
+                json={"status": status},
+            )
+            assert response.status_code == 200, f"Expected 200 for status={status}"
+
+    @pytest.mark.asyncio
+    async def test_update_status_unauthenticated(self, client):
+        """Test status update without authentication fails."""
+        response = await client.patch(
+            "/api/conversations/session_123/status",
+            json={"status": "resolved"},
+        )
+
+        assert response.status_code == 401
+
+
+class TestUpdateConversationPriority:
+    """Tests for PATCH /api/conversations/{session_id}/priority endpoint."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_priority_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating conversation priority."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_priority = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/priority",
+            json={"priority": "high"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["priority"] == "high"
+
+    @pytest.mark.asyncio
+    async def test_update_priority_invalid_value(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test that invalid priority value returns 400."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/priority",
+            json={"priority": "critical"},
+        )
+
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_update_priority_not_found(self, authenticated_client, mock_mongodb):
+        """Test updating priority when conversation does not exist."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.patch(
+            "/api/conversations/nonexistent/priority",
+            json={"priority": "low"},
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_update_priority_all_valid_values(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test all valid priority values are accepted."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_priority = AsyncMock(return_value=True)
+
+        for priority in ("high", "medium", "low"):
+            response = await authenticated_client.patch(
+                f"/api/conversations/{sample_conv['session_id']}/priority",
+                json={"priority": priority},
+            )
+            assert response.status_code == 200, f"Expected 200 for priority={priority}"
+
+
+class TestUpdateConversationTags:
+    """Tests for PATCH /api/conversations/{session_id}/tags endpoint."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_tags_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating conversation tags."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_tags = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/tags",
+            json={"tags": ["billing", "urgent"]},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["tags"] == ["billing", "urgent"]
+
+    @pytest.mark.asyncio
+    async def test_update_tags_empty_list(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test clearing all tags with an empty list."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_tags = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/tags",
+            json={"tags": []},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["tags"] == []
+
+    @pytest.mark.asyncio
+    async def test_update_tags_not_found(self, authenticated_client, mock_mongodb):
+        """Test updating tags when conversation does not exist."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.patch(
+            "/api/conversations/nonexistent/tags",
+            json={"tags": ["billing"]},
+        )
+
+        assert response.status_code == 404
+
+
+class TestConversationNotes:
+    """Tests for notes CRUD on conversations."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.fixture
+    def sample_note(self):
+        return {
+            "note_id": "note_001",
+            "content": "Follow up needed",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        }
+
+    @pytest.mark.asyncio
+    async def test_add_note_success(self, authenticated_client, mock_mongodb, sample_conv, sample_note):
+        """Test adding an internal note to a conversation."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.add_conversation_note = AsyncMock(return_value=sample_note)
+
+        response = await authenticated_client.post(
+            f"/api/conversations/{sample_conv['session_id']}/notes",
+            json={"content": "Follow up needed"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["note_id"] == "note_001"
+        assert data["content"] == "Follow up needed"
+
+    @pytest.mark.asyncio
+    async def test_add_note_empty_content_rejected(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test that empty note content is rejected."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+
+        response = await authenticated_client.post(
+            f"/api/conversations/{sample_conv['session_id']}/notes",
+            json={"content": ""},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_add_note_conversation_not_found(self, authenticated_client, mock_mongodb):
+        """Test adding note when conversation does not exist."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.post(
+            "/api/conversations/nonexistent/notes",
+            json={"content": "Some note"},
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_update_note_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating an existing note."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_note = AsyncMock(return_value=True)
+
+        response = await authenticated_client.put(
+            f"/api/conversations/{sample_conv['session_id']}/notes/note_001",
+            json={"content": "Updated note text"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["note_id"] == "note_001"
+        assert data["content"] == "Updated note text"
+
+    @pytest.mark.asyncio
+    async def test_update_note_not_found(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating a note that does not exist."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_note = AsyncMock(return_value=False)
+
+        response = await authenticated_client.put(
+            f"/api/conversations/{sample_conv['session_id']}/notes/nonexistent_note",
+            json={"content": "Updated text"},
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_delete_note_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test deleting an existing note."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.delete_conversation_note = AsyncMock(return_value=True)
+
+        response = await authenticated_client.delete(
+            f"/api/conversations/{sample_conv['session_id']}/notes/note_001",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["note_id"] == "note_001"
+        assert "deleted" in data["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_delete_note_not_found(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test deleting a note that does not exist."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.delete_conversation_note = AsyncMock(return_value=False)
+
+        response = await authenticated_client.delete(
+            f"/api/conversations/{sample_conv['session_id']}/notes/nonexistent_note",
+        )
+
+        assert response.status_code == 404
+
+
+class TestUpdateConversationVisitor:
+    """Tests for PATCH /api/conversations/{session_id}/visitor endpoint."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_update_visitor_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating visitor name and email."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_visitor = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/visitor",
+            json={"visitor_name": "Jane Doe", "visitor_email": "jane@example.com"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["visitor_name"] == "Jane Doe"
+        assert data["visitor_email"] == "jane@example.com"
+
+    @pytest.mark.asyncio
+    async def test_update_visitor_partial(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test updating only visitor name."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.update_conversation_visitor = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/visitor",
+            json={"visitor_name": "Jane Doe"},
+        )
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_update_visitor_not_found(self, authenticated_client, mock_mongodb):
+        """Test updating visitor on non-existent conversation."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.patch(
+            "/api/conversations/nonexistent/visitor",
+            json={"visitor_name": "Jane Doe"},
+        )
+
+        assert response.status_code == 404
+
+
+class TestMarkConversationRead:
+    """Tests for PATCH /api/conversations/{session_id}/read endpoint."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_mark_read_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test marking a conversation as read."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.mark_conversation_read = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/read",
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["unread"] is False
+        assert data["session_id"] == sample_conv["session_id"]
+
+    @pytest.mark.asyncio
+    async def test_mark_read_conversation_not_found(self, authenticated_client, mock_mongodb):
+        """Test marking read on non-existent conversation."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.patch("/api/conversations/nonexistent/read")
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_mark_read_unauthenticated(self, client):
+        """Test mark read without authentication fails."""
+        response = await client.patch("/api/conversations/session_123/read")
+
+        assert response.status_code == 401
+
+
+class TestSetConversationRating:
+    """Tests for PATCH /api/conversations/{session_id}/rating endpoint."""
+
+    @pytest.fixture
+    def sample_conv(self):
+        return {
+            "session_id": "session_123",
+            "site_id": "test_site_123",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+            "stats": {},
+        }
+
+    @pytest.mark.asyncio
+    async def test_set_rating_success(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test setting a satisfaction rating."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.set_conversation_rating = AsyncMock(return_value=True)
+
+        response = await authenticated_client.patch(
+            f"/api/conversations/{sample_conv['session_id']}/rating",
+            json={"rating": 5},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["satisfaction_rating"] == 5
+
+    @pytest.mark.asyncio
+    async def test_set_rating_boundary_values(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test that rating 1 and 5 are both accepted."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+        mock_mongodb.set_conversation_rating = AsyncMock(return_value=True)
+
+        for rating in (1, 5):
+            response = await authenticated_client.patch(
+                f"/api/conversations/{sample_conv['session_id']}/rating",
+                json={"rating": rating},
+            )
+            assert response.status_code == 200, f"Expected 200 for rating={rating}"
+
+    @pytest.mark.asyncio
+    async def test_set_rating_out_of_range(self, authenticated_client, mock_mongodb, sample_conv):
+        """Test that rating outside 1-5 is rejected."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=sample_conv)
+
+        for bad_rating in (0, 6):
+            response = await authenticated_client.patch(
+                f"/api/conversations/{sample_conv['session_id']}/rating",
+                json={"rating": bad_rating},
+            )
+            assert response.status_code == 422, f"Expected 422 for rating={bad_rating}"
+
+    @pytest.mark.asyncio
+    async def test_set_rating_not_found(self, authenticated_client, mock_mongodb):
+        """Test rating on non-existent conversation."""
+        mock_mongodb.get_conversation_full = AsyncMock(return_value=None)
+
+        response = await authenticated_client.patch(
+            "/api/conversations/nonexistent/rating",
+            json={"rating": 3},
+        )
+
+        assert response.status_code == 404
+
+
+class TestAutoCloseConversations:
+    """Tests for POST /api/conversations/auto-close endpoint."""
+
+    @pytest.mark.asyncio
+    async def test_auto_close_success(self, admin_client, mock_mongodb):
+        """Test auto-closing inactive conversations."""
+        mock_mongodb.auto_close_inactive_conversations = AsyncMock(return_value=3)
+
+        response = await admin_client.post(
+            "/api/conversations/auto-close",
+            json={"days_inactive": 7},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["closed_count"] == 3
+        assert "3" in data["message"]
+
+    @pytest.mark.asyncio
+    async def test_auto_close_none_closed(self, admin_client, mock_mongodb):
+        """Test auto-close when no conversations qualify."""
+        mock_mongodb.auto_close_inactive_conversations = AsyncMock(return_value=0)
+
+        response = await admin_client.post(
+            "/api/conversations/auto-close",
+            json={"days_inactive": 30},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["closed_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_auto_close_invalid_days(self, admin_client):
+        """Test that days_inactive < 1 is rejected."""
+        response = await admin_client.post(
+            "/api/conversations/auto-close",
+            json={"days_inactive": 0},
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_auto_close_non_admin_forbidden(self, client, mock_database):
+        """Test that non-admin users cannot auto-close conversations."""
+        from app.services.auth import get_password_hash, create_access_token
+        uid = mock_database.seed_user({
+            "user_id": "regular_user_ac",
+            "email": "regular_ac@example.com",
+            "name": "Regular",
+            "password_hash": get_password_hash("Pass123!"),
+            "role": "user",
+            "created_at": datetime.utcnow(),
+        })
+        token = create_access_token({"sub": uid, "email": "regular_ac@example.com", "role": "user"})
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = await client.post(
+            "/api/conversations/auto-close",
+            json={"days_inactive": 7},
+            headers=headers,
+        )
+
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_auto_close_unauthenticated(self, client):
+        """Test auto-close without authentication fails."""
+        response = await client.post(
+            "/api/conversations/auto-close",
+            json={"days_inactive": 7},
+        )
+
+        assert response.status_code == 401

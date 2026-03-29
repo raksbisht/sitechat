@@ -96,6 +96,7 @@ async def app(mock_database: MockDatabaseProvider, mock_vector_store) -> AsyncGe
          patch("app.routes.triggers.get_mongodb", get_mock_db), \
          patch("app.routes.crawl.get_mongodb", get_mock_db), \
          patch("app.routes.analytics.get_mongodb", get_mock_db), \
+         patch("app.routes.leads.get_mongodb", get_mock_db), \
          patch("app.database.vector_store.get_vector_store", AsyncMock(return_value=mock_vector_store)):
         from app.main import app as fastapi_app
         yield fastapi_app

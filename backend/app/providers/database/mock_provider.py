@@ -621,11 +621,21 @@ class MockDatabaseProvider(BaseDatabaseProvider):
             "assigned_agent_name": None,
             "created_at": now,
             "updated_at": now,
-            "resolved_at": None
+            "resolved_at": None,
+            "visitor_queue_signals": 0,
         }
         
         self._handoffs[handoff_id] = handoff
         return handoff_id
+    
+    async def bump_handoff_visitor_requeue_pending(self, handoff_id: str) -> None:
+        if handoff_id not in self._handoffs:
+            return
+        h = self._handoffs[handoff_id]
+        if h.get("status") != "pending":
+            return
+        h["visitor_queue_signals"] = int(h.get("visitor_queue_signals") or 0) + 1
+        h["updated_at"] = datetime.utcnow()
     
     async def get_handoff_session(self, handoff_id: str) -> Optional[Dict]:
         """Get handoff session by ID."""

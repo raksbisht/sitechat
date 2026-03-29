@@ -52,7 +52,7 @@ Manage your sites, customize widget appearance, and see a live preview of your c
 
 </details>
 
-<details>
+<details open>
 <summary><strong>Q&A Training</strong></summary>
 
 Create custom question-answer pairs to improve chatbot responses and train your AI.
@@ -61,7 +61,7 @@ Create custom question-answer pairs to improve chatbot responses and train your 
 
 </details>
 
-<details>
+<details open>
 <summary><strong>Embed Code</strong></summary>
 
 Get a ready-to-use embed code to add the chatbot to any website with a single script tag.
@@ -113,7 +113,51 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 | [🚀 Quick Start](#-quick-start) | [📚 API Reference](#-api-reference) | [🧪 Testing](#-testing) |
 | [⚙️ Configuration](#️-configuration) | [🔌 Widget Integration](#-widget-integration) | [🔒 Production Security](#-production-security-checklist) |
 | [🏗️ Architecture](#️-architecture) | [🎯 Features](#-features) | [🤝 Contributing](#-contributing) |
-| [📸 Screenshots](#-screenshots) | [🔄 Comparison](#-sitechat-vs-commercial-alternatives) | |
+| [📸 Screenshots](#-screenshots) | [🔄 Comparison](#-sitechat-vs-commercial-alternatives) | [🆕 Recent updates](#-recent-updates) |
+
+---
+
+## 🆕 Recent updates
+
+Highlights from the latest platform and dashboard work:
+
+### Authentication and admin safety
+
+- **Mandatory admin password change** — New auto-created admin accounts are flagged with `must_change_password`. Legacy admin users without that field are migrated on startup so they must pick a new password on first login.
+- **API lock until password is set** — While `must_change_password` is true, admins may only call `GET` / `PATCH` `/api/auth/me`. Other dashboard APIs return `403` with code `must_change_password`.
+- **Profile password flow** — `PATCH /api/auth/me` allows setting a new password **without** the current password when `must_change_password` is true; otherwise the current password is still required.
+- **Admin management of site owners** — `PATCH /api/auth/users/{user_id}` lets admins update a site owner’s (`role=user`) display name and/or password.
+- **User API** — Responses include `must_change_password` where applicable.
+
+### Conversations API (authorization)
+
+- **JWT on conversation routes** — Listing, search, detail, notes, tags, status, export, delete, and related operations require a valid Bearer token.
+- **Role-scoped data** — **Admins** see all sites (optional `site_id` filter). **Support agents** see only conversations for sites in `assigned_site_ids` (multi-site queries use a `site_id` `$in` filter). **Site owners** see only their own sites’ conversations.
+- **Agent restrictions** — Agents cannot export conversations or delete (single or bulk). **`POST /api/conversations/auto-close`** is **admin-only**. Exports for non-admins require explicit `site_id` and/or `session_ids` scoped to sites they can access.
+
+### Human handoff and widget
+
+- **Visitor abandon** — `POST /api/handoff/{handoff_id}/abandon` (public, rate-limited) marks a handoff abandoned when the visitor leaves; body includes `session_id` for verification. The embeddable widget calls this on unload/navigation where possible (including `sendBeacon`).
+- **Re-request signal** — If a visitor requests a human again while the request is still **pending**, the server bumps `visitor_queue_signals` and updates the row so the agent queue and **SSE** stream can highlight “still waiting / nudge” behavior.
+- **Agent queue visibility** — Support agents see **unassigned** items (open pool) plus handoffs **assigned to them**. Admins and site owners still see the full queue for the site(s). SSE uses the same rules and includes queue row identity (including signals) so updates propagate reliably.
+- **Abandoned handoffs** — Messaging, assignment, and status changes are rejected appropriately once a session is abandoned.
+
+### Leads
+
+- **Site-scoped access** — List, export, count, and delete check that the caller may view that site (`can_view_site`). **Agents cannot delete leads.**
+
+### Dashboard and marketing frontend
+
+- **First-login gate** — After login, admins with `must_change_password` get a blocking “Set your password” modal until they save a new password (dashboard is inert until then).
+- **Agents** — Default view is **Handoffs**; **white-label** settings are not loaded for the agent role. Sidebar navigation uses delegated clicks and keeps **menu + utility links** in sync for the active view.
+- **Handoffs UI** — Copy explains the shared pending queue; **assign to agent** sits with the conversation chrome for clearer workflow.
+- **Landing** — The chat widget is loaded with a normal `<script>` tag (same-origin in dev). For a separate API host, set `data-api-url` on the script.
+- **Cache busting** — Dashboard CSS may use a query string on `styles.css` after UI changes so browsers pick up new styles.
+
+### Configuration and widget build
+
+- **Default CORS** — Includes `http://localhost:8015` and `http://127.0.0.1:8015` for common alternate dev ports.
+- **Widget build** — If `npm run build` fails with “source missing”, restore **`frontend/src/widget/chatbot.js`** from the repo; `frontend/widget/` is build output only.
 
 ---
 
@@ -124,7 +168,7 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 | **Core** | Site management, document upload, RAG chatbot, multi-LLM support |
 | **Widget** | Embeddable chat, customizable appearance, proactive triggers, lead capture |
 | **Operations** | Conversation history, analytics dashboard, human handoff, Q&A training |
-| **Admin** | JWT auth, role-based access, security hardening, white-labeling |
+| **Admin** | JWT auth, role-based access, mandatory admin password setup, security hardening, white-labeling |
 
 ### Core
 
@@ -182,6 +226,7 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 - **Source Tracking** - Track where leads originated (chat, form, etc.)
 - **CSV Export** - Export all leads with timestamps for CRM import
 - **Search & Pagination** - Easily browse and search captured leads
+- **Access Control** - Dashboard lead APIs enforce per-site access; **agents cannot delete** leads
 
 </details>
 
@@ -190,10 +235,12 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 <details open>
 <summary><strong>Conversation Management</strong></summary>
 
-- **Full History** - View all conversations across sites
-- **Search & Filter** - By content, date, or site
-- **Export** - Download conversations for analysis
-- **Bulk Operations** - Delete or manage multiple conversations
+- **Authenticated API** - List, search, detail, tags, notes, and exports require JWT; access is limited by role (admin / site owner / agent)
+- **Full History** - Admins see all sites; agents only assigned sites; owners only their sites
+- **Search & Filter** - By content, date, or site (scoped like list)
+- **Export** - Download conversations for analysis (not available to agents; site owners need explicit site/session scope)
+- **Bulk Operations** - Delete or manage multiple conversations (agents cannot delete)
+- **Auto-close** - Inactive conversation cleanup is **admin-only**
 - **Session Tracking** - Track user sessions and engagement
 
 </details>
@@ -212,9 +259,11 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 <summary><strong>Human Handoff</strong></summary>
 
 - **Triggers** - User-initiated, AI-suggested (low confidence), phrase detection
-- **Agent Dashboard** - Real-time queue, pending/active/resolved filters
+- **Visitor Abandon** - Visitors can abandon a handoff when leaving the page; widget calls the public abandon endpoint with session verification
+- **Re-request While Pending** - Repeated “connect to human” while still pending bumps a queue signal for agent visibility and SSE updates
+- **Agent Dashboard** - Real-time queue, pending/active/resolved filters; **agents** see the open pool plus tickets assigned to them; admins/owners see the full site queue
 - **Business Hours** - Configurable schedule, timezone support, offline messages
-- **Live Chat** - Real-time messaging between agent and visitor
+- **Live Chat** - Real-time messaging between agent and visitor (blocked for resolved/abandoned sessions)
 
 </details>
 
@@ -236,9 +285,11 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 <summary><strong>Authentication & Authorization</strong></summary>
 
 - **JWT Authentication** - Secure token-based auth
-- **Role-based Access** - Admin and user roles
+- **Role-based Access** - Admin, site owner (`user`), and support **agent** roles with scoped data access
+- **Mandatory Admin Password** - New and migrated admin accounts can be required to set a new password before using the rest of the API; until then, only profile (`/api/auth/me`) is allowed
+- **Admin Updates Site Owners** - Admins can patch site-owner accounts (`name` / `password`) via `/api/auth/users/{user_id}`
 - **Password Policy** - Configurable complexity requirements
-- **Session Management** - Secure login/logout
+- **Session Management** - Secure login/logout; `must_change_password` exposed in user responses
 
 </details>
 
@@ -351,7 +402,7 @@ sitechat/
 │   ├── css/landing.css            # Landing page styles
 │   ├── package.json               # Widget build config
 │   ├── build.js                   # Obfuscation script
-│   ├── src/widget/chatbot.js      # Widget source (private)
+│   ├── src/widget/chatbot.js      # Widget source (edit here; commit to git)
 │   └── widget/                    # Obfuscated widget (served)
 │       ├── chatbot.js             # Production build
 │       └── chatbot.min.js         # Minified build
@@ -515,7 +566,9 @@ Full documentation available at `/api/docs` (Swagger UI) when running the server
 |--------|----------|-------------|
 | POST | `/api/auth/login` | User login |
 | POST | `/api/auth/register` | User registration |
-| GET | `/api/auth/me` | Get current user |
+| GET | `/api/auth/me` | Get current user (includes `must_change_password` when applicable) |
+| PATCH | `/api/auth/me` | Update profile; set `new_password` without current password when `must_change_password` is true |
+| PATCH | `/api/auth/users/{user_id}` | Admin: update site owner name/password (`role=user`) |
 | GET | `/api/sites` | List all sites |
 | POST | `/api/sites` | Create new site |
 | GET | `/api/sites/{site_id}` | Get site details |
@@ -546,12 +599,17 @@ Full documentation available at `/api/docs` (Swagger UI) when running the server
 
 ### Conversations & Analytics
 
+All `/api/conversations/*` routes require authentication; list/search/detail respect admin vs site-owner vs **agent** site scope. Agents cannot export or delete.
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/conversations` | List conversations |
+| GET | `/api/conversations` | List conversations (scoped by role) |
+| GET | `/api/conversations/search` | Search by message content (scoped) |
 | GET | `/api/conversations/{session_id}` | Get conversation |
-| DELETE | `/api/conversations/{session_id}` | Delete conversation |
-| POST | `/api/conversations/export` | Export conversations |
+| DELETE | `/api/conversations/{session_id}` | Delete conversation (not agents) |
+| POST | `/api/conversations/bulk-delete` | Delete multiple conversations (not agents) |
+| POST | `/api/conversations/export` | Export conversations (not agents; scoped for non-admins) |
+| POST | `/api/conversations/auto-close` | Close inactive conversations (**admin only**) |
 | GET | `/api/analytics/overview` | Dashboard overview |
 | GET | `/api/analytics/sites/{site_id}` | Site-specific analytics |
 
@@ -569,17 +627,20 @@ Full documentation available at `/api/docs` (Swagger UI) when running the server
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/handoff` | Create handoff request |
+| POST | `/api/handoff` | Create handoff request (re-post while pending bumps visitor queue signal) |
+| POST | `/api/handoff/{handoff_id}/abandon` | Visitor abandons handoff (`session_id` in body); public, rate-limited |
 | GET | `/api/handoff/{id}` | Get handoff status |
 | GET | `/api/handoff/{id}/messages` | Get messages |
 | POST | `/api/handoff/{id}/messages` | Send visitor message |
 | POST | `/api/handoff/{id}/agent-message` | Send agent message |
 | PUT | `/api/handoff/{id}/status` | Update status (claim/resolve) |
-| GET | `/api/sites/{site_id}/handoff/queue` | Get agent queue |
+| GET | `/api/sites/{site_id}/handoff/queue` | Get agent queue (agents: unassigned + assigned to them) |
 | GET | `/api/sites/{site_id}/handoff/config` | Get handoff config |
 | PUT | `/api/sites/{site_id}/handoff/config` | Update handoff config |
 
 ### Lead Generation
+
+Dashboard lead routes require auth and per-site access; agents cannot delete.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -588,7 +649,7 @@ Full documentation available at `/api/docs` (Swagger UI) when running the server
 | GET | `/api/sites/{site_id}/leads` | List leads (paginated) |
 | GET | `/api/sites/{site_id}/leads/export` | Export leads as CSV |
 | GET | `/api/sites/{site_id}/leads/count` | Get total leads count |
-| DELETE | `/api/leads/{lead_id}` | Delete a lead |
+| DELETE | `/api/leads/{lead_id}` | Delete a lead (not agents) |
 
 ### Q&A Training
 
@@ -631,7 +692,7 @@ Add the chatbot to any website with a single script tag:
 | Attribute | Description | Default |
 |-----------|-------------|---------|
 | `data-site-id` | Site ID (required) | - |
-| `data-api-url` | Backend API URL | - |
+| `data-api-url` | Backend API base URL (omit when the page is same-origin with the API; set when the marketing site and API use different hosts) | - |
 | `data-color` | Primary theme color | `#0D9488` |
 | `data-title` | Chat header title | `Chat with us` |
 | `data-welcome` | Welcome message | `Hi! How can I help you?` |
@@ -639,15 +700,17 @@ Add the chatbot to any website with a single script tag:
 
 ### Widget Development
 
-For modifying the widget source code:
+The **authoritative widget code** lives at `frontend/src/widget/chatbot.js`. It is part of this repository—commit it like any other source file.
+
+The **embeddable script** your sites load is generated under `frontend/widget/` (`chatbot.js` is obfuscated for production; `chatbot.min.js` is a lighter build). Only those built files need to be URL-served to end users; they are produced from `src/widget/`, not hand-edited.
 
 ```bash
 cd frontend
 npm install          # First time only
-npm run build        # Build obfuscated widget
+npm run build        # Regenerates frontend/widget/chatbot.js and chatbot.min.js
 ```
 
-The widget source (`frontend/src/widget/`) is private and obfuscated for production. Only `frontend/widget/` is publicly served.
+If `npm run build` fails with “Source file not found”, `frontend/src/widget/chatbot.js` is missing from your tree—restore it from git; do not rely on `widget/*.js` alone as the source of truth.
 
 ---
 

@@ -277,6 +277,21 @@ class TestHandoffMessages:
         
         assert response.status_code == 400
         assert "resolved" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_send_visitor_message_abandoned_handoff(self, client, mock_mongodb, sample_handoff_data):
+        """Test sending message to abandoned handoff fails."""
+        abandoned_handoff = {**sample_handoff_data, "status": "abandoned"}
+
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=abandoned_handoff)
+
+        response = await client.post(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/messages",
+            json={"content": "Hello"},
+        )
+
+        assert response.status_code == 400
+        assert "ended" in response.json()["detail"].lower() or "abandoned" in response.json()["detail"].lower()
     
     @pytest.mark.asyncio
     async def test_send_agent_message(self, authenticated_client, mock_mongodb, sample_handoff_data):
@@ -323,6 +338,86 @@ class TestHandoffMessages:
         
         assert response.status_code == 200
         mock_mongodb.update_handoff_status.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_send_agent_message_abandoned_handoff(self, authenticated_client, mock_mongodb, sample_handoff_data):
+        """Agent cannot message an abandoned handoff."""
+        abandoned = {**sample_handoff_data, "status": "abandoned"}
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=abandoned)
+
+        response = await authenticated_client.post(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/agent-message",
+            json={"content": "Hello"},
+        )
+
+        assert response.status_code == 400
+        assert "abandoned" in response.json()["detail"].lower()
+
+
+class TestAbandonHandoffPublic:
+    """POST /api/handoff/{id}/abandon — visitor leaves widget (public)."""
+
+    @pytest.mark.asyncio
+    async def test_abandon_pending_success(self, client, mock_mongodb, sample_handoff_data):
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=sample_handoff_data)
+        mock_mongodb.update_handoff_status = AsyncMock(
+            return_value={**sample_handoff_data, "status": "abandoned"}
+        )
+
+        response = await client.post(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/abandon",
+            json={"session_id": sample_handoff_data["session_id"]},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["status"] == "abandoned"
+        mock_mongodb.update_handoff_status.assert_called_once_with(
+            handoff_id=sample_handoff_data["handoff_id"],
+            status="abandoned",
+        )
+
+    @pytest.mark.asyncio
+    async def test_abandon_wrong_session_forbidden(self, client, mock_mongodb, sample_handoff_data):
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=sample_handoff_data)
+        mock_mongodb.update_handoff_status = AsyncMock()
+
+        response = await client.post(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/abandon",
+            json={"session_id": "other-session"},
+        )
+
+        assert response.status_code == 403
+        mock_mongodb.update_handoff_status.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_abandon_resolved_idempotent(self, client, mock_mongodb, sample_handoff_data):
+        resolved = {**sample_handoff_data, "status": "resolved"}
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=resolved)
+        mock_mongodb.update_handoff_status = AsyncMock()
+
+        response = await client.post(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/abandon",
+            json={"session_id": sample_handoff_data["session_id"]},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("unchanged") is True
+        assert data["status"] == "resolved"
+        mock_mongodb.update_handoff_status.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_abandon_not_found(self, client, mock_mongodb):
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=None)
+
+        response = await client.post(
+            "/api/handoff/missing_handoff/abandon",
+            json={"session_id": "session_123"},
+        )
+
+        assert response.status_code == 404
 
 
 class TestUpdateHandoffStatus:
@@ -762,7 +857,94 @@ class TestBusinessHours:
         """Test getting business hours when config has no hours."""
         mock_mongodb.get_site_handoff_config = AsyncMock(return_value={"enabled": True})
         mock_mongodb.seed_site(sample_site)
-        
+
         response = await client.get(f"/api/sites/{sample_site['site_id']}/business-hours")
-        
+
         assert response.status_code == 200
+
+
+class TestHandoffAlreadyClaimedConflict:
+    """Tests for the 409 conflict when an agent tries to claim an already-active handoff."""
+
+    @pytest.mark.asyncio
+    async def test_claim_already_active_handoff_returns_409(
+        self, authenticated_client, mock_mongodb, sample_handoff_data
+    ):
+        """Claiming a handoff that is already active returns 409."""
+        already_active = {**sample_handoff_data, "status": "active"}
+
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=already_active)
+        mock_mongodb.update_handoff_status = AsyncMock(return_value=True)
+
+        response = await authenticated_client.put(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/status",
+            json={"status": "active"},
+        )
+
+        assert response.status_code == 409
+        assert "already claimed" in response.json()["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_claim_pending_handoff_succeeds(
+        self, authenticated_client, mock_mongodb, sample_handoff_data
+    ):
+        """Claiming a pending handoff (not yet active) succeeds."""
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=sample_handoff_data)
+        mock_mongodb.update_handoff_status = AsyncMock(return_value=True)
+
+        response = await authenticated_client.put(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/status",
+            json={"status": "active"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+
+
+class TestHandoffWaitTime:
+    """Tests for wait_time_seconds in the full handoff detail response."""
+
+    @pytest.mark.asyncio
+    async def test_full_handoff_includes_wait_time(
+        self, authenticated_client, mock_mongodb, sample_handoff_data
+    ):
+        """Full handoff detail response includes wait_time_seconds."""
+        full_handoff = {
+            **sample_handoff_data,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+        }
+
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=full_handoff)
+
+        response = await authenticated_client.get(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/full"
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "wait_time_seconds" in data
+        assert isinstance(data["wait_time_seconds"], int)
+        assert data["wait_time_seconds"] >= 0
+
+    @pytest.mark.asyncio
+    async def test_full_handoff_wait_time_zero_when_no_created_at(
+        self, authenticated_client, mock_mongodb, sample_handoff_data
+    ):
+        """wait_time_seconds defaults to 0 when created_at is missing."""
+        full_handoff = {
+            **sample_handoff_data,
+            "created_at": None,
+            "updated_at": datetime.utcnow(),
+            "messages": [],
+        }
+
+        mock_mongodb.get_handoff_session = AsyncMock(return_value=full_handoff)
+
+        response = await authenticated_client.get(
+            f"/api/handoff/{sample_handoff_data['handoff_id']}/full"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["wait_time_seconds"] == 0

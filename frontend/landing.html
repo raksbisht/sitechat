@@ -767,6 +767,12 @@
     </div>
   </footer>
 
+  <!--
+    SiteChat embed. Local dev (e.g. http://127.0.0.1:8015/): same-origin API — omit data-api-url.
+    Split domain (marketing site ≠ API): add data-api-url="https://your-api-host".
+  -->
+  <script src="/widget/chatbot.js?v=2" data-site-id="713b6838215c"></script>
+
   <script>
     (function () {
       // Mobile nav
@@ -806,19 +812,8 @@
         item.addEventListener('toggle', function () {});
       });
 
-      // Load SiteChat widget
+      // Enhance loaded SiteChat widget — close button + human handoff button
       (function() {
-        var apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? 'http://' + window.location.host
-          : 'https://api.sitechat.in';
-        var s = document.createElement('script');
-        s.src = apiUrl + '/widget/chatbot.js';
-        s.async = true;
-        s.dataset.siteId = '713b6838215c';
-        s.dataset.apiUrl = apiUrl;
-        document.head.appendChild(s);
-
-        // Enhance widget header — close button + human handoff button
         var observer = new MutationObserver(function() {
           var header = document.querySelector('.sitechat-header');
           if (!header) return;

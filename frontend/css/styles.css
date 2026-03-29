@@ -144,6 +144,7 @@ button, .btn, input, select, textarea {
     left: 0;
     bottom: 0;
     z-index: 100;
+    pointer-events: auto;
 }
 
 .sidebar-brand {
@@ -1340,6 +1341,17 @@ button, .btn, input, select, textarea {
     padding: 24px;
 }
 
+/* Dashboard SPA: hide embed widget; keep sidebar above any stray high z-index layers */
+body[data-sitechat-dashboard] .sitechat-widget {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+body[data-sitechat-dashboard] .sidebar {
+    z-index: 100001;
+}
+
 body:not(.is-admin) .is-admin-only {
     display: none !important;
 }
@@ -1348,11 +1360,28 @@ body.is-agent .is-not-agent {
     display: none !important;
 }
 
-body.is-agent .menu-item[data-view="sites"],
 body.is-agent .menu-item[data-view="admin"],
-body.is-agent .menu-item[data-view="conversations"],
-body.is-agent .menu-item[data-view="settings"],
 body.is-agent .menu-item[data-view="team"] {
+    display: none !important;
+}
+
+/* Agents: force-show core nav (avoids stale cached CSS hiding these) */
+body.is-agent .sidebar-menu .menu-item[data-view="sites"],
+body.is-agent .sidebar-menu .menu-item[data-view="conversations"],
+body.is-agent .sidebar-menu .menu-item[data-view="handoffs"] {
+    display: flex !important;
+}
+body.is-agent .sidebar-utils .sidebar-util-link[data-view="settings"],
+body.is-agent .sidebar-utils .sidebar-util-link[data-view="help"] {
+    display: flex !important;
+}
+
+/* Agents: read-only site management (no add/delete/crawl/upload) */
+body.is-agent #add-site-btn,
+body.is-agent #empty-add-btn,
+body.is-agent #delete-site,
+body.is-agent #recrawl-site,
+body.is-agent #add-documents-btn {
     display: none !important;
 }
 
@@ -3221,6 +3250,7 @@ body.is-admin .admin-only {
     background: rgba(0, 0, 0, 0.3);
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transition: all 0.3s ease;
     z-index: 998;
 }
@@ -3228,6 +3258,7 @@ body.is-admin .admin-only {
 .side-panel-overlay.active {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
 }
 
 .side-panel {
@@ -5410,6 +5441,14 @@ body.is-admin .admin-only {
     gap: 8px;
 }
 
+.handoffs-queue-hint {
+    margin: 12px 0 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--gray-600);
+    max-width: 42rem;
+}
+
 .handoffs-stats {
     display: flex;
     gap: 16px;
@@ -5482,6 +5521,15 @@ body.is-admin .admin-only {
     font-size: 13px;
 }
 
+.handoffs-empty .handoffs-empty-hint {
+    display: block;
+    margin-top: 16px;
+    max-width: 320px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--gray-600);
+}
+
 .handoff-item {
     position: relative;
     padding: 14px 16px;
@@ -5539,42 +5587,48 @@ body.is-admin .admin-only {
     box-shadow: 0 1px 2px rgba(22, 101, 52, 0.25);
 }
 
-/* New handoff — visible for several minutes (see JS handoffHighlightExpiry); survives queue refresh. */
+/* New handoff — visible for several minutes (see JS handoffHighlightExpiry); survives queue refresh.
+   Blue accent: distinct from green Accept + yellow PENDING; uses :root --blue-* tokens. */
 @keyframes handoff-new-pulse {
     0%, 100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.12);
-        border-color: #a7f3d0;
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.1);
+        border-color: #bfdbfe;
     }
     50% {
-        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.1);
-        border-color: var(--green-500, #22c55e);
+        box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.08);
+        border-color: var(--blue-500);
     }
 }
 
 .handoff-item.handoff-item-new {
-    border-left: 4px solid var(--green-600, #16a34a);
-    background: linear-gradient(90deg, var(--green-50) 0%, #fff 18%);
+    border-left: 4px solid var(--blue-600);
+    background: linear-gradient(90deg, var(--blue-50) 0%, #fff 20%);
     animation: handoff-new-pulse 2s ease-in-out infinite;
+}
+
+.handoff-item.handoff-item-new:hover {
+    border-color: #93c5fd;
+    background: linear-gradient(90deg, var(--blue-100) 0%, #fff 22%);
 }
 
 /* Open chat: selection wins over “new” styling (JS omits .handoff-item-new when selected). */
 .handoff-item.handoff-item-new.selected {
     animation: none;
     border-left-width: 1px;
-    background: linear-gradient(95deg, rgba(240, 253, 244, 0.95) 0%, #fff 100%);
-    box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.28);
+    background: linear-gradient(95deg, rgba(239, 246, 255, 0.96) 0%, #fff 100%);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.22);
 }
 
 .handoff-item-accept-hint {
     font-size: 12px;
     line-height: 1.45;
     color: var(--gray-700);
-    background: var(--gray-50);
+    background: var(--blue-50);
     border-radius: 8px;
     padding: 8px 10px 8px 12px;
     margin-bottom: 8px;
-    border: 1px solid var(--gray-200);
-    border-left: 3px solid var(--green-500, #22c55e);
+    border: 1px solid #bfdbfe;
+    border-left: 3px solid var(--blue-500);
 }
 
 .handoff-item-accept-hint strong {
@@ -5892,9 +5946,10 @@ body.is-admin .admin-only {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--gray-200);
+    flex-shrink: 0;
+    padding: 10px 20px;
+    border-top: 1px solid var(--gray-200);
+    background: #fff;
 }
 
 .hd-assign-label {
@@ -6175,6 +6230,10 @@ body.is-admin .admin-only {
     border-top: 1px solid var(--gray-200);
     background: white;
     flex-shrink: 0;
+}
+
+.hd-assign-row:not(.hidden) + .hd-input-bar {
+    border-top: none;
 }
 
 .hd-input-form {
@@ -9647,3 +9706,98 @@ kbd {
     padding: 0;
 }
 .btn-link.danger { color: var(--danger); }
+
+/* First-time admin: block dashboard until password is set */
+body.admin-password-gate-active .app {
+    filter: blur(2px);
+    pointer-events: none;
+    user-select: none;
+}
+
+#admin-password-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+}
+
+.admin-password-gate-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface, #fff);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+    padding: 28px 28px 24px;
+    border: 1px solid var(--gray-200, #e5e7eb);
+}
+
+.admin-password-gate-card h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: var(--gray-900, #111827);
+}
+
+.admin-password-gate-hint {
+    margin: 0 0 20px;
+    font-size: 14px;
+    color: var(--gray-600, #4b5563);
+    line-height: 1.45;
+}
+
+.admin-password-gate-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700, #374151);
+    margin-bottom: 6px;
+}
+
+.admin-password-gate-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--gray-200, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    font-size: 15px;
+    margin-bottom: 14px;
+}
+
+.admin-password-gate-input:focus {
+    outline: none;
+    border-color: var(--primary, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.admin-password-gate-error {
+    color: var(--danger, #dc2626);
+    font-size: 13px;
+    margin: 0 0 12px;
+}
+
+.admin-password-gate-submit {
+    width: 100%;
+    margin-top: 4px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: var(--radius, 8px);
+    background: var(--primary, #2563eb);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-password-gate-submit:hover:not(:disabled) {
+    filter: brightness(1.05);
+}
+
+.admin-password-gate-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}

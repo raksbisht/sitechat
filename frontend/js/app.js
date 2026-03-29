@@ -47,11 +47,166 @@ const elements = {
     documentsList: document.getElementById('documents-list')
 };
 
-document.addEventListener('DOMContentLoaded', initializeApp);
+function scheduleInitializeApp() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeApp, { once: true });
+    } else {
+        queueMicrotask(() => initializeApp());
+    }
+}
+scheduleInitializeApp();
+
+function formatApiErrorDetail(data) {
+    if (!data || data.detail == null) return 'Request failed.';
+    const d = data.detail;
+    if (typeof d === 'string') return d;
+    if (d.message) return d.message;
+    if (Array.isArray(d) && d[0]?.msg) return d[0].msg;
+    return 'Request failed.';
+}
+
+function syncBodyRoleClasses() {
+    document.body.classList.remove('is-admin', 'is-user', 'is-agent');
+    if (!currentUser?.role) return;
+    const r = String(currentUser.role).toLowerCase();
+    if (r === 'admin') document.body.classList.add('is-admin');
+    else if (r === 'user') document.body.classList.add('is-user');
+    else if (r === 'agent') document.body.classList.add('is-agent');
+}
+
+/** Prefer getAttribute — dataset.view can be unreliable for data-view in some browsers. */
+function navDataView(el) {
+    if (!el || !el.getAttribute) return '';
+    return String(el.getAttribute('data-view') || '').trim();
+}
+
+function isDashboardAgent() {
+    return String(currentUser?.role || '').toLowerCase() === 'agent';
+}
+
+function syncSidebarActiveNav(viewId) {
+    document.querySelectorAll('.menu-item').forEach((i) => {
+        i.classList.toggle('active', navDataView(i) === viewId);
+    });
+    document.querySelectorAll('.sidebar-util-link').forEach((l) => {
+        l.classList.toggle('active', navDataView(l) === viewId);
+    });
+}
+
+async function refreshCurrentUserFromServer() {
+    try {
+        const res = await fetch(`${API_BASE}/auth/me`, { headers: getAuthHeaders() });
+        if (res.status === 401) {
+            logout();
+            return false;
+        }
+        if (!res.ok) return true;
+        const data = await res.json();
+        currentUser = {
+            ...currentUser,
+            id: data.id,
+            email: data.email,
+            name: data.name,
+            role: data.role,
+            created_at: data.created_at,
+            assigned_site_ids: data.assigned_site_ids || [],
+            must_change_password: !!data.must_change_password,
+        };
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        syncBodyRoleClasses();
+        return true;
+    } catch {
+        return true;
+    }
+}
+
+function runAdminPasswordGate() {
+    return new Promise((resolve) => {
+        document.body.classList.add('admin-password-gate-active');
+        const appRoot = document.querySelector('.app');
+        if (appRoot) appRoot.setAttribute('inert', '');
+
+        const el = document.createElement('div');
+        el.id = 'admin-password-gate';
+        el.setAttribute('role', 'dialog');
+        el.setAttribute('aria-modal', 'true');
+        el.setAttribute('aria-labelledby', 'admin-password-gate-title');
+        el.innerHTML = `
+          <div class="admin-password-gate-card">
+            <h1 id="admin-password-gate-title">Set your password</h1>
+            <p class="admin-password-gate-hint">For security, choose a new password before using the dashboard.</p>
+            <form id="admin-password-gate-form">
+              <label class="admin-password-gate-label" for="admin-gate-pw">New password</label>
+              <input type="password" id="admin-gate-pw" class="admin-password-gate-input" autocomplete="new-password" required minlength="8" />
+              <label class="admin-password-gate-label" for="admin-gate-pw2">Confirm password</label>
+              <input type="password" id="admin-gate-pw2" class="admin-password-gate-input" autocomplete="new-password" required minlength="8" />
+              <p class="admin-password-gate-error" id="admin-gate-error" role="alert" hidden></p>
+              <button type="submit" class="admin-password-gate-submit" id="admin-gate-submit">Save and continue</button>
+            </form>
+          </div>
+        `;
+        document.body.appendChild(el);
+
+        const form = el.querySelector('#admin-password-gate-form');
+        const errEl = el.querySelector('#admin-gate-error');
+        const pw1 = el.querySelector('#admin-gate-pw');
+        const pw2 = el.querySelector('#admin-gate-pw2');
+        pw1.focus();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errEl.hidden = true;
+            const p1 = pw1.value;
+            const p2 = pw2.value;
+            if (p1 !== p2) {
+                errEl.textContent = 'Passwords do not match.';
+                errEl.hidden = false;
+                return;
+            }
+            const btn = el.querySelector('#admin-gate-submit');
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE}/auth/me`, {
+                    method: 'PATCH',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_password: p1 }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    errEl.textContent = formatApiErrorDetail(data);
+                    errEl.hidden = false;
+                    btn.disabled = false;
+                    return;
+                }
+                currentUser = {
+                    ...currentUser,
+                    ...data,
+                    assigned_site_ids: data.assigned_site_ids || [],
+                    must_change_password: !!data.must_change_password,
+                };
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                el.remove();
+                document.body.classList.remove('admin-password-gate-active');
+                if (appRoot) appRoot.removeAttribute('inert');
+                updateUserUI();
+                resolve();
+            } catch {
+                errEl.textContent = 'Network error. Try again.';
+                errEl.hidden = false;
+                btn.disabled = false;
+            }
+        });
+    });
+}
 
 async function initializeApp() {
     if (!checkAuth()) return;
-    
+    const sessionOk = await refreshCurrentUserFromServer();
+    if (!sessionOk) return;
+    if (currentUser.role === 'admin' && currentUser.must_change_password) {
+        await runAdminPasswordGate();
+    }
+
     initSidebarCollapse();
     initSiteDetailHashRouting();
     setupNavigation();
@@ -59,11 +214,11 @@ async function initializeApp() {
     setupAnalyticsPeriodButtons();
     setupCustomizeTabs();
     updateUserUI();
-    loadWhiteLabelConfig();
+    if (!isDashboardAgent()) {
+        loadWhiteLabelConfig();
+    }
     await loadSites();
-    if (currentUser.role === 'agent') {
-        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-        document.querySelector('.menu-item[data-view="handoffs"]')?.classList.add('active');
+    if (isDashboardAgent()) {
         switchView('handoffs');
     }
 }
@@ -83,15 +238,7 @@ function checkAuth() {
             currentUser.assigned_site_ids = [];
         }
         
-        if (currentUser.role === 'admin') {
-            document.body.classList.add('is-admin');
-        }
-        if (currentUser.role === 'user') {
-            document.body.classList.add('is-user');
-        }
-        if (currentUser.role === 'agent') {
-            document.body.classList.add('is-agent');
-        }
+        syncBodyRoleClasses();
         
         return true;
     } catch (e) {
@@ -127,25 +274,15 @@ function logout() {
 }
 
 function setupNavigation() {
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('dashboard-sidebar');
+    if (sidebar) {
+        sidebar.addEventListener('click', (e) => {
+            const link = e.target.closest('.menu-item[data-view], .sidebar-util-link[data-view]');
+            if (!link || !sidebar.contains(link)) return;
             e.preventDefault();
-            const view = item.dataset.view;
-            switchView(view);
-            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
+            switchView(navDataView(link));
         });
-    });
-
-    document.querySelectorAll('.sidebar-util-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            switchView(link.dataset.view);
-            document.querySelectorAll('.sidebar-util-link').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-        });
-    });
-
+    }
 
     // Keyboard shortcuts (g+s, g+c, g+h, comma)
     let gPressed = false;
@@ -154,7 +291,6 @@ function setupNavigation() {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
         if (e.key === ',' && !e.metaKey && !e.ctrlKey) {
             switchView('settings');
-            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
             return;
         }
         if (e.key === 'g') {
@@ -170,18 +306,22 @@ function setupNavigation() {
             const view = map[e.key];
             if (view) {
                 switchView(view);
-                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-                document.querySelector(`.menu-item[data-view="${view}"]`)?.classList.add('active');
             }
         }
     });
 }
 
 function switchView(viewId) {
-    if (currentUser?.role === 'agent' && !['handoffs', 'help'].includes(viewId)) {
+    const id = typeof viewId === 'string' ? viewId.trim() : String(viewId || '').trim();
+    viewId = id;
+    if (!viewId) {
+        return;
+    }
+
+    if (isDashboardAgent() && !['handoffs', 'conversations', 'sites', 'settings', 'help'].includes(viewId)) {
         viewId = 'handoffs';
     }
-    if (viewId === 'team' && currentUser?.role === 'agent') {
+    if (viewId === 'team' && isDashboardAgent()) {
         viewId = 'handoffs';
     }
 
@@ -194,13 +334,12 @@ function switchView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     viewEl.classList.add('active');
 
-    document.querySelectorAll('.menu-item').forEach(i => {
-        i.classList.toggle('active', i.dataset.view === viewId);
-    });
+    syncSidebarActiveNav(viewId);
 
     // Close handoff SSE streams when navigating away
     if (viewId !== 'handoffs') {
         stopHandoffQueueStream();
+        stopHandoffQueuePoll();
         stopMessageStream();
     }
     
@@ -216,8 +355,10 @@ function switchView(viewId) {
     } else if (viewId === 'settings') {
         initSettingsPanels();
         initProfileSettings();
-        initWhiteLabelSettings();
-        checkHealth();
+        if (!isDashboardAgent()) {
+            initWhiteLabelSettings();
+            checkHealth();
+        }
     } else if (viewId === 'handoffs') {
         populateHandoffSiteFilter();
         initHandoffsView();
@@ -345,7 +486,7 @@ function renderSites() {
             sitesList.appendChild(item);
         });
         
-        if (!currentDetailSite && sites.length > 0 && currentUser?.role !== 'agent') {
+        if (!currentDetailSite && sites.length > 0) {
             selectSite(sites[0]);
         }
     }
@@ -4996,10 +5137,17 @@ let handoffsState = {
     statusFilter: '',
     queueES: null,
     messageES: null,
+    /** Periodic REST refresh while Handoffs is open (backup if SSE is blocked or flaky). */
+    queuePollTimer: null,
     lastRenderedMessagesSig: '',
-    /** First queue snapshot after opening Handoffs seeds known IDs (no flash for existing items). */
+    /** First queue snapshot after opening Handoffs seeds baseline (no flash for items already in view). */
     queueBaselineInitialized: false,
-    knownHandoffIds: new Set(),
+    /** Previous render's handoff_id set — detects re-entries (e.g. visitor cancelled then re-requested). */
+    previousQueueSnapshotIds: null,
+    /** handoff_id -> last seen updated_at key — detects visitor re-post on same pending row. */
+    lastHandoffUpdatedAt: new Map(),
+    /** handoff_id -> last visitor_queue_signals from API (int) — reliable reconnect highlight. */
+    lastHandoffVisitorSignal: new Map(),
     /** handoff_id -> epoch ms when highlight ends (survives SSE re-renders). */
     handoffHighlightExpiry: new Map(),
     /** Cached GET /api/auth/agents (admin). */
@@ -5009,12 +5157,41 @@ let handoffsState = {
 const HANDOFF_HIGHLIGHT_MS = 3 * 60 * 1000; // 3 minutes — enough to notice and accept
 
 function initHandoffsView() {
+    const siteFilterEl = document.getElementById('handoff-site-filter');
+    const statusFilterEl = document.getElementById('handoff-status-filter');
+    if (siteFilterEl) handoffsState.siteFilter = siteFilterEl.value;
+    if (statusFilterEl) handoffsState.statusFilter = statusFilterEl.value;
+
     handoffsState.queueBaselineInitialized = false;
-    handoffsState.knownHandoffIds = new Set();
+    handoffsState.previousQueueSnapshotIds = null;
+    handoffsState.lastHandoffUpdatedAt = new Map();
+    handoffsState.lastHandoffVisitorSignal = new Map();
     handoffsState.handoffHighlightExpiry.clear();
     handoffsState.agentCatalog = null;
     setupHandoffsEventListeners();
+    const agentQueueHint = document.getElementById('handoffs-agent-queue-hint');
+    if (agentQueueHint) {
+        agentQueueHint.classList.toggle('hidden', currentUser?.role !== 'agent');
+    }
     startHandoffQueueStream();
+    // REST snapshot so the queue shows even if SSE fails (401/CORS/adblock/reconnect issues).
+    loadHandoffQueue();
+    startHandoffQueuePoll();
+}
+
+function stopHandoffQueuePoll() {
+    if (handoffsState.queuePollTimer != null) {
+        clearInterval(handoffsState.queuePollTimer);
+        handoffsState.queuePollTimer = null;
+    }
+}
+
+function startHandoffQueuePoll() {
+    stopHandoffQueuePoll();
+    handoffsState.queuePollTimer = setInterval(() => {
+        const view = document.getElementById('handoffs-view');
+        if (view?.classList.contains('active')) loadHandoffQueue();
+    }, 12000);
 }
 
 function handoffShouldHighlight(handoffId) {
@@ -5119,6 +5296,7 @@ function setupHandoffsEventListeners() {
         siteFilter.addEventListener('change', () => {
             handoffsState.siteFilter = siteFilter.value;
             startHandoffQueueStream();
+            loadHandoffQueue();
         });
     }
 
@@ -5126,6 +5304,7 @@ function setupHandoffsEventListeners() {
         statusFilter.addEventListener('change', () => {
             handoffsState.statusFilter = statusFilter.value;
             startHandoffQueueStream();
+            loadHandoffQueue();
         });
     }
     
@@ -5192,7 +5371,8 @@ async function loadHandoffQueue() {
         if (handoffsState.statusFilter) {
             url += `status=${handoffsState.statusFilter}&`;
         }
-        
+        url += 'limit=50';
+
         const response = await fetch(url, {
             headers: getAuthHeaders()
         });
@@ -5244,6 +5424,18 @@ function renderHandoffQueue() {
     if (!container) return;
     
     if (handoffsState.handoffs.length === 0) {
+        // Queue went empty: clear snapshots so the same handoff id is treated as a re-entry next time.
+        handoffsState.previousQueueSnapshotIds = new Set();
+        handoffsState.lastHandoffUpdatedAt = new Map();
+        handoffsState.lastHandoffVisitorSignal = new Map();
+
+        const agentNoSites =
+            typeof currentUser !== 'undefined' &&
+            currentUser?.role === 'agent' &&
+            (!Array.isArray(sites) || sites.length === 0);
+        const agentHint = agentNoSites
+            ? `<span class="handoffs-empty-hint">You are not assigned to any sites yet. An admin must assign sites under <strong>Team</strong> before visitor handoffs can appear here.</span>`
+            : '';
         container.innerHTML = `
             <div class="handoffs-empty">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -5254,6 +5446,7 @@ function renderHandoffQueue() {
                 </svg>
                 <p>No handoff requests</p>
                 <span>Handoff requests from visitors will appear here</span>
+                ${agentHint}
             </div>
         `;
         return;
@@ -5265,16 +5458,67 @@ function renderHandoffQueue() {
         if (exp <= now) handoffsState.handoffHighlightExpiry.delete(hid);
     }
 
+    const updatedAtKey = (h) => {
+        const u = h.updated_at;
+        if (u == null) return '';
+        if (typeof u === 'string') return u;
+        if (typeof u === 'number' && Number.isFinite(u)) return String(u);
+        const s = String(u);
+        const parsed = Date.parse(s);
+        return Number.isFinite(parsed) ? new Date(parsed).toISOString() : s;
+    };
+
+    const visitorSignal = (h) => {
+        const n = Number(h.visitor_queue_signals);
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const bumpHighlight = (handoffId) => {
+        handoffsState.handoffHighlightExpiry.set(handoffId, now + HANDOFF_HIGHLIGHT_MS);
+    };
+
     if (!handoffsState.queueBaselineInitialized) {
-        handoffsState.knownHandoffIds = new Set(ids);
+        handoffsState.previousQueueSnapshotIds = new Set(ids);
         handoffsState.queueBaselineInitialized = true;
-    } else {
-        handoffsState.handoffs.forEach(h => {
-            if (!handoffsState.knownHandoffIds.has(h.handoff_id)) {
-                handoffsState.handoffHighlightExpiry.set(h.handoff_id, now + HANDOFF_HIGHLIGHT_MS);
-            }
+        handoffsState.handoffs.forEach((h) => {
+            const id = h.handoff_id;
+            handoffsState.lastHandoffUpdatedAt.set(id, updatedAtKey(h));
+            handoffsState.lastHandoffVisitorSignal.set(id, visitorSignal(h));
         });
-        ids.forEach(id => handoffsState.knownHandoffIds.add(id));
+    } else {
+        const prevSnap = handoffsState.previousQueueSnapshotIds || new Set();
+        handoffsState.handoffs.forEach((h) => {
+            const id = h.handoff_id;
+            const sig = visitorSignal(h);
+            if (!prevSnap.has(id)) {
+                bumpHighlight(id);
+            } else if (h.status === 'pending') {
+                const prevSig = handoffsState.lastHandoffVisitorSignal.get(id);
+                if (prevSig !== undefined && sig > prevSig) {
+                    bumpHighlight(id);
+                } else {
+                    const prevU = handoffsState.lastHandoffUpdatedAt.get(id);
+                    const u = updatedAtKey(h);
+                    const prevMs = prevU ? Date.parse(prevU) : NaN;
+                    const uMs = u ? Date.parse(u) : NaN;
+                    if (
+                        prevU != null && prevU !== '' && u !== '' &&
+                        Number.isFinite(prevMs) && Number.isFinite(uMs) && uMs > prevMs
+                    ) {
+                        bumpHighlight(id);
+                    }
+                }
+            }
+            handoffsState.lastHandoffUpdatedAt.set(id, updatedAtKey(h));
+            handoffsState.lastHandoffVisitorSignal.set(id, sig);
+        });
+        for (const k of handoffsState.lastHandoffUpdatedAt.keys()) {
+            if (!ids.includes(k)) handoffsState.lastHandoffUpdatedAt.delete(k);
+        }
+        for (const k of handoffsState.lastHandoffVisitorSignal.keys()) {
+            if (!ids.includes(k)) handoffsState.lastHandoffVisitorSignal.delete(k);
+        }
+        handoffsState.previousQueueSnapshotIds = new Set(ids);
     }
 
     const displayHandoffs = handoffsDisplayOrder(handoffsState.handoffs);
@@ -6406,7 +6650,9 @@ function initProfileSettings() {
         const body = {};
         if (name && name !== currentUser?.name) body.name = name;
         if (newPw) {
-            body.current_password = currentPw;
+            if (!currentUser?.must_change_password) {
+                body.current_password = currentPw;
+            }
             body.new_password = newPw;
         }
 
@@ -6589,6 +6835,7 @@ async function loadTeamOwners() {
             const color = avatarColor(u.email);
             const joined = new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
             const canDelete = u.id !== currentUser.id && u.role !== 'admin';
+            const canEditOwner = u.role === 'user';
             return `<div class="member-row" data-member-id="${escapeHtml(u.id)}" data-member-type="owner">
                 <div class="member-identity">
                     <div class="member-avatar" style="background:${color}">${escapeHtml(initials)}</div>
@@ -6600,12 +6847,23 @@ async function loadTeamOwners() {
                 <div><span class="role-badge ${rolePillClass[u.role] || ''}">${escapeHtml(roleLabels[u.role] || u.role)}</span></div>
                 <div class="member-date">${joined}</div>
                 <div class="member-actions">
+                    ${canEditOwner ? `<button type="button" class="btn btn-ghost btn-sm edit-owner-btn" title="Edit site owner">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>` : ''}
                     ${canDelete ? `<button class="btn btn-ghost btn-sm delete-member-btn" title="Delete user">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                     </button>` : ''}
                 </div>
             </div>`;
         }).join('');
+        list.querySelectorAll('.edit-owner-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('[data-member-id]');
+                const id = row?.dataset.memberId;
+                const owner = owners.find(o => o.id === id);
+                if (owner) openMemberModal('owners', owner);
+            });
+        });
         list.querySelectorAll('.delete-member-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const row = btn.closest('[data-member-id]');
@@ -6826,13 +7084,23 @@ async function submitMemberForm() {
 
     try {
         if (type === 'owners') {
-            // Create new owner (edit not supported yet — email is the key)
-            const res = await fetch(`${API_BASE}/auth/users`, {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify({ name, email, password })
-            });
-            if (!res.ok) throw new Error(formatMemberApiError(await res.json().catch(() => ({}))));
+            if (editId) {
+                const body = { name };
+                if (password) body.password = password;
+                const res = await fetch(`${API_BASE}/auth/users/${editId}`, {
+                    method: 'PATCH',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error(formatMemberApiError(await res.json().catch(() => ({}))));
+            } else {
+                const res = await fetch(`${API_BASE}/auth/users`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ name, email, password })
+                });
+                if (!res.ok) throw new Error(formatMemberApiError(await res.json().catch(() => ({}))));
+            }
         } else {
             const boxes = document.querySelectorAll('#member-sites-checkboxes input[name="member-site"]:checked');
             const assigned_site_ids = Array.from(boxes).map(b => b.value);

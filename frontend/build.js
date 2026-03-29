@@ -53,7 +53,9 @@ function buildWidget() {
     const srcFile = path.join(SRC_DIR, 'chatbot.js');
     
     if (!fs.existsSync(srcFile)) {
-        console.error('❌ Source file not found:', srcFile);
+        console.error('❌ Widget source missing:', srcFile);
+        console.error('   Edit and commit frontend/src/widget/chatbot.js in this repo, then re-run build.');
+        console.error('   The files in frontend/widget/ are build output only.');
         process.exit(1);
     }
 

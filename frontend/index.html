@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SiteChat - AI Chatbots for Your Website</title>
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css?v=nav-sync-20260329">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet">
@@ -194,13 +194,7 @@
                                         </svg>
                                         Get code
                                     </button>
-                                    <a href="/widget-demo" target="_blank" class="btn btn-secondary btn-sm" id="preview-site">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                            <circle cx="12" cy="12" r="3"/>
-                                        </svg>
-                                        Preview
-                                    </a>
+                                  
                                     <button class="btn btn-danger btn-sm" id="delete-site">
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <polyline points="3 6 5 6 21 6"/>
@@ -765,6 +759,7 @@
                                     <option value="resolved">Resolved</option>
                                 </select>
                             </div>
+                            <p id="handoffs-agent-queue-hint" class="handoffs-queue-hint hidden" role="note">Pending requests appear here for every agent assigned to that site until someone accepts.</p>
                         </div>
                         
                         <div class="handoffs-stats">
@@ -823,10 +818,6 @@
                                                 <span id="handoff-site-name">Site</span>
                                             </span>
                                         </div>
-                                        <div class="hd-assign-row hidden" id="handoff-assign-row">
-                                            <label class="hd-assign-label" for="handoff-assign-select">Assign to agent</label>
-                                            <select id="handoff-assign-select" class="hd-assign-select"></select>
-                                        </div>
                                     </div>
                                 </div>
                                 <div class="hd-actions">
@@ -855,6 +846,11 @@
 
                             <!-- Chat messages -->
                             <div class="hd-messages" id="handoff-messages"></div>
+
+                            <div class="hd-assign-row hidden" id="handoff-assign-row">
+                                <label class="hd-assign-label" for="handoff-assign-select">Assign to agent</label>
+                                <select id="handoff-assign-select" class="hd-assign-select"></select>
+                            </div>
 
                             <!-- Input bar -->
                             <div class="hd-input-bar hidden" id="handoff-input-wrapper">
@@ -2556,6 +2552,8 @@
         </div>
     </div>
 
+    <!-- Widget loads after <body> exists; hidden on dashboard via CSS (no overlay over sidebar) -->
+    <script src="/widget/chatbot.js?v=3" data-site-id="713b6838215c"></script>
     <script src="/js/app.js"></script>
 </body>
 </html>

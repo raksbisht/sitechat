@@ -3,17 +3,20 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from loguru import logger
 from slowapi import Limiter
+from pydantic import BaseModel, EmailStr, field_validator
 
 from app.database import get_mongodb
 from app.core.security import get_client_ip
-
-limiter = Limiter(key_func=get_client_ip)
 from app.services.auth import (
     AuthService, UserCreate, UserLogin, UserResponse, TokenResponse,
     UserRole, create_access_token, decode_token, user_to_response,
-    AgentCreate, AgentUpdate, ProfileUpdate,
+    AgentCreate, AgentUpdate, ProfileUpdate, SiteOwnerUpdate,
 )
-from pydantic import BaseModel, EmailStr, field_validator
+
+limiter = Limiter(key_func=get_client_ip)
+
+# Admins with must_change_password may only reach GET/PATCH /api/auth/me until they set a new password.
+_ADMIN_PASSWORD_RESET_PATH = "/api/auth/me"
 
 
 class AdminUserCreate(BaseModel):
@@ -58,7 +61,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     return user
 
 
-async def require_auth(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+async def require_auth(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -83,6 +89,18 @@ async def require_auth(credentials: HTTPAuthorizationCredentials = Depends(secur
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
+
+    if user.get("role") == UserRole.ADMIN.value and user.get("must_change_password"):
+        path = request.url.path.rstrip("/") or "/"
+        allowed = path == _ADMIN_PASSWORD_RESET_PATH and request.method in ("GET", "PATCH")
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "must_change_password",
+                    "message": "You must set a new password before using the dashboard.",
+                },
+            )
     
     return user
 
@@ -187,6 +205,20 @@ async def create_user_account(data: AdminUserCreate, admin: dict = Depends(requi
     if not user:
         raise HTTPException(status_code=400, detail="Email already registered")
     return user_to_response(user)
+
+
+@router.patch("/users/{user_id}", response_model=UserResponse)
+async def update_user_account(user_id: str, data: SiteOwnerUpdate, _admin: dict = Depends(require_admin)):
+    """Admin updates a site-owner (role=user): name and/or password."""
+    mongodb = await get_mongodb()
+    auth_service = AuthService(mongodb)
+    try:
+        updated = await auth_service.update_site_owner(user_id, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found or not a site owner")
+    return user_to_response(updated)
 
 
 @router.get("/users", response_model=list[UserResponse])

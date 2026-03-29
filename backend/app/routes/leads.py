@@ -13,6 +13,7 @@ import io
 
 from app.database import get_mongodb
 from app.routes.auth import require_auth
+from app.core.site_access import can_view_site, is_agent
 from app.models.schemas import (
     LeadCreate, Lead, LeadListItem, LeadListResponse
 )
@@ -21,6 +22,14 @@ from app.core.security import get_client_ip
 limiter = Limiter(key_func=get_client_ip)
 
 router = APIRouter(tags=["leads"])
+
+
+async def _require_site_leads_access(site_id: str, user: dict, mongodb) -> None:
+    site = await mongodb.get_site(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail="Site not found")
+    if not can_view_site(user, site):
+        raise HTTPException(status_code=403, detail="Access denied")
 
 
 # ==================== Public Widget Endpoints ====================
@@ -94,7 +103,8 @@ async def get_site_leads(
 ):
     """Get paginated leads for a site."""
     mongodb = await get_mongodb()
-    
+    await _require_site_leads_access(site_id, user, mongodb)
+
     leads, total = await mongodb.get_leads(
         site_id=site_id,
         page=page,
@@ -128,7 +138,8 @@ async def export_leads(
 ):
     """Export all leads for a site as CSV."""
     mongodb = await get_mongodb()
-    
+    await _require_site_leads_access(site_id, user, mongodb)
+
     leads = await mongodb.get_all_leads_for_export(site_id)
     
     output = io.StringIO()
@@ -168,7 +179,8 @@ async def get_leads_count(
 ):
     """Get total leads count for a site."""
     mongodb = await get_mongodb()
-    
+    await _require_site_leads_access(site_id, user, mongodb)
+
     count = await mongodb.get_leads_count(site_id)
     
     return {"count": count}
@@ -180,12 +192,16 @@ async def delete_lead(
     user: dict = Depends(require_auth)
 ):
     """Delete a lead by ID."""
+    if is_agent(user):
+        raise HTTPException(status_code=403, detail="Access denied")
     mongodb = await get_mongodb()
-    
+
     lead = await mongodb.get_lead_by_id(lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
-    
+
+    await _require_site_leads_access(lead["site_id"], user, mongodb)
+
     success = await mongodb.delete_lead(lead_id)
     
     if not success:

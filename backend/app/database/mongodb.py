@@ -196,6 +196,7 @@ class MongoDB:
     async def get_conversations_paginated(
         self,
         site_id: str = None,
+        site_ids: Optional[List[str]] = None,
         page: int = 1,
         limit: int = 20,
         sort_by: str = "updated_at",
@@ -211,6 +212,8 @@ class MongoDB:
 
         if site_id:
             query["site_id"] = site_id
+        elif site_ids is not None:
+            query["site_id"] = {"$in": site_ids}
 
         if date_from or date_to:
             query["created_at"] = {}
@@ -323,6 +326,7 @@ class MongoDB:
         self,
         query: str,
         site_id: str = None,
+        site_ids: Optional[List[str]] = None,
         page: int = 1,
         limit: int = 20
     ) -> Tuple[List[Dict], int]:
@@ -334,6 +338,8 @@ class MongoDB:
         
         if site_id:
             search_filter["site_id"] = site_id
+        elif site_ids is not None:
+            search_filter["site_id"] = {"$in": site_ids}
         
         total = await self.db.conversations.count_documents(search_filter)
         
@@ -1028,7 +1034,8 @@ class MongoDB:
             "assigned_agent_name": None,
             "created_at": now,
             "updated_at": now,
-            "resolved_at": None
+            "resolved_at": None,
+            "visitor_queue_signals": 0,
         }
         
         await self.db.handoff_sessions.insert_one(handoff)
@@ -1055,31 +1062,67 @@ class MongoDB:
             handoff["_id"] = str(handoff["_id"])
         return handoff
     
+    async def bump_handoff_visitor_requeue_pending(self, handoff_id: str) -> None:
+        """Visitor requested human again for an existing pending handoff (widget re-post)."""
+        now = datetime.utcnow()
+        await self.db.handoff_sessions.update_one(
+            {"handoff_id": handoff_id, "status": "pending"},
+            {
+                "$inc": {"visitor_queue_signals": 1},
+                "$set": {"updated_at": now},
+            },
+        )
+    
     async def get_handoff_queue(
         self,
         site_id: Optional[str] = None,
         site_ids: Optional[List[str]] = None,
         status: List[str] = None,
         page: int = 1,
-        limit: int = 20
+        limit: int = 20,
+        agent_queue_user_id: Optional[str] = None,
     ) -> Tuple[List[Dict], int, int, int]:
-        """Get handoff queue with counts. Use site_ids for multiple sites, or site_id for one, or neither for all sites."""
+        """Get handoff queue with counts. Use site_ids for multiple sites, or site_id for one, or neither for all sites.
+
+        When ``agent_queue_user_id`` is set (support agent dashboard), rows are limited to:
+        unassigned handoffs (no ``assigned_agent_id``) or handoffs assigned to that agent.
+        Admins and site owners omit ``agent_queue_user_id`` and see all rows for the site(s).
+        """
         base: Dict[str, Any] = {}
         if site_ids is not None:
             base["site_id"] = {"$in": site_ids}
         elif site_id:
             base["site_id"] = site_id
         
-        query: Dict[str, Any] = dict(base)
+        inner: Dict[str, Any] = dict(base)
         if status:
-            query["status"] = {"$in": status}
+            inner["status"] = {"$in": status}
         else:
-            query["status"] = {"$in": ["pending", "active"]}
-        
+            inner["status"] = {"$in": ["pending", "active"]}
+
+        if agent_queue_user_id:
+            aid = str(agent_queue_user_id)
+            visibility = {
+                "$or": [
+                    {"assigned_agent_id": None},
+                    {"assigned_agent_id": ""},
+                    {"assigned_agent_id": aid},
+                ]
+            }
+            query: Dict[str, Any] = {"$and": [inner, visibility]}
+        else:
+            query = inner
+
         total = await self.db.handoff_sessions.count_documents(query)
-        
-        pending_count = await self.db.handoff_sessions.count_documents({**base, "status": "pending"})
-        active_count = await self.db.handoff_sessions.count_documents({**base, "status": "active"})
+
+        async def _status_count(st: str) -> int:
+            q = {**base, "status": st}
+            if agent_queue_user_id:
+                q = {"$and": [q, visibility]}
+            return await self.db.handoff_sessions.count_documents(q)
+
+        pending_count = await _status_count("pending")
+        active_count = await _status_count("active")
         
         skip = (page - 1) * limit
         pipeline = [

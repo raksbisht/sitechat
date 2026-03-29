@@ -3,14 +3,17 @@ Conversation Management API Routes.
 Handles listing, searching, viewing, exporting, and deleting conversations.
 """
 from datetime import datetime
-from typing import Optional
-from fastapi import APIRouter, Query, HTTPException
+from typing import List, Optional, Tuple
+
+from fastapi import APIRouter, Query, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 import json
 import csv
 import io
 
 from app.database.mongodb import get_mongodb
+from app.routes.auth import require_auth, require_admin
+from app.core.site_access import is_admin, is_agent, assigned_site_ids, can_view_site
 from app.models.schemas import (
     ConversationListResponse,
     ConversationSearchResponse,
@@ -44,8 +47,107 @@ VALID_STATUSES = {"open", "resolved", "closed"}
 VALID_PRIORITIES = {"high", "medium", "low"}
 
 
+def _forbid_agent_export(user: dict) -> None:
+    if is_agent(user):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+
+def _forbid_agent_delete(user: dict) -> None:
+    if is_agent(user):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+
+async def _resolve_conversation_site_scope(
+    user: dict,
+    mongodb,
+    site_id: Optional[str],
+) -> Tuple[Optional[str], Optional[List[str]]]:
+    """
+    Returns (single_site_id, site_ids) for MongoDB:
+    - (None, None): no site filter (admins only).
+    - (str, None): single site.
+    - (None, list): $in filter (possibly empty).
+    """
+    if is_admin(user):
+        if site_id:
+            site = await mongodb.get_site(site_id)
+            if not site:
+                raise HTTPException(status_code=404, detail="Site not found")
+            return site_id, None
+        return None, None
+
+    if is_agent(user):
+        allowed = assigned_site_ids(user)
+        if not allowed:
+            return None, []
+        if site_id:
+            if site_id not in allowed:
+                raise HTTPException(status_code=403, detail="Access denied")
+            return site_id, None
+        return None, allowed
+
+    if site_id:
+        site = await mongodb.get_site(site_id)
+        if not site or not can_view_site(user, site):
+            raise HTTPException(status_code=403, detail="Access denied")
+        return site_id, None
+
+    sites = await mongodb.list_sites(user_id=str(user["_id"]))
+    sids = [s["site_id"] for s in sites]
+    return None, sids if sids else []
+
+
+async def _ensure_conversation_access(user: dict, mongodb, session_id: str) -> dict:
+    conv = await mongodb.get_conversation_full(session_id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    sid = conv.get("site_id")
+    if not sid:
+        if is_admin(user):
+            return conv
+        raise HTTPException(status_code=403, detail="Access denied")
+    site = await mongodb.get_site(sid)
+    if not site:
+        raise HTTPException(status_code=404, detail="Site not found")
+    if not can_view_site(user, site):
+        raise HTTPException(status_code=403, detail="Access denied")
+    return conv
+
+
+async def _validate_export_access(user: dict, mongodb, request: ExportRequest) -> None:
+    _forbid_agent_export(user)
+    if is_admin(user):
+        return
+    if not request.session_ids and not request.site_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Specify session_ids or site_id",
+        )
+    if request.site_id:
+        site = await mongodb.get_site(request.site_id)
+        if not site or not can_view_site(user, site):
+            raise HTTPException(status_code=403, detail="Access denied")
+    if request.session_ids:
+        for sid in request.session_ids:
+            conv = await mongodb.get_conversation_full(sid)
+            if not conv:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+            csid = conv.get("site_id")
+            if not csid:
+                raise HTTPException(status_code=403, detail="Access denied")
+            site = await mongodb.get_site(csid)
+            if not site or not can_view_site(user, site):
+                raise HTTPException(status_code=403, detail="Access denied")
+            if request.site_id and csid != request.site_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Conversation site does not match site_id filter",
+                )
+
+
 @router.get("", response_model=ConversationListResponse)
 async def list_conversations(
+    user: dict = Depends(require_auth),
     site_id: Optional[str] = Query(None, description="Filter by site ID"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
@@ -94,8 +196,9 @@ async def list_conversations(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date_to format")
 
-    conversations, total = await mongodb.get_conversations_paginated(
-        site_id=site_id,
+    sid, sids = await _resolve_conversation_site_scope(user, mongodb, site_id)
+
+    kw = dict(
         page=page,
         limit=limit,
         sort_by=sort_by,
@@ -104,12 +207,18 @@ async def list_conversations(
         date_to=to_date,
         status=status,
         priority=priority,
-        tag=tag
+        tag=tag,
     )
-    
+    if sid:
+        conversations, total = await mongodb.get_conversations_paginated(site_id=sid, **kw)
+    elif sids is not None:
+        conversations, total = await mongodb.get_conversations_paginated(site_ids=sids, **kw)
+    else:
+        conversations, total = await mongodb.get_conversations_paginated(**kw)
+
     items = [ConversationListItem(**conv) for conv in conversations]
     total_pages = (total + limit - 1) // limit
-    
+
     return ConversationListResponse(
         conversations=items,
         total=total,
@@ -121,6 +230,7 @@ async def list_conversations(
 
 @router.get("/search", response_model=ConversationSearchResponse)
 async def search_conversations(
+    user: dict = Depends(require_auth),
     q: str = Query(..., min_length=1, description="Search query"),
     site_id: Optional[str] = Query(None, description="Filter by site ID"),
     page: int = Query(1, ge=1, description="Page number"),
@@ -130,17 +240,25 @@ async def search_conversations(
     Search conversations by message content.
     """
     mongodb = await get_mongodb()
-    
-    conversations, total = await mongodb.search_conversations(
-        query=q,
-        site_id=site_id,
-        page=page,
-        limit=limit
-    )
-    
+
+    sid, sids = await _resolve_conversation_site_scope(user, mongodb, site_id)
+
+    if sid:
+        conversations, total = await mongodb.search_conversations(
+            query=q, site_id=sid, page=page, limit=limit
+        )
+    elif sids is not None:
+        conversations, total = await mongodb.search_conversations(
+            query=q, site_ids=sids, page=page, limit=limit
+        )
+    else:
+        conversations, total = await mongodb.search_conversations(
+            query=q, page=page, limit=limit
+        )
+
     items = [ConversationSearchItem(**conv) for conv in conversations]
     total_pages = (total + limit - 1) // limit
-    
+
     return ConversationSearchResponse(
         conversations=items,
         total=total,
@@ -152,18 +270,25 @@ async def search_conversations(
 
 
 @router.post("/auto-close", response_model=AutoCloseResponse)
-async def auto_close_conversations(request: AutoCloseRequest):
+async def auto_close_conversations(
+    body: AutoCloseRequest,
+    _admin: dict = Depends(require_admin),
+):
     """Close conversations that have had no activity for X days."""
     mongodb = await get_mongodb()
-    closed_count = await mongodb.auto_close_inactive_conversations(request.days_inactive)
+    closed_count = await mongodb.auto_close_inactive_conversations(body.days_inactive)
     return AutoCloseResponse(
         closed_count=closed_count,
-        message=f"Closed {closed_count} inactive conversation(s) (inactive for {request.days_inactive}+ days)"
+        message=f"Closed {closed_count} inactive conversation(s) (inactive for {body.days_inactive}+ days)"
     )
 
 
 @router.patch("/{session_id}/status")
-async def update_conversation_status(session_id: str, request: UpdateStatusRequest):
+async def update_conversation_status(
+    session_id: str,
+    request: UpdateStatusRequest,
+    user: dict = Depends(require_auth),
+):
     """Update conversation status."""
     if request.status not in VALID_STATUSES:
         raise HTTPException(
@@ -171,6 +296,7 @@ async def update_conversation_status(session_id: str, request: UpdateStatusReque
             detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}"
         )
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.update_conversation_status(session_id, request.status)
     if not updated:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -178,7 +304,11 @@ async def update_conversation_status(session_id: str, request: UpdateStatusReque
 
 
 @router.patch("/{session_id}/priority")
-async def update_conversation_priority(session_id: str, request: UpdatePriorityRequest):
+async def update_conversation_priority(
+    session_id: str,
+    request: UpdatePriorityRequest,
+    user: dict = Depends(require_auth),
+):
     """Update conversation priority."""
     if request.priority not in VALID_PRIORITIES:
         raise HTTPException(
@@ -186,6 +316,7 @@ async def update_conversation_priority(session_id: str, request: UpdatePriorityR
             detail=f"Invalid priority. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}"
         )
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.update_conversation_priority(session_id, request.priority)
     if not updated:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -193,9 +324,14 @@ async def update_conversation_priority(session_id: str, request: UpdatePriorityR
 
 
 @router.patch("/{session_id}/tags")
-async def update_conversation_tags(session_id: str, request: UpdateTagsRequest):
+async def update_conversation_tags(
+    session_id: str,
+    request: UpdateTagsRequest,
+    user: dict = Depends(require_auth),
+):
     """Update conversation tags."""
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.update_conversation_tags(session_id, request.tags)
     if not updated:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -203,20 +339,28 @@ async def update_conversation_tags(session_id: str, request: UpdateTagsRequest):
 
 
 @router.post("/{session_id}/notes")
-async def add_conversation_note(session_id: str, request: AddNoteRequest):
+async def add_conversation_note(
+    session_id: str,
+    request: AddNoteRequest,
+    user: dict = Depends(require_auth),
+):
     """Add an internal note to a conversation."""
     mongodb = await get_mongodb()
-    conv = await mongodb.get_conversation_full(session_id)
-    if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+    await _ensure_conversation_access(user, mongodb, session_id)
     note = await mongodb.add_conversation_note(session_id, request.content)
     return note
 
 
 @router.put("/{session_id}/notes/{note_id}")
-async def update_conversation_note(session_id: str, note_id: str, request: UpdateNoteRequest):
+async def update_conversation_note(
+    session_id: str,
+    note_id: str,
+    request: UpdateNoteRequest,
+    user: dict = Depends(require_auth),
+):
     """Update an internal note."""
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.update_conversation_note(session_id, note_id, request.content)
     if not updated:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -224,9 +368,14 @@ async def update_conversation_note(session_id: str, note_id: str, request: Updat
 
 
 @router.delete("/{session_id}/notes/{note_id}")
-async def delete_conversation_note(session_id: str, note_id: str):
+async def delete_conversation_note(
+    session_id: str,
+    note_id: str,
+    user: dict = Depends(require_auth),
+):
     """Delete an internal note."""
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     deleted = await mongodb.delete_conversation_note(session_id, note_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -234,9 +383,14 @@ async def delete_conversation_note(session_id: str, note_id: str):
 
 
 @router.patch("/{session_id}/visitor")
-async def update_conversation_visitor(session_id: str, request: UpdateVisitorRequest):
+async def update_conversation_visitor(
+    session_id: str,
+    request: UpdateVisitorRequest,
+    user: dict = Depends(require_auth),
+):
     """Update visitor identity information."""
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.update_conversation_visitor(
         session_id,
         visitor_name=request.visitor_name,
@@ -248,17 +402,23 @@ async def update_conversation_visitor(session_id: str, request: UpdateVisitorReq
 
 
 @router.patch("/{session_id}/read")
-async def mark_conversation_read(session_id: str):
+async def mark_conversation_read(session_id: str, user: dict = Depends(require_auth)):
     """Mark a conversation as read."""
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     await mongodb.mark_conversation_read(session_id)
     return {"session_id": session_id, "unread": False}
 
 
 @router.patch("/{session_id}/rating")
-async def set_conversation_rating(session_id: str, request: SetRatingRequest):
+async def set_conversation_rating(
+    session_id: str,
+    request: SetRatingRequest,
+    user: dict = Depends(require_auth),
+):
     """Set satisfaction rating for a conversation."""
     mongodb = await get_mongodb()
+    await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.set_conversation_rating(session_id, request.rating)
     if not updated:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -266,16 +426,14 @@ async def set_conversation_rating(session_id: str, request: SetRatingRequest):
 
 
 @router.get("/{session_id}", response_model=ConversationDetail)
-async def get_conversation(session_id: str):
+async def get_conversation(session_id: str, user: dict = Depends(require_auth)):
     """
     Get full conversation details with all messages and stats.
     """
     mongodb = await get_mongodb()
-    
-    conv = await mongodb.get_conversation_full(session_id)
-    if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    
+
+    conv = await _ensure_conversation_access(user, mongodb, session_id)
+
     messages = [
         MessageDetail(
             role=msg.get("role", "user"),
@@ -288,7 +446,7 @@ async def get_conversation(session_id: str):
         )
         for msg in conv.get("messages", [])
     ]
-    
+
     stats_data = conv.get("stats", {})
     stats = ConversationStats(**stats_data)
 
@@ -325,28 +483,37 @@ async def get_conversation(session_id: str):
 
 
 @router.delete("/{session_id}")
-async def delete_conversation(session_id: str):
+async def delete_conversation(session_id: str, user: dict = Depends(require_auth)):
     """
     Delete a single conversation.
     """
+    _forbid_agent_delete(user)
     mongodb = await get_mongodb()
-    
+    await _ensure_conversation_access(user, mongodb, session_id)
+
     deleted = await mongodb.clear_conversation(session_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
+
     return {"message": "Conversation deleted", "session_id": session_id}
 
 
 @router.post("/bulk-delete", response_model=BulkDeleteResponse)
-async def bulk_delete_conversations(request: BulkDeleteRequest):
+async def bulk_delete_conversations(
+    request: BulkDeleteRequest,
+    user: dict = Depends(require_auth),
+):
     """
     Delete multiple conversations at once.
     """
+    _forbid_agent_delete(user)
     mongodb = await get_mongodb()
-    
+
+    for sid in request.session_ids:
+        await _ensure_conversation_access(user, mongodb, sid)
+
     deleted_count = await mongodb.delete_conversations_bulk(request.session_ids)
-    
+
     return BulkDeleteResponse(
         deleted_count=deleted_count,
         message=f"Successfully deleted {deleted_count} conversation(s)"
@@ -354,28 +521,32 @@ async def bulk_delete_conversations(request: BulkDeleteRequest):
 
 
 @router.post("/export")
-async def export_conversations(request: ExportRequest):
+async def export_conversations(
+    request: ExportRequest,
+    user: dict = Depends(require_auth),
+):
     """
     Export conversations as JSON or CSV.
     """
     mongodb = await get_mongodb()
-    
+    await _validate_export_access(user, mongodb, request)
+
     conversations = await mongodb.get_conversations_for_export(
         session_ids=request.session_ids,
         site_id=request.site_id
     )
-    
+
     if not conversations:
         raise HTTPException(status_code=404, detail="No conversations found")
-    
+
     if request.format == "json":
         def serialize_datetime(obj):
             if isinstance(obj, datetime):
                 return obj.isoformat()
             raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-        
+
         json_data = json.dumps(conversations, default=serialize_datetime, indent=2)
-        
+
         return StreamingResponse(
             iter([json_data]),
             media_type="application/json",
@@ -383,11 +554,11 @@ async def export_conversations(request: ExportRequest):
                 "Content-Disposition": f"attachment; filename=conversations_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
             }
         )
-    
+
     elif request.format == "csv":
         output = io.StringIO()
         writer = csv.writer(output)
-        
+
         writer.writerow([
             "session_id",
             "site_id",
@@ -398,13 +569,13 @@ async def export_conversations(request: ExportRequest):
             "message_timestamp",
             "feedback"
         ])
-        
+
         for conv in conversations:
             session_id = conv.get("session_id", "")
             site_id = conv.get("site_id", "")
             created_at = conv.get("created_at", "")
             updated_at = conv.get("updated_at", "")
-            
+
             messages = conv.get("messages", [])
             if messages:
                 for msg in messages:
@@ -420,9 +591,9 @@ async def export_conversations(request: ExportRequest):
                     ])
             else:
                 writer.writerow([session_id, site_id, created_at, updated_at, "", "", "", ""])
-        
+
         output.seek(0)
-        
+
         return StreamingResponse(
             iter([output.getvalue()]),
             media_type="text/csv",
@@ -430,6 +601,6 @@ async def export_conversations(request: ExportRequest):
                 "Content-Disposition": f"attachment; filename=conversations_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
             }
         )
-    
+
     else:
         raise HTTPException(status_code=400, detail="Invalid format. Use 'json' or 'csv'")

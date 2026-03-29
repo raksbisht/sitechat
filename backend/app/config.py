@@ -19,7 +19,10 @@ class Settings(BaseSettings):
     # Security Settings
     # ===========================================
     # CORS - comma-separated list of allowed origins
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000"
+    CORS_ORIGINS: str = (
+        "http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000,"
+        "http://localhost:8015,http://127.0.0.1:8015"
+    )
     CORS_ALLOW_CREDENTIALS: bool = True
     
     # Trusted hosts for production

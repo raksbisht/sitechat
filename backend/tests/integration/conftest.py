@@ -98,6 +98,7 @@ async def authenticated_app(
          patch("app.routes.triggers.get_mongodb", get_mock_db), \
          patch("app.routes.crawl.get_mongodb", get_mock_db), \
          patch("app.routes.analytics.get_mongodb", get_mock_db), \
+         patch("app.routes.leads.get_mongodb", get_mock_db), \
          patch("app.database.vector_store.get_vector_store", AsyncMock(return_value=mock_vector_store)):
         from app.main import app as fastapi_app
         from app.routes.auth import require_auth, require_admin
@@ -147,6 +148,7 @@ async def admin_authenticated_app(
          patch("app.routes.triggers.get_mongodb", get_mock_db), \
          patch("app.routes.crawl.get_mongodb", get_mock_db), \
          patch("app.routes.analytics.get_mongodb", get_mock_db), \
+         patch("app.routes.leads.get_mongodb", get_mock_db), \
          patch("app.database.vector_store.get_vector_store", AsyncMock(return_value=mock_vector_store)):
         from app.main import app as fastapi_app
         from app.routes.auth import require_auth, require_admin

@@ -105,6 +105,35 @@ class AgentUpdate(BaseModel):
         return v
 
 
+class SiteOwnerUpdate(BaseModel):
+    """Admin updates a site-owner (role=user) account: name and/or password."""
+
+    name: Optional[str] = None
+    password: Optional[str] = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_name_optional(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        from app.core.security import sanitize_input
+        v = sanitize_input(v, max_length=100)
+        if len(v) < 2:
+            raise ValueError("Name must be at least 2 characters")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def validate_optional_password_owner(cls, v: Optional[str]) -> Optional[str]:
+        if v is None or v == "":
+            return None
+        from app.core.security import validate_password
+        is_valid, error_message = validate_password(v)
+        if not is_valid:
+            raise ValueError(error_message)
+        return v
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
@@ -112,6 +141,7 @@ class UserResponse(BaseModel):
     role: UserRole
     created_at: datetime
     assigned_site_ids: List[str] = []
+    must_change_password: bool = False
 
 
 class TokenResponse(BaseModel):
@@ -177,6 +207,7 @@ class AuthService:
             "name": user_data.name,
             "password_hash": get_password_hash(user_data.password),
             "role": role.value,
+            "must_change_password": False,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -220,11 +251,15 @@ class AuthService:
             updates["name"] = data.name
 
         if data.new_password:
-            if not data.current_password:
-                raise ValueError("Current password required to set a new password")
-            if not verify_password(data.current_password, user.get("password_hash", "")):
-                raise ValueError("Current password is incorrect")
-            updates["password_hash"] = get_password_hash(data.new_password)
+            if user.get("must_change_password"):
+                updates["password_hash"] = get_password_hash(data.new_password)
+                updates["must_change_password"] = False
+            else:
+                if not data.current_password:
+                    raise ValueError("Current password required to set a new password")
+                if not verify_password(data.current_password, user.get("password_hash", "")):
+                    raise ValueError("Current password is incorrect")
+                updates["password_hash"] = get_password_hash(data.new_password)
 
         if hasattr(self._provider, "update_user"):
             await self._provider.update_user(user_id, updates)
@@ -236,6 +271,23 @@ class AuthService:
         if hasattr(self._provider, 'update_user'):
             return await self._provider.update_user(user_id, {"role": role.value})
         return False
+
+    async def update_site_owner(self, user_id: str, data: SiteOwnerUpdate) -> Optional[dict]:
+        """Update a site-owner (role=user). Admins only; use from routes with require_admin."""
+        user = await self._provider.get_user_by_id(user_id)
+        if not user or user.get("role") != UserRole.USER.value:
+            return None
+        updates: dict = {}
+        if data.name is not None:
+            updates["name"] = data.name
+        if data.password:
+            updates["password_hash"] = get_password_hash(data.password)
+        if not updates:
+            return user
+        updates["updated_at"] = datetime.utcnow()
+        if hasattr(self._provider, "update_user"):
+            await self._provider.update_user(user_id, updates)
+        return await self._provider.get_user_by_id(user_id)
     
     async def delete_user(self, user_id: str) -> bool:
         # Use provider interface if available
@@ -275,6 +327,7 @@ class AuthService:
             "role": UserRole.AGENT.value,
             "owner_id": caller_id,
             "assigned_site_ids": list(data.assigned_site_ids),
+            "must_change_password": False,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
         }
@@ -354,6 +407,13 @@ class AuthService:
             admin = await self._provider.get_user_by_role("admin")
         
         if admin and admin.get("role") == "admin":
+            # Legacy admins (created before this flag existed): require password change on first login.
+            if admin.get("must_change_password") is None and hasattr(self._provider, "update_user"):
+                uid = str(admin.get("user_id") or admin["_id"])
+                await self._provider.update_user(uid, {"must_change_password": True})
+                logger.info(
+                    "Admin account requires password change (migrated missing must_change_password for first-time setup)"
+                )
             logger.info(f"Admin user exists: {admin.get('email')}")
             return
         
@@ -379,6 +439,7 @@ class AuthService:
                 "name": "Administrator",
                 "password_hash": get_password_hash(settings.ADMIN_PASSWORD),
                 "role": UserRole.ADMIN.value,
+                "must_change_password": True,
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow()
             }
@@ -402,4 +463,5 @@ def user_to_response(user: dict) -> UserResponse:
         role=UserRole(user["role"]),
         created_at=user["created_at"],
         assigned_site_ids=list(user.get("assigned_site_ids") or []),
+        must_change_password=bool(user.get("must_change_password")),
     )
