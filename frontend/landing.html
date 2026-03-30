@@ -160,7 +160,7 @@
             var SESSION_ID = 'hero-' + Math.random().toString(36).slice(2);
             var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
               ? 'http://' + location.host
-              : 'https://api.sitechat.in';
+              : 'https://sitechat.in';
 
             var form     = document.getElementById('hero-chat-form');
             var input    = document.getElementById('hero-chat-input');
@@ -799,7 +799,7 @@
         copyBtn.addEventListener('click', function () {
           var code = document.getElementById('embed-code');
           if (!code) return;
-          var text = '<script\n  src="https://sitechat.in/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="https://api.sitechat.in"\n  data-color="#0d9488"\n><\/script>';
+          var text = '<script\n  src="https://sitechat.in/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="https://sitechat.in"\n  data-color="#0d9488"\n><\/script>';
           navigator.clipboard.writeText(text).then(function () {
             copyBtn.textContent = 'Copied!';
             setTimeout(function () { copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy'; }, 2000);
