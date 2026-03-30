@@ -3007,7 +3007,7 @@ function updateWidgetPreview() {
             previewBranding.classList.remove('hidden');
             if (link) {
                 link.innerHTML = 'Powered by <strong>SiteChat</strong>';
-                link.href = 'https://sitechat.ai';
+                link.href = 'https://sitechat.in';
             }
         }
     }
@@ -3069,7 +3069,7 @@ function updateAppearancePreview(color, darkColor, title, welcome) {
             appearancePreviewBranding.classList.remove('hidden');
             if (link) {
                 link.innerHTML = 'Powered by <strong>SiteChat</strong>';
-                link.href = 'https://sitechat.ai';
+                link.href = 'https://sitechat.in';
             }
         }
     }
