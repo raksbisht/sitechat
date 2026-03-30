@@ -8,7 +8,7 @@ const { test, expect } = require('@playwright/test');
 test.describe('Site Management', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('#login-email', 'admin@sitechat.com');
+    await page.fill('#login-email', 'admin@sitechat.in');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
     await expect(page).toHaveURL(/\/app\/?$/);

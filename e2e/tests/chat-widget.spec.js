@@ -313,7 +313,7 @@ test.describe('Chat Widget', () => {
 test.describe('Dashboard Chat View', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('#login-email', 'admin@sitechat.com');
+    await page.fill('#login-email', 'admin@sitechat.in');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
     await expect(page).toHaveURL(/\/app\/?$/);

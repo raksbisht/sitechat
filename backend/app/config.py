@@ -137,7 +137,7 @@ class Settings(BaseSettings):
     
     # Admin credentials (created on first run if no admin exists)
     # Set ADMIN_PASSWORD to empty string to disable auto-creation
-    ADMIN_EMAIL: str = "admin@sitechat.com"
+    ADMIN_EMAIL: str = "admin@sitechat.in"
     ADMIN_PASSWORD: str = ""
     
     # Password policy
