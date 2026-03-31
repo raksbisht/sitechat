@@ -93,6 +93,96 @@
     H["id"] = "sitechat-dynamic-styles", H["textContent"] = "\n      .sitechat-toggle {\n        background: linear-gradient(135deg, " + config.primaryColor + ", " + adjustHexColor(config.primaryColor, -20) + ") !important;\n      }\n      .sitechat-header {\n        background: linear-gradient(135deg, " + config.primaryColor + ", " + adjustHexColor(config.primaryColor, -20) + ") !important;\n      }\n      .sitechat-avatar.bot {\n        background: linear-gradient(135deg, " + config.primaryColor + ", " + adjustHexColor(config.primaryColor, -30) + ") !important;\n        box-shadow: 0 2px 8px " + config.primaryColor + "40 !important;\n      }\n      .sitechat-message.user {\n        background: linear-gradient(135deg, " + config.primaryColor + ", " + adjustHexColor(config.primaryColor, -25) + ") !important;\n        box-shadow: 0 2px 12px " + config.primaryColor + "30 !important;\n      }\n      .sitechat-typing span {\n        background: linear-gradient(135deg, " + config.primaryColor + ", " + adjustHexColor(config.primaryColor, -20) + ") !important;\n      }\n      .sitechat-send {\n        background: linear-gradient(135deg, " + config.primaryColor + ", " + adjustHexColor(config.primaryColor, -20) + ") !important;\n      }\n      .sitechat-welcome-icon {\n        background: linear-gradient(135deg, " + config.primaryColor + "15, " + config.primaryColor + "25) !important;\n      }\n      .sitechat-welcome-icon::before {\n        background: linear-gradient(135deg, " + config.primaryColor + "40, transparent) !important;\n      }\n      .sitechat-welcome-icon svg {\n        color: " + config.primaryColor + " !important;\n      }\n      .sitechat-suggestion:hover {\n        background: " + config.primaryColor + "08 !important;\n        border-color: " + config.primaryColor + "30 !important;\n        color: " + config.primaryColor + " !important;\n      }\n      .sitechat-source-link {\n        color: " + config.primaryColor + " !important;\n        background: linear-gradient(135deg, " + config.primaryColor + "08, " + config.primaryColor + "12) !important;\n        border: 1px solid " + config.primaryColor + "20 !important;\n      }\n      .sitechat-source-link:hover {\n        background: linear-gradient(135deg, " + config.primaryColor + "15, " + config.primaryColor + "20) !important;\n        border-color: " + config.primaryColor + "40 !important;\n        box-shadow: 0 2px 8px " + config.primaryColor + "20 !important;\n      }\n      .sitechat-message.bot code {\n        color: " + config.primaryColor + " !important;\n      }\n      .sitechat-feedback-btn.active {\n        border-color: " + config.primaryColor + "40 !important;\n      }\n    ", 
     document["head"]["appendChild"](H);
   }
+  function injectResponsiveStyles() {
+    const G = document["getElementById"]("sitechat-responsive-styles");
+    G && G["remove"]();
+    const H = document["createElement"]("style");
+    H["id"] = "sitechat-responsive-styles";
+    H["textContent"] = `
+      @media (max-width: 900px) {
+        .sitechat-window {
+          width: min(420px, calc(100vw - 24px)) !important;
+          height: min(70vh, 560px) !important;
+          right: 12px !important;
+          left: 12px !important;
+          margin: 0 auto !important;
+          bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        .sitechat-toggle {
+          right: 12px !important;
+          bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+          width: 56px !important;
+          height: 56px !important;
+        }
+        .sitechat-toggle svg {
+          width: 24px !important;
+          height: 24px !important;
+        }
+        .sitechat-nudge {
+          right: 12px !important;
+          left: 12px !important;
+          max-width: none !important;
+          bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .sitechat-window {
+          width: auto !important;
+          left: 8px !important;
+          right: 8px !important;
+          bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+          height: calc(100vh - 108px - env(safe-area-inset-bottom, 0px)) !important;
+          max-height: none !important;
+          border-radius: 14px !important;
+        }
+        .sitechat-header {
+          padding: 14px 16px !important;
+        }
+        .sitechat-header-icon {
+          width: 36px !important;
+          height: 36px !important;
+        }
+        .sitechat-header-icon svg {
+          width: 18px !important;
+          height: 18px !important;
+        }
+        .sitechat-messages {
+          padding: 14px !important;
+          gap: 12px !important;
+        }
+        .sitechat-input-wrapper {
+          padding: 10px !important;
+        }
+        .sitechat-message {
+          font-size: 13px !important;
+          padding: 12px 14px !important;
+        }
+        .sitechat-branding {
+          padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        .sitechat-nudge {
+          left: 8px !important;
+          right: 8px !important;
+          bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+          border-radius: 12px !important;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .sitechat-window {
+          height: calc(100vh - 96px - env(safe-area-inset-bottom, 0px)) !important;
+        }
+        .sitechat-header-text h3 {
+          font-size: 15px !important;
+        }
+        .sitechat-header-text p {
+          font-size: 12px !important;
+        }
+      }
+    `;
+    document["head"]["appendChild"](H);
+  }
   function syncHeaderAndWelcomeText() {
     const G = document["querySelector"](".sitechat-header-text h3");
     if (G) G["textContent"] = config.title;
@@ -323,7 +413,7 @@
     }), H["addEventListener"]("click", () => {
       H["remove"](), activeNudgeEl = null, triggerEngine.logEvent(G["id"], "clicked"), chatOpen = true, toggleBtn["classList"]["add"]("open"), windowEl["classList"]["add"]("open"), 
       inputEl["focus"](), triggerEngine.logEvent(G["id"], "converted");
-    }), document["body"]["appendChild"](H), activeNudgeEl = H, requestAnimationFrame(() => {
+    }), document["body"]["appendChild"](H), activeNudgeEl = H, scheduleMobileViewportOffsets(), requestAnimationFrame(() => {
       H["classList"]["add"]("sitechat-nudge-in");
     });
   }
@@ -528,7 +618,7 @@
   baseStyleEl["textContent"] = baseWidgetCss, document["head"]["appendChild"](baseStyleEl);
   const widgetRoot = document["createElement"]("div");
   widgetRoot["className"] = "sitechat-widget", widgetRoot["innerHTML"] = '\n    <button class="sitechat-toggle" aria-label="Toggle chat">\n      <svg class="sitechat-icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>\n      </svg>\n      <svg class="sitechat-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n        <line x1="18" y1="6" x2="6" y2="18"/>\n        <line x1="6" y1="6" x2="18" y2="18"/>\n      </svg>\n    </button>\n    \n    <div class="sitechat-window">\n      <div class="sitechat-header">\n        <div class="sitechat-header-icon">\n          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n            <path d="M12 2L2 7l10 5 10-5-10-5z"/>\n            <path d="M2 17l10 5 10-5"/>\n            <path d="M2 12l10 5 10-5"/>\n          </svg>\n        </div>\n        <div class="sitechat-header-text">\n          <h3>' + config.title + '</h3>\n          <p>Powered by AI</p>\n        </div>\n        <button class="sitechat-handoff-btn" title="Talk to a human">\n          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>\n            <circle cx="12" cy="7" r="4"/>\n          </svg>\n        </button>\n      </div>\n      \n      <div class="sitechat-messages">\n        <div class="sitechat-welcome">\n          <div class="sitechat-welcome-icon">\n            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">\n              <path d="M12 2L2 7l10 5 10-5-10-5z"/>\n              <path d="M2 17l10 5 10-5"/>\n              <path d="M2 12l10 5 10-5"/>\n            </svg>\n          </div>\n          <h4>Hi there! 👋</h4>\n          <p>I\'m your AI assistant. Ask me anything about this website.</p>\n          <div class="sitechat-welcome-suggestions">\n            <button class="sitechat-suggestion" data-query="What can you help me with?">What can you help me with?</button>\n            <button class="sitechat-suggestion" data-query="Tell me about this website">Tell me about this website</button>\n          </div>\n        </div>\n      </div>\n      \n      <div class="sitechat-input-wrapper">\n        <form class="sitechat-input-form">\n          <input type="text" class="sitechat-input" placeholder="Type your message..." autocomplete="off">\n          <button type="submit" class="sitechat-send" disabled>\n            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">\n              <line x1="22" y1="2" x2="11" y2="13"/>\n              <polygon points="22 2 15 22 11 13 2 9 22 2"/>\n            </svg>\n          </button>\n        </form>\n      </div>\n      \n      <div class="sitechat-branding">\n        <a href="'+ config.apiUrl +'" target="_blank" rel="noopener noreferrer">\n          Powered by <strong>SiteChat</strong>\n        </a>\n      </div>\n    </div>\n  ', 
-  document["body"]["appendChild"](widgetRoot), updateBrandingFooter();
+  document["body"]["appendChild"](widgetRoot), injectResponsiveStyles(), updateBrandingFooter();
   const toggleBtn = widgetRoot["querySelector"](".sitechat-toggle"),
     windowEl = widgetRoot["querySelector"](".sitechat-window"),
     messagesEl = widgetRoot["querySelector"](".sitechat-messages"),
@@ -536,6 +626,44 @@
     inputEl = widgetRoot["querySelector"](".sitechat-input"),
     sendBtn = widgetRoot["querySelector"](".sitechat-send"),
     handoffBtn = widgetRoot["querySelector"](".sitechat-handoff-btn");
+  function isMobileViewport() {
+    try {
+      return window.matchMedia("(max-width: 900px)").matches;
+    } catch (G) {
+      return window.innerWidth <= 900;
+    }
+  }
+  function applyMobileViewportOffsets() {
+    if (!isMobileViewport()) {
+      toggleBtn.style.removeProperty("bottom");
+      windowEl.style.removeProperty("bottom");
+      if (activeNudgeEl) activeNudgeEl.style.removeProperty("bottom");
+      return;
+    }
+    const G = window.visualViewport;
+    const H = G ? Math.max(0, window.innerHeight - (G.height + G.offsetTop)) : 0;
+    const I = Math.max(12, 12 + H);
+    const J = Math.max(76, 76 + H);
+    toggleBtn.style.bottom = "calc(" + I + "px + env(safe-area-inset-bottom, 0px))";
+    windowEl.style.bottom = "calc(" + J + "px + env(safe-area-inset-bottom, 0px))";
+    if (activeNudgeEl) activeNudgeEl.style.bottom = "calc(" + J + "px + env(safe-area-inset-bottom, 0px))";
+  }
+  let viewportOffsetRaf = null;
+  function scheduleMobileViewportOffsets() {
+    if (viewportOffsetRaf) cancelAnimationFrame(viewportOffsetRaf);
+    viewportOffsetRaf = requestAnimationFrame(() => {
+      viewportOffsetRaf = null, applyMobileViewportOffsets();
+    });
+  }
+  window.addEventListener("resize", scheduleMobileViewportOffsets, {
+    passive: true
+  }), window.addEventListener("orientationchange", scheduleMobileViewportOffsets, {
+    passive: true
+  }), window.visualViewport && (window.visualViewport.addEventListener("resize", scheduleMobileViewportOffsets, {
+    passive: true
+  }), window.visualViewport.addEventListener("scroll", scheduleMobileViewportOffsets, {
+    passive: true
+  })), scheduleMobileViewportOffsets();
   let chatOpen = false, welcomeRemoved = false, lastMessageIndex = -1;
   toggleBtn["addEventListener"]("click", () => {
     const wasOpen = chatOpen;

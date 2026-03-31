@@ -208,6 +208,7 @@ async function initializeApp() {
     }
 
     initSidebarCollapse();
+    initMobileSidebar();
     initSiteDetailHashRouting();
     setupNavigation();
     setupEventListeners();
@@ -259,12 +260,15 @@ function getAuthHeaders() {
 
 function updateUserUI() {
     if (!currentUser) return;
-    
+
     const initial = currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U';
     elements.userAvatar.textContent = initial;
     elements.userName.textContent = currentUser.name || currentUser.email;
     const roleLabels = { admin: 'Admin', agent: 'Support agent', user: 'User' };
     elements.userRole.textContent = roleLabels[currentUser.role] || currentUser.role;
+
+    const mobileAvatar = document.getElementById('mobile-user-avatar');
+    if (mobileAvatar) mobileAvatar.textContent = initial;
 }
 
 function logout() {
@@ -333,6 +337,15 @@ function switchView(viewId) {
 
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     viewEl.classList.add('active');
+
+    // Mobile: clear back-nav state when switching top-level views
+    mobileNav.pop();
+    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
+    if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
+    const convLayout = document.querySelector('.conversations-layout');
+    if (convLayout) convLayout.classList.remove('detail-open');
+    const handoffLayout = document.querySelector('.handoffs-layout');
+    if (handoffLayout) handoffLayout.classList.remove('detail-open');
 
     syncSidebarActiveNav(viewId);
 
@@ -1110,6 +1123,10 @@ function navigateDetailBreadcrumbSites() {
     document.querySelectorAll('.site-card, .site-list-item').forEach(c => c.classList.remove('active'));
     showDetailEmptyState();
     clearSiteDetailHash();
+    // Mobile: exit full-screen detail mode
+    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
+    if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
+    mobileNav.pop();
 }
 
 /** @param {{ skipHash?: boolean }} [opts] */
@@ -1144,6 +1161,78 @@ function initSiteDetailHashRouting() {
         activateDetailTab(getDetailTabFromHash(), { skipHash: true });
         updateAppearanceEmbedCode();
         updateWidgetPreview();
+    });
+}
+
+/** Mobile back-navigation stack */
+const mobileNav = {
+    _action: null,
+
+    push(action, title) {
+        this._action = action;
+        document.body.classList.add('mobile-has-back');
+        const titleEl = document.getElementById('mobile-topbar-title');
+        if (titleEl) titleEl.textContent = title || '';
+    },
+
+    pop() {
+        this._action = null;
+        document.body.classList.remove('mobile-has-back');
+        const titleEl = document.getElementById('mobile-topbar-title');
+        if (titleEl) titleEl.textContent = '';
+    },
+
+    trigger() {
+        if (typeof this._action === 'function') {
+            this._action();
+        }
+        this.pop();
+    }
+};
+
+function initMobileSidebar() {
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const backBtn = document.getElementById('mobile-back-btn');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
+    const sidebar = document.getElementById('dashboard-sidebar');
+
+    function openSidebar() {
+        document.body.classList.add('sidebar-mobile-open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeSidebar() {
+        document.body.classList.remove('sidebar-mobile-open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    menuBtn?.addEventListener('click', () => {
+        if (document.body.classList.contains('sidebar-mobile-open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+
+    backBtn?.addEventListener('click', () => mobileNav.trigger());
+
+    overlay?.addEventListener('click', closeSidebar);
+
+    // Close on nav item click on mobile
+    sidebar?.addEventListener('click', (e) => {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            if (e.target.closest('.menu-item, .sidebar-util-link')) {
+                closeSidebar();
+            }
+        }
+    });
+
+    // Close on resize back to desktop
+    window.matchMedia('(max-width: 768px)').addEventListener('change', (e) => {
+        if (!e.matches) {
+            closeSidebar();
+            mobileNav.pop();
+        }
     });
 }
 
@@ -1185,10 +1274,17 @@ function initSidebarCollapse() {
 
 async function openSiteDetails(site) {
     currentDetailSite = site;
-    
-    showDetailContent();
-    
+
+    // Mobile: switch to full-screen detail mode
+    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
+    if (sitesLayout) sitesLayout.classList.add('mobile-detail-open');
     const siteName = site.name || site.url;
+    mobileNav.push(() => {
+        if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
+    }, siteName.replace(/https?:\/\//, '').replace(/\/$/, ''));
+
+    showDetailContent();
+
     const iconLetter = siteName.replace(/https?:\/\//, '').charAt(0).toUpperCase();
     const detailIcon = document.getElementById('detail-icon');
     if (detailIcon) detailIcon.textContent = iconLetter;
@@ -3767,9 +3863,20 @@ async function selectConversation(sessionId) {
 async function loadConversationDetail(sessionId) {
     const emptyState = document.querySelector('.conversation-detail-empty');
     const contentState = document.getElementById('conversation-detail-content');
-    
+
     emptyState.style.display = 'none';
     contentState.style.display = 'flex';
+
+    // Mobile: full-screen detail
+    const layout = document.querySelector('.conversations-layout');
+    if (layout && !layout.classList.contains('detail-open')) {
+        layout.classList.add('detail-open');
+        mobileNav.push(() => {
+            if (layout) layout.classList.remove('detail-open');
+            if (emptyState) emptyState.style.display = 'flex';
+            if (contentState) contentState.style.display = 'none';
+        }, 'Conversation');
+    }
     
     const transcript = document.getElementById('conversation-transcript');
     transcript.innerHTML = `
@@ -5615,6 +5722,15 @@ function renderHandoffDetail(handoff) {
     if (emptyEl) emptyEl.classList.add('hidden');
     if (contentEl) contentEl.classList.remove('hidden');
     setHandoffPanelSessionActive(true);
+
+    // Mobile: full-screen detail
+    const layout = document.querySelector('.handoffs-layout');
+    if (layout && !layout.classList.contains('detail-open')) {
+        layout.classList.add('detail-open');
+        mobileNav.push(() => {
+            layout.classList.remove('detail-open');
+        }, handoff.visitor_name || 'Handoff');
+    }
 
     // Visitor name + avatar initials
     const name = handoff.visitor_name || 'Visitor';

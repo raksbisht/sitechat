@@ -6760,79 +6760,151 @@ body.is-admin .admin-only {
     }
 }
 
+/* ===== Mobile Topbar ===== */
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    align-items: center;
+    padding: 0 10px;
+    z-index: 200;
+    gap: 4px;
+}
+
+.mobile-menu-btn {
+    /* sizing handled by .mobile-nav-btn */
+}
+
+.mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-brand-icon {
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    flex-shrink: 0;
+}
+
+.mobile-brand span {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+}
+
+.mobile-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* Mobile sidebar overlay backdrop */
+.mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
 @media (max-width: 768px) {
+    /* Sidebar becomes a slide-in overlay */
     .sidebar-toggle {
         display: none;
     }
 
     .sidebar {
-        width: 72px;
+        transform: translateX(-100%);
+        width: 220px;
+        transition: transform 0.25s ease;
+        z-index: 1001;
+        box-shadow: none;
     }
-    
-    .brand-name,
-    .menu-item span,
-    .menu-label,
-    .app-download,
-    .connection-status span:not(.status-dot) {
-        display: none;
+
+    body.sidebar-mobile-open .sidebar {
+        transform: translateX(0);
+        box-shadow: var(--shadow-xl);
     }
-    
-    .sidebar-brand {
-        justify-content: center;
+
+    .mobile-topbar {
+        display: flex;
+    }
+
+    .mobile-sidebar-overlay {
+        display: block;
+        pointer-events: none;
+    }
+
+    body.sidebar-mobile-open .mobile-sidebar-overlay {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .main {
+        margin-left: 0;
+        padding-top: 56px;
+    }
+
+    .page-container {
         padding: 16px;
     }
-    
-    .menu-item {
-        justify-content: center;
-        padding: 14px;
-    }
-    
-    .menu-badge {
-        display: none;
-    }
-    
-    .main {
-        margin-left: 72px;
-    }
-    
-    .page-container {
-        padding: 24px 20px;
-    }
-    
+
     .page-header {
         flex-direction: column;
         gap: 16px;
     }
-    
+
     .sites-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .modal {
         width: calc(100% - 32px);
         max-height: calc(100vh - 64px);
     }
-    
+
     .side-panel {
         width: 100%;
     }
-    
+
     .panel-stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
-    .user-menu {
-        padding: 12px;
-        justify-content: center;
-    }
-    
-    .user-info,
-    .logout-btn {
-        display: none;
-    }
-    
+
     .analytics-period-select {
         display: none;
+    }
+
+    /* Full-height views must account for the 56px topbar */
+    #handoffs-view.view.active {
+        height: calc(100dvh - 56px);
     }
 }
 
@@ -9417,6 +9489,162 @@ kbd {
     animation: spin 0.8s linear infinite;
 }
 
+/* =========================================================
+   Mobile polish (dashboard)
+   ========================================================= */
+@media (max-width: 900px) {
+    .page-container {
+        padding: 16px;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .conversations-layout,
+    .handoffs-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .conversations-list-panel,
+    .handoffs-queue-panel,
+    .conversation-detail-panel,
+    .handoff-detail-panel {
+        min-height: 0;
+        height: auto;
+    }
+
+    .detail-settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-settings-nav {
+        position: static;
+        top: auto;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Small phones: sidebar becomes a bottom nav bar */
+    .sidebar {
+        transform: none;
+        width: 100%;
+        height: 64px;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-right: none;
+        border-top: 1px solid var(--gray-200);
+        flex-direction: row;
+        align-items: center;
+        z-index: 300;
+        box-shadow: none;
+    }
+
+    /* Undo overlay open state on small phones */
+    body.sidebar-mobile-open .sidebar {
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Hide overlay backdrop on small phones */
+    .mobile-sidebar-overlay {
+        display: none !important;
+    }
+
+    /* Hide mobile topbar — bottom nav is the nav chrome */
+    .mobile-topbar {
+        display: none;
+    }
+
+    .sidebar-brand,
+    .sidebar-footer {
+        display: none;
+    }
+
+    .sidebar-menu {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 8px;
+        gap: 0;
+    }
+
+    .menu-item {
+        flex: 1;
+        height: 48px;
+        min-width: 0;
+        padding: 0;
+        margin: 0 2px;
+        border-radius: 10px;
+        justify-content: center;
+    }
+
+    .menu-item span,
+    .menu-badge {
+        display: none !important;
+    }
+
+    .main {
+        margin-left: 0 !important;
+        padding-top: 0;
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .master-detail-layout {
+        gap: 10px;
+    }
+
+    .master-panel {
+        max-height: 35vh;
+    }
+
+    .detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .detail-header-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .detail-header-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .detail-stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .detail-quick-actions {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .table-container,
+    .leads-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Reset height override from 768px block — bottom nav, no topbar */
+    #handoffs-view.view.active {
+        height: 100dvh;
+    }
+}
+
 .lead-source-badge {
     display: inline-flex;
     align-items: center;
@@ -9800,4 +10028,539 @@ body.admin-password-gate-active .app {
 .admin-password-gate-submit:disabled {
     opacity: 0.65;
     cursor: not-allowed;
+}
+
+/* Extra mobile-friendly overrides (dashboard) */
+@media (max-width: 640px) {
+    .page-container { padding: 12px; }
+    .page-title { font-size: 22px; line-height: 1.2; }
+    .detail-header-actions { grid-template-columns: 1fr !important; }
+    .table-container, .leads-table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* Very small phones */
+@media (max-width: 375px) {
+    .page-container {
+        padding: 10px;
+    }
+
+    .page-title {
+        font-size: 20px;
+    }
+
+    .topbar {
+        padding: 10px 12px;
+    }
+
+    .site-card,
+    .stats-card,
+    .card {
+        padding: 12px;
+    }
+
+    .btn,
+    .btn-primary,
+    .btn-secondary {
+        min-height: 40px;
+        padding: 8px 12px;
+    }
+}
+
+/* Tablet portrait pass */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .page-container {
+        padding: 16px;
+    }
+
+    .site-list-grid,
+    .stats-grid,
+    .dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detail-header-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .table-container,
+    .leads-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ================================================================
+   MOBILE BEAUTIFUL — comprehensive polish for phones
+   ================================================================ */
+
+/* ── Mobile topbar: back button + page title ────────────────── */
+.mobile-nav-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-btn:hover,
+.mobile-nav-btn:active {
+    background: var(--gray-100);
+    color: var(--gray-900);
+}
+
+/* Override old mobile-menu-btn sizing now it uses mobile-nav-btn */
+.mobile-menu-btn {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+}
+
+.mobile-back-btn {
+    display: none;
+}
+
+.mobile-topbar-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mobile-topbar-title {
+    display: none;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-900);
+    font-family: var(--font-sans);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+
+/* Back-nav mode: hamburger → back arrow, brand → page title */
+@media (max-width: 768px) {
+    body.mobile-has-back .mobile-menu-btn {
+        display: none;
+    }
+    body.mobile-has-back .mobile-back-btn {
+        display: flex;
+    }
+    body.mobile-has-back .mobile-brand {
+        display: none;
+    }
+    body.mobile-has-back .mobile-topbar-title {
+        display: block;
+    }
+}
+
+/* ── Sites: full-screen master → detail navigation on mobile ── */
+@media (max-width: 768px) {
+    #sites-view .master-detail-layout {
+        flex-direction: column;
+        overflow: visible;
+    }
+
+    /* Master panel fills the screen */
+    #sites-view .master-panel {
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        height: auto;
+        flex: 1;
+        min-height: 0;
+        border-right: none;
+        border-bottom: none;
+        overflow-y: auto;
+    }
+
+    /* Detail panel hidden until a site is selected */
+    #sites-view .detail-panel {
+        display: none;
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+    }
+
+    /* When a site is tapped: hide list, show detail full-screen */
+    #sites-view .master-detail-layout.mobile-detail-open .master-panel {
+        display: none;
+    }
+    #sites-view .master-detail-layout.mobile-detail-open .detail-panel {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    /* Breadcrumb hidden on mobile (back button handles this) */
+    .detail-breadcrumb {
+        display: none;
+    }
+}
+
+/* ── Conversations & Handoffs: extend detail-open to mobile ── */
+@media (max-width: 1024px) {
+    .conversations-layout.detail-open .conversations-list-panel {
+        display: none;
+    }
+    .conversations-layout.detail-open .conversation-detail-panel {
+        display: flex;
+    }
+    .handoffs-layout.detail-open .handoffs-queue-panel {
+        display: none;
+    }
+    .handoffs-layout.detail-open .handoff-detail-panel {
+        display: flex;
+    }
+}
+
+/* ── Detail settings tabs: horizontal scroll on mobile ──────── */
+@media (max-width: 900px) {
+    .detail-settings-nav {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        padding: 10px 12px !important;
+        gap: 6px !important;
+        border-bottom: 1px solid var(--gray-200);
+        border-right: none;
+    }
+
+    .detail-settings-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .detail-nav-group {
+        display: contents;
+    }
+
+    .detail-nav-group-label {
+        display: none !important;
+    }
+
+    .detail-settings-nav .detail-nav-item.detail-tab {
+        flex: 0 0 auto;
+        min-width: auto;
+        white-space: nowrap;
+        scroll-snap-align: start;
+        border-radius: 20px;
+        padding: 8px 16px;
+        font-size: 13px;
+        text-align: left;
+        justify-content: flex-start;
+        border: 1px solid var(--gray-200);
+        background: var(--white);
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    .detail-settings-nav .detail-nav-item.detail-tab.active {
+        background: var(--primary);
+        color: var(--white);
+        border-color: var(--primary);
+        outline: none !important;
+        box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25) !important;
+    }
+
+    .detail-settings-layout {
+        flex-direction: column;
+    }
+}
+
+/* ── Stats row: horizontal scroll on phones ──────────────────── */
+@media (max-width: 640px) {
+    .stats-row {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+        gap: 10px;
+    }
+
+    .stats-row::-webkit-scrollbar { display: none; }
+
+    .stat-card {
+        min-width: 150px;
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+    }
+}
+
+/* ── Site list items: better touch targets ───────────────────── */
+@media (max-width: 768px) {
+    .site-list-item {
+        padding: 14px 12px;
+        gap: 14px;
+    }
+
+    .master-header {
+        padding: 16px 14px;
+    }
+
+    .master-header h2 {
+        font-size: 17px;
+    }
+}
+
+/* ── Detail header: clean stack on mobile ────────────────────── */
+@media (max-width: 768px) {
+    .detail-header {
+        padding: 16px 14px 12px;
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .detail-header-info {
+        gap: 10px;
+    }
+
+    .detail-header-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .detail-header-actions .btn {
+        flex: 1;
+        justify-content: center;
+        min-height: 40px;
+    }
+
+    .detail-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 12px 14px;
+    }
+
+    .detail-stat {
+        padding: 12px;
+    }
+
+    .detail-quick-actions {
+        padding: 0 14px 12px;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .detail-action-btn {
+        min-height: 44px;
+        font-size: 13px;
+        gap: 6px;
+    }
+
+    .detail-tab-content {
+        padding: 0;
+    }
+}
+
+/* ── Forms: prevent iOS zoom (font-size must be ≥ 16px) ──────── */
+@media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"],
+    input[type="number"],
+    input[type="search"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* ── Buttons: proper touch targets ───────────────────────────── */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+        padding: 10px 18px;
+    }
+
+    .btn-sm {
+        min-height: 38px;
+        padding: 8px 14px;
+    }
+}
+
+/* ── Modal: bottom sheet style on mobile ─────────────────────── */
+@media (max-width: 640px) {
+    .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        max-height: 92dvh;
+        margin: 0;
+    }
+
+    .modal-header {
+        padding: 20px 20px 16px;
+    }
+
+    .modal::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: var(--gray-300);
+        border-radius: 2px;
+        margin: 12px auto -4px;
+    }
+}
+
+/* ── Bottom nav: active item shows label ─────────────────────── */
+@media (max-width: 640px) {
+    .sidebar-menu .menu-item {
+        flex-direction: column;
+        height: 56px;
+        gap: 3px;
+        border-radius: 10px;
+        padding: 6px 4px 4px;
+        position: relative;
+    }
+
+    .sidebar-menu .menu-item::after {
+        content: attr(title);
+        font-size: 9px;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--gray-400);
+        font-family: var(--font-sans);
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+    }
+
+    .sidebar-menu .menu-item.active::after {
+        color: var(--white);
+    }
+
+    .sidebar-menu .menu-item svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    /* Bottom nav bar taller to fit labels */
+    .sidebar {
+        height: 68px;
+    }
+
+    /* Adjust main padding to match */
+    .main {
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* ── Page header: compact on mobile ─────────────────────────── */
+@media (max-width: 768px) {
+    .page-header {
+        margin-bottom: 20px;
+    }
+
+    .page-title {
+        font-size: 22px;
+    }
+
+    .page-subtitle {
+        font-size: 13px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .header-actions .btn,
+    .header-actions select {
+        flex: 1;
+    }
+}
+
+/* ── Cards: better padding & radius on mobile ────────────────── */
+@media (max-width: 640px) {
+    .stat-card {
+        padding: 14px;
+        border-radius: var(--radius-lg);
+    }
+
+    .stat-value {
+        font-size: 26px;
+    }
+
+    .card {
+        padding: 14px;
+    }
+}
+
+/* ── Conversations: compact list items ───────────────────────── */
+@media (max-width: 768px) {
+    .conversations-header,
+    .handoffs-queue-header {
+        padding: 14px 16px;
+    }
+
+    .conv-list-item {
+        padding: 12px 14px;
+    }
+}
+
+/* ── Side panel: full-screen on mobile ───────────────────────── */
+@media (max-width: 640px) {
+    .side-panel {
+        top: 0;
+        border-radius: 0;
+    }
+}
+
+/* ── Handoffs detail: add back button affordance ─────────────── */
+@media (max-width: 1024px) {
+    .hd-header {
+        position: relative;
+    }
+}
+
+/* ── Analytics page: period buttons compact ──────────────────── */
+@media (max-width: 768px) {
+    .analytics-period-buttons {
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: none;
+        gap: 4px;
+    }
+
+    .analytics-period-buttons::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* ── Safe area bottom padding for iOS ────────────────────────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @media (max-width: 640px) {
+        .sidebar {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            height: calc(68px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .main {
+            padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        }
+    }
 }

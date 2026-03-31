@@ -12,6 +12,9 @@
 </head>
 <body data-sitechat-dashboard>
     <div class="app">
+        <!-- Mobile sidebar overlay backdrop -->
+        <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
+
         <!-- Sidebar -->
         <aside class="sidebar" id="dashboard-sidebar" aria-label="Main navigation">
             <div class="sidebar-brand">
@@ -117,6 +120,36 @@
         
         <!-- Main Content -->
         <main class="main">
+            <!-- Mobile topbar (visible on small screens only) -->
+            <div class="mobile-topbar" id="mobile-topbar">
+                <button class="mobile-nav-btn mobile-menu-btn" id="mobile-menu-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="dashboard-sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <button class="mobile-nav-btn mobile-back-btn" id="mobile-back-btn" aria-label="Go back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </button>
+                <div class="mobile-topbar-center">
+                    <div class="mobile-brand" id="mobile-topbar-brand">
+                        <div class="mobile-brand-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </svg>
+                        </div>
+                        <span>SiteChat</span>
+                    </div>
+                    <span class="mobile-topbar-title" id="mobile-topbar-title"></span>
+                </div>
+                <div class="mobile-user-avatar" id="mobile-user-avatar">A</div>
+            </div>
+
             <!-- Sites View - Master-Detail Layout -->
             <div class="view active" id="sites-view">
                 <div class="master-detail-layout">

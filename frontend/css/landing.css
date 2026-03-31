@@ -279,7 +279,7 @@ body { margin: 0; }
 .landing-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 80;
   transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   border-bottom: 1px solid transparent;
 }
@@ -342,6 +342,9 @@ body { margin: 0; }
 }
 
 .landing-nav-overlay { display: none; }
+body.landing-nav-open {
+  overflow: hidden;
+}
 
 .landing .btn {
   display: inline-flex;
@@ -469,23 +472,31 @@ body { margin: 0; }
 }
 
 @media (max-width: 899px) {
-  .landing-nav-toggle { display: flex; }
+  .landing-nav-toggle {
+    display: flex;
+    position: relative;
+    z-index: 220;
+  }
 
   .landing-nav-links {
     position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(300px, 88vw);
+    inset: 0;
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 100dvh;
+    height: 100dvh;
     background: var(--surface);
     flex-direction: column;
     align-items: stretch;
-    padding: 4.5rem 1.5rem 2rem;
+    padding: calc(72px + env(safe-area-inset-top, 0px)) 1.25rem calc(20px + env(safe-area-inset-bottom, 0px));
     gap: 0;
     box-shadow: -12px 0 48px rgba(0, 0, 0, 0.08);
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 100;
+    z-index: 210;
+    max-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .landing-nav-links.is-open { transform: translateX(0); }
@@ -509,10 +520,16 @@ body { margin: 0; }
     position: fixed;
     inset: 0;
     background: rgba(12, 18, 34, 0.45);
-    z-index: 99;
+    z-index: 200;
   }
 
   .landing-nav-overlay.is-open { display: block; }
+}
+
+@media (max-width: 640px) {
+  .landing-nav-github {
+    display: none !important;
+  }
 }
 
 /* ——— Hero ——— */
@@ -2695,5 +2712,160 @@ body { margin: 0; }
 
   .landing-hiw-step-body h3 {
     font-size: 1.15rem;
+  }
+}
+
+/* ---------------------------------------------------------
+   Mobile polish (landing)
+   --------------------------------------------------------- */
+@media (max-width: 900px) {
+  .landing .wrap {
+    padding: 0 1rem;
+  }
+
+  .landing-hero-grid,
+  .landing-proof-grid,
+  .landing-feature-grid,
+  .landing-ops-grid,
+  .landing-footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .landing-demo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing {
+    font-size: 15px;
+  }
+
+  .landing-section {
+    padding: 2.5rem 0;
+  }
+
+  .landing-hero {
+    padding-top: 1rem;
+  }
+
+  .landing-hero-title {
+    font-size: clamp(1.75rem, 7vw, 2.15rem);
+    line-height: 1.1;
+  }
+
+  .landing-hero-subtitle {
+    font-size: 0.98rem;
+  }
+
+  .landing-hero-cta {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .landing-hero-cta .btn,
+  .landing-hero-cta a {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #landing-nav-menu,
+  .landing-nav-links {
+    max-height: calc(100vh - 72px);
+    overflow-y: auto;
+  }
+
+  .landing-code,
+  .landing-embed-card,
+  .landing-live-card {
+    border-radius: 12px;
+  }
+
+  .landing-code pre,
+  .landing-code code {
+    font-size: 12px;
+    white-space: pre;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .landing-chat-window {
+    min-height: 420px;
+  }
+}
+
+/* Extra mobile-friendly overrides (landing) */
+@media (max-width: 640px) {
+  .landing-hero-grid { gap: 1rem; }
+  .landing-hero-stats { grid-template-columns: 1fr; gap: .5rem; }
+  .landing-browser { border-radius: 14px; }
+  .landing-browser-chat { min-height: 320px; }
+  .landing-nav-links { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Very small phones */
+@media (max-width: 375px) {
+  .landing .wrap {
+    padding: 0 0.85rem;
+  }
+
+  .landing-hero-title {
+    font-size: clamp(1.5rem, 8.5vw, 1.9rem);
+  }
+
+  .landing-hero-actions {
+    flex-direction: column;
+  }
+
+  .landing-hero-actions .btn {
+    width: 100%;
+  }
+
+  .landing-stat {
+    min-width: 100%;
+    padding-right: 0;
+    margin-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .landing-stat:last-child {
+    border-bottom: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .landing-demo-site-body {
+    padding: 1.25rem;
+  }
+}
+
+/* Tablet portrait pass */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .landing .wrap {
+    max-width: 920px;
+  }
+
+  .landing-hero-grid {
+    gap: 2rem;
+  }
+
+  .landing-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-bento-featured {
+    grid-column: span 2;
+    grid-row: auto;
+  }
+
+  .landing-code-inner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
 }
