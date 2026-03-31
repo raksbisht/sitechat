@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "SiteChat"
     DEBUG: bool = False
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
+    SITE_URL: str = "http://localhost:8000"
     
     # ===========================================
     # Security Settings

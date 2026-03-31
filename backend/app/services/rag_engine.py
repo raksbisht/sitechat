@@ -157,9 +157,8 @@ class RAGEngine:
             # 1. Get conversation history
             history = await mongodb.get_conversation_history(session_id)
             
-            # 2. Rewrite query with context
-            rewritten_query = await self._rewrite_query(message, history)
-            logger.info(f"Rewritten query: {rewritten_query}")
+            # 2. Use the original query directly to avoid extra LLM latency.
+            rewritten_query = message
             
             # 3. Check for matching Q&A pair first
             qa_match = await self._check_qa_match(rewritten_query, site_id)
@@ -181,8 +180,8 @@ class RAGEngine:
                 # Increment Q&A use count
                 await mongodb.increment_qa_use_count(qa_pair["id"])
                 
-                # Generate follow-up questions
-                follow_ups = await self._generate_follow_ups(message, answer)
+                # Follow-up suggestions are disabled to avoid an extra LLM call.
+                follow_ups = []
                 
                 # Save messages to history
                 await mongodb.save_message(
@@ -225,8 +224,8 @@ class RAGEngine:
                 site_name=site_name
             )
             
-            # 8. Generate follow-up questions
-            follow_ups = await self._generate_follow_ups(message, answer)
+            # 8. Follow-up suggestions are disabled to avoid an extra LLM call.
+            follow_ups = []
             
             # 9. Calculate confidence
             confidence = self._calculate_confidence(relevant_docs)
@@ -270,7 +269,8 @@ class RAGEngine:
         try:
             # Get context (same as non-streaming)
             history = await mongodb.get_conversation_history(session_id)
-            rewritten_query = await self._rewrite_query(message, history)
+            # Use the original query directly to avoid extra LLM latency.
+            rewritten_query = message
             retrieved_docs = await self._retrieve_documents(rewritten_query)
             relevant_docs = await self._grade_documents(rewritten_query, retrieved_docs)
             context, sources = self._build_context(relevant_docs)

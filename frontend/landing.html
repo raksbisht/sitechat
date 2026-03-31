@@ -160,7 +160,7 @@
             var SESSION_ID = 'hero-' + Math.random().toString(36).slice(2);
             var API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
               ? 'http://' + location.host
-              : 'https://sitechat.in';
+              : window.location.origin;
 
             var form     = document.getElementById('hero-chat-form');
             var input    = document.getElementById('hero-chat-input');
@@ -578,7 +578,7 @@
           <pre class="landing-code-pre" id="embed-code"><code><span class="tok-p">&lt;script</span>
   <span class="tok-a">src</span>=<span class="tok-s">"https://sitechat.in/widget/chatbot.js"</span>
   <span class="tok-a">data-site-id</span>=<span class="tok-s">"YOUR_SITE_ID"</span>
-  <span class="tok-a">data-api-url</span>=<span class="tok-s">"https://sitechat.in"</span>
+  <span class="tok-a">data-api-url</span>=<span class="tok-s">"https://your-domain.com"</span>
   <span class="tok-a">data-color</span>=<span class="tok-s">"#0d9488"</span>
 <span class="tok-p">&gt;&lt;/script&gt;</span></code></pre>
         </div>
@@ -799,7 +799,7 @@
         copyBtn.addEventListener('click', function () {
           var code = document.getElementById('embed-code');
           if (!code) return;
-          var text = '<script\n  src="https://sitechat.in/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="https://sitechat.in"\n  data-color="#0d9488"\n><\/script>';
+          var text = '<script\n  src="https://sitechat.in/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="https://your-domain.com"\n  data-color="#0d9488"\n><\/script>';
           navigator.clipboard.writeText(text).then(function () {
             copyBtn.textContent = 'Copied!';
             setTimeout(function () { copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy'; }, 2000);
@@ -812,138 +812,7 @@
         item.addEventListener('toggle', function () {});
       });
 
-      // Enhance loaded SiteChat widget — close button + human handoff button
-      (function() {
-        var observer = new MutationObserver(function() {
-          var header = document.querySelector('.sitechat-header');
-          if (!header) return;
-
-          // 1. Inject close button
-          if (!header.querySelector('.sitechat-close-btn')) {
-            var closeBtn = document.createElement('button');
-            closeBtn.className = 'sitechat-close-btn';
-            closeBtn.setAttribute('aria-label', 'Close chat');
-            closeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-            closeBtn.addEventListener('click', function() {
-              var toggle = document.querySelector('.sitechat-toggle');
-              if (toggle) toggle.click();
-            });
-            header.appendChild(closeBtn);
-          }
-
-          // 2. Enhance the handoff button — toggle with states
-          var handoffBtn = header.querySelector('.sitechat-handoff-btn');
-          if (handoffBtn && !handoffBtn.dataset.enhanced) {
-            handoffBtn.dataset.enhanced = '1';
-
-            var ICON_AGENT =
-              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
-                '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>' +
-                '<path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>' +
-              '</svg>';
-
-            var ICON_CANCEL =
-              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
-                '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>' +
-              '</svg>';
-
-            function setIdle() {
-              handoffBtn.setAttribute('aria-label', 'Talk to a real person');
-              handoffBtn.setAttribute('data-state', 'idle');
-              handoffBtn.innerHTML = ICON_AGENT + '<span>Live agent</span><div class="sitechat-handoff-tip">Connect with a real person</div>';
-            }
-
-            function setRequesting() {
-              handoffBtn.setAttribute('aria-label', 'Cancel request');
-              handoffBtn.setAttribute('data-state', 'requesting');
-              handoffBtn.innerHTML = ICON_CANCEL + '<span>Cancel request</span><div class="sitechat-handoff-tip">Cancel agent request</div>';
-            }
-
-            function setConnected() {
-              handoffBtn.setAttribute('aria-label', 'Agent connected');
-              handoffBtn.setAttribute('data-state', 'connected');
-              handoffBtn.innerHTML = ICON_AGENT + '<span>Agent connected</span><div class="sitechat-handoff-tip">A real person has joined</div>';
-            }
-
-            function syncStateFromWidget() {
-              var inHandoffMode = header.classList.contains('handoff-mode');
-              var subtitle = header.querySelector('.sitechat-header-text p');
-              var isConnected = subtitle && subtitle.textContent.indexOf('Chatting') !== -1;
-
-              if (isConnected) {
-                setConnected();
-                return;
-              }
-              if (inHandoffMode) {
-                setRequesting();
-                return;
-              }
-              setIdle();
-            }
-
-            syncStateFromWidget();
-
-            var resetTimer = null;
-
-            function scheduleReset() {
-              clearTimeout(resetTimer);
-              // If handoff-mode isn't added within 12s the request likely failed — reset
-              resetTimer = setTimeout(function() {
-                if (handoffBtn.getAttribute('data-state') === 'requesting') {
-                  setIdle();
-                }
-              }, 12000);
-            }
-
-            handoffBtn.addEventListener('click', function(e) {
-              var state = handoffBtn.getAttribute('data-state');
-              if (state === 'idle') {
-                setRequesting();
-                scheduleReset();
-                // let the widget's own handler fire to create the handoff
-              } else if (state === 'requesting') {
-                // user is cancelling — stop event so widget doesn't start a new handoff
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                clearTimeout(resetTimer);
-                setIdle();
-              }
-            }, true); // capture phase so we run before widget's own handler
-
-            // Watch for widget entering/leaving handoff-mode (class change only)
-            var headerObserver = new MutationObserver(function() {
-              if (!header.classList.contains('handoff-mode')) {
-                // handoff-mode removed = session resolved — restore button
-                if (handoffBtn.getAttribute('data-state') === 'connected' ||
-                    handoffBtn.getAttribute('data-state') === 'requesting') {
-                  handoffBtn.style.display = '';
-                  setIdle();
-                }
-              } else {
-                // handoff-mode just added = pending — clear the reset timer,
-                // but do NOT call setConnected() yet (agent hasn't accepted)
-                clearTimeout(resetTimer);
-              }
-            });
-            headerObserver.observe(header, { attributes: true, attributeFilter: ['class'] });
-
-            // Watch the subtitle text — widget sets "Chatting with X" only when
-            // an agent actually claims the session (pending → active)
-            var subtitle = header.querySelector('.sitechat-header-text p');
-            if (subtitle) {
-              var subtitleObserver = new MutationObserver(function() {
-                if (header.classList.contains('handoff-mode') &&
-                    subtitle.textContent.indexOf('Chatting') !== -1) {
-                  setConnected();
-                }
-              });
-              subtitleObserver.observe(subtitle, { childList: true, characterData: true, subtree: true });
-            }
-          }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-      })();
+      // Widget bubble behavior is fully handled in frontend/src/widget/chatbot.js.
     })();
   </script>
 </body>

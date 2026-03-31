@@ -75,7 +75,11 @@ def get_widget_sri_hash() -> Optional[str]:
 
 def get_embed_url(request: Optional[Request] = None) -> str:
     """Get the base URL for embed scripts."""
-    # In production, use the configured URL or derive from request
+    # Prefer configured URL from env; derive from request when available.
+    configured = (settings.SITE_URL or "").rstrip("/")
+    if configured:
+        return configured
+
     if request:
         # Use the request's scheme and host
         scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
