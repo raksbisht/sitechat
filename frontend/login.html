@@ -556,13 +556,23 @@
                 </button>
             </form>
 
-            <div class="login-footer">
-                <p>Demo credentials: <code>admin@sitechat.in</code> / <code>Admin123!</code></p>
+            <div class="login-footer" id="login-demo-footer" hidden>
+                <p>Demo credentials: <code>__ADMIN_EMAIL__</code> / <code>Admin123!</code></p>
             </div>
         </div>
     </div>
 
     <script>
+        (function () {
+            const h = window.location.hostname;
+            const isLocal =
+                h === 'localhost' ||
+                h === '127.0.0.1' ||
+                h === '[::1]';
+            const footer = document.getElementById('login-demo-footer');
+            if (footer && isLocal) footer.removeAttribute('hidden');
+        })();
+
         const API_BASE = window.location.origin + '/api';
 
         // Check if already logged in

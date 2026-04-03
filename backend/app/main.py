@@ -16,7 +16,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from typing import Optional
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -33,7 +34,8 @@ from app.core.security import (
     get_client_ip
 )
 from app.routes import chat_router, crawl_router, admin_router, analytics_router, conversations_router, triggers_router, handoff_router, platform_router
-from app.routes.embed import router as embed_router
+from app.routes.embed import router as embed_router, get_widget_sri_hash
+from app.public_html import apply_public_html_placeholders
 from app.routes.sites import router as sites_router
 from app.routes.auth import router as auth_router
 from app.routes.documents import router as documents_router
@@ -160,6 +162,7 @@ if settings.is_production and settings.TRUSTED_HOSTS != "*":
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=settings.cors_origin_regex,
     allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin"],
@@ -191,6 +194,13 @@ frontend_path = os.path.join(project_root, "frontend")
 
 logger.info(f"Frontend path: {frontend_path}")
 
+def _html_file_response(filename: str, *, widget_sri: Optional[str] = None) -> HTMLResponse:
+    path = os.path.join(frontend_path, filename)
+    with open(path, "r", encoding="utf-8") as f:
+        body = apply_public_html_placeholders(f.read(), widget_sri=widget_sri)
+    return HTMLResponse(content=body, media_type="text/html; charset=utf-8")
+
+
 if os.path.exists(frontend_path):
     # Mount CSS and JS directories
     css_path = os.path.join(frontend_path, "css")
@@ -210,7 +220,7 @@ async def root():
     """Serve marketing landing page, or dashboard fallback if landing missing."""
     landing_path = os.path.join(frontend_path, "landing.html")
     if os.path.exists(landing_path):
-        return FileResponse(landing_path)
+        return _html_file_response("landing.html", widget_sri=get_widget_sri_hash())
 
     frontend_index = os.path.join(frontend_path, "index.html")
     logger.info(f"Looking for index.html at: {frontend_index}")
@@ -233,7 +243,7 @@ async def dashboard_app():
     """Serve authenticated SPA dashboard."""
     frontend_index = os.path.join(frontend_path, "index.html")
     if os.path.exists(frontend_index):
-        return FileResponse(frontend_index)
+        return _html_file_response("index.html")
     return {"error": "Dashboard not found"}
 
 
@@ -258,7 +268,7 @@ async def login_page():
     """Serve the login page."""
     login_path = os.path.join(frontend_path, "login.html")
     if os.path.exists(login_path):
-        return FileResponse(login_path)
+        return _html_file_response("login.html")
     return {"error": "Login page not found"}
 
 

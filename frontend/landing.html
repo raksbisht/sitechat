@@ -6,9 +6,9 @@
   <title>SiteChat — Open-source AI customer support for your website</title>
   <meta name="description" content="Train an AI chatbot on your website in minutes. Self-hosted, free forever. Embed one script tag — get cited answers, human handoff, analytics, and full data ownership.">
 
-  <link rel="canonical" href="https://sitechat.in/">
+  <link rel="canonical" href="__SITE_URL__/">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://sitechat.in/">
+  <meta property="og:url" content="__SITE_URL__/">
   <meta property="og:title" content="SiteChat — Open-source AI customer support for your website">
   <meta property="og:description" content="Train an AI chatbot on your website in minutes. Self-hosted, free forever. Full data ownership, no subscriptions.">
   <meta property="og:site_name" content="SiteChat">
@@ -19,7 +19,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/landing.css">
+  <link rel="stylesheet" href="/css/landing.css?v=20260403-2">
+  <!-- Local dev: optional override if the API is not the same origin as this page (e.g. page on :3000, API on :8000). -->
+  <!-- <meta name="sitechat-api-origin" content="http://127.0.0.1:8000"> -->
 </head>
 <body class="landing" data-sitechat-landing>
   <div class="landing-bg" aria-hidden="true"></div>
@@ -63,23 +65,25 @@
         <button type="button" class="landing-nav-toggle" aria-expanded="false" aria-controls="landing-nav-menu" id="nav-toggle" aria-label="Menu">
           <span></span><span></span><span></span>
         </button>
+        <div class="landing-nav-links" id="landing-nav-menu">
+          <div class="landing-nav-primary">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#why-sitechat">Why SiteChat</a>
+            <a href="#faq">FAQ</a>
+            <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer" class="landing-nav-github" aria-label="GitHub">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>
+            </a>
+          </div>
+          <div class="landing-nav-cta">
+            <a href="/login" class="btn btn-ghost">Sign in</a>
+            <a href="/login" class="btn btn-primary">Get started free</a>
+          </div>
+        </div>
       </nav>
     </div>
   </header>
   <div class="landing-nav-overlay" id="nav-overlay" hidden></div>
-  <div class="landing-nav-links" id="landing-nav-menu">
-    <a href="#features">Features</a>
-    <a href="#how-it-works">How it works</a>
-    <a href="#why-sitechat">Why SiteChat</a>
-    <a href="#faq">FAQ</a>
-    <a href="https://github.com/raksbisht/sitechat" target="_blank" rel="noopener noreferrer" class="landing-nav-github" aria-label="GitHub">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12c0-5.523-4.477-10-10-10z"/></svg>
-    </a>
-    <div class="landing-nav-cta">
-      <a href="/login" class="btn btn-ghost">Sign in</a>
-      <a href="/login" class="btn btn-primary">Get started free</a>
-    </div>
-  </div>
 
   <main>
 
@@ -120,7 +124,7 @@
           <div class="landing-browser">
             <div class="landing-browser-chrome">
               <span class="landing-browser-dots"><i></i><i></i><i></i></span>
-              <span class="landing-browser-url">sitechat.in</span>
+              <span class="landing-browser-url">__SITE_HOST__</span>
             </div>
             <div class="landing-browser-body">
               <div class="landing-browser-page" aria-hidden="true">
@@ -481,7 +485,7 @@
                 <span class="hiw-code-file">index.html</span>
               </div>
               <pre class="hiw-code-body"><code><span class="hiw-tok-p">&lt;script</span>
-  <span class="hiw-tok-a">src</span>=<span class="hiw-tok-s">"https://sitechat.in/widget/chatbot.js"</span>
+  <span class="hiw-tok-a">src</span>=<span class="hiw-tok-s">"__SITE_URL__/widget/chatbot.js"</span>
   <span class="hiw-tok-a">data-site-id</span>=<span class="hiw-tok-s">"your-site-id"</span>
 <span class="hiw-tok-p">&gt;&lt;/script&gt;</span></code></pre>
               <div class="hiw-code-footer">
@@ -576,9 +580,9 @@
             </button>
           </div>
           <pre class="landing-code-pre" id="embed-code"><code><span class="tok-p">&lt;script</span>
-  <span class="tok-a">src</span>=<span class="tok-s">"https://sitechat.in/widget/chatbot.js"</span>
+  <span class="tok-a">src</span>=<span class="tok-s">"__SITE_URL__/widget/chatbot.js"</span>
   <span class="tok-a">data-site-id</span>=<span class="tok-s">"YOUR_SITE_ID"</span>
-  <span class="tok-a">data-api-url</span>=<span class="tok-s">"https://your-domain.com"</span>
+  <span class="tok-a">data-api-url</span>=<span class="tok-s">"__SITE_URL__"</span>
   <span class="tok-a">data-color</span>=<span class="tok-s">"#0d9488"</span>
 <span class="tok-p">&gt;&lt;/script&gt;</span></code></pre>
         </div>
@@ -767,11 +771,37 @@
     </div>
   </footer>
 
-  <!--
-    SiteChat embed. Local dev (e.g. http://127.0.0.1:8015/): same-origin API — omit data-api-url.
-    Split domain (marketing site ≠ API): add data-api-url="https://your-api-host".
-  -->
-  <script src="/widget/chatbot.js?v=2" data-site-id="713b6838215c"></script>
+  <!-- SiteChat widget: non-local uses SITE_URL from server env; local uses this page origin (or meta sitechat-api-origin). -->
+  <script>
+  (function () {
+    var host = location.hostname;
+    var isLocal = host === 'localhost' || host === '127.0.0.1';
+    var meta = document.querySelector('meta[name="sitechat-api-origin"]');
+    var apiUrl = '__SITE_URL__';
+    if (isLocal) {
+      if (meta && meta.getAttribute('content')) {
+        apiUrl = meta.getAttribute('content').trim().replace(/\/$/, '');
+      } else if (location.protocol === 'http:' || location.protocol === 'https:') {
+        apiUrl = location.origin;
+      } else {
+        apiUrl = 'http://' + host + ':8000';
+      }
+    }
+    // Fallback for async dynamic loads (document.currentScript may be null); see chatbot.js
+    window.__sitechatEmbed = { siteId: '8047d01776c6', apiUrl: apiUrl };
+    var s = document.createElement('script');
+    s.async = false;
+    s.dataset.siteId = '8047d01776c6';
+    s.dataset.apiUrl = apiUrl;
+    if (isLocal) {
+      s.src = apiUrl + '/widget/chatbot.js';
+    } else {
+      s.src = '__SITE_URL__/widget/chatbot.js';
+__WIDGET_SRI_JS__
+    }
+    document.head.appendChild(s);
+  })();
+  </script>
 
   <script>
     (function () {
@@ -813,7 +843,7 @@
         copyBtn.addEventListener('click', function () {
           var code = document.getElementById('embed-code');
           if (!code) return;
-          var text = '<script\n  src="https://sitechat.in/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="https://your-domain.com"\n  data-color="#0d9488"\n><\/script>';
+          var text = '<script\n  src="__SITE_URL__/widget/chatbot.js"\n  data-site-id="YOUR_SITE_ID"\n  data-api-url="__SITE_URL__"\n  data-color="#0d9488"\n><\/script>';
           navigator.clipboard.writeText(text).then(function () {
             copyBtn.textContent = 'Copied!';
             setTimeout(function () { copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy'; }, 2000);

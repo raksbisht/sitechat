@@ -51,7 +51,7 @@ test.describe('Authentication', () => {
   });
 
   test('should login successfully with valid credentials', async ({ page }) => {
-    await page.fill('#login-email', 'admin@sitechat.in');
+    await page.fill('#login-email', 'admin@example.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
 
@@ -62,7 +62,7 @@ test.describe('Authentication', () => {
   });
 
   test('should show loading state during login', async ({ page }) => {
-    await page.fill('#login-email', 'admin@sitechat.in');
+    await page.fill('#login-email', 'admin@example.com');
     await page.fill('#login-password', 'admin123');
     
     const [response] = await Promise.all([
@@ -74,7 +74,7 @@ test.describe('Authentication', () => {
   });
 
   test('should remember email when checkbox is checked', async ({ page }) => {
-    await page.fill('#login-email', 'admin@sitechat.in');
+    await page.fill('#login-email', 'admin@example.com');
     await page.check('#remember-me');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
@@ -82,7 +82,7 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL(/\/app\/?$/);
     
     const rememberedEmail = await page.evaluate(() => localStorage.getItem('remember_email'));
-    expect(rememberedEmail).toBe('admin@sitechat.in');
+    expect(rememberedEmail).toBe('admin@example.com');
   });
 
   test('should pre-fill remembered email on page load', async ({ page, context }) => {
@@ -111,7 +111,7 @@ test.describe('Authentication', () => {
 test.describe('Logout', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.fill('#login-email', 'admin@sitechat.in');
+    await page.fill('#login-email', 'admin@example.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
     await expect(page).toHaveURL(/\/app\/?$/);
@@ -141,7 +141,7 @@ test.describe('Logout', () => {
 test.describe('Session Management', () => {
   test('should redirect to login on 401 response', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('#login-email', 'admin@sitechat.in');
+    await page.fill('#login-email', 'admin@example.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
     await expect(page).toHaveURL(/\/app\/?$/);
@@ -157,7 +157,7 @@ test.describe('Session Management', () => {
 
   test('should display user info after login', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('#login-email', 'admin@sitechat.in');
+    await page.fill('#login-email', 'admin@example.com');
     await page.fill('#login-password', 'admin123');
     await page.click('#login-btn');
     await expect(page).toHaveURL(/\/app\/?$/);

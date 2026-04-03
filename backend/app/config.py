@@ -22,15 +22,24 @@ class Settings(BaseSettings):
     # CORS - comma-separated list of allowed origins
     CORS_ORIGINS: str = (
         "http://localhost:3000,http://localhost:8000,http://127.0.0.1:8000,"
-        "http://localhost:8015,http://127.0.0.1:8015"
+        "http://localhost:8015,http://127.0.0.1:8015,"
+        "http://localhost:8012,http://127.0.0.1:8012,"
+        # Default HTTP port (80): browsers send Origin without an explicit port
+        "http://127.0.0.1,http://localhost"
     )
     CORS_ALLOW_CREDENTIALS: bool = True
+    # Match loopback on any port (CORS Origin is exact; http://127.0.0.1 does not match :8012).
+    # Set to empty string in .env to disable.
+    CORS_ORIGIN_REGEX: str = r"^https?://127\.0\.0\.1(?::\d+)?$"
     
     # Trusted hosts for production
     TRUSTED_HOSTS: str = "localhost,127.0.0.1"
     
     # Security headers
     ENABLE_SECURITY_HEADERS: bool = True
+    # Full Content-Security-Policy for non-API HTML (/, /app, static pages). Empty = omit CSP header.
+    # Configure in .env — see .env.example.
+    CONTENT_SECURITY_POLICY: str = ""
     
     @property
     def cors_origins_list(self) -> List[str]:
@@ -38,6 +47,19 @@ class Settings(BaseSettings):
         if self.CORS_ORIGINS == "*":
             return ["*"]
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
+    @property
+    def cors_origin_regex(self) -> Optional[str]:
+        """Optional regex for allowed Origins (e.g. 127.0.0.1 with any port)."""
+        if not self.CORS_ORIGIN_REGEX or not str(self.CORS_ORIGIN_REGEX).strip():
+            return None
+        return str(self.CORS_ORIGIN_REGEX).strip()
+
+    @property
+    def content_security_policy_non_api(self) -> Optional[str]:
+        """CSP for HTML routes; None when unset so the header is not sent."""
+        raw = (self.CONTENT_SECURITY_POLICY or "").strip()
+        return raw if raw else None
     
     @property
     def trusted_hosts_list(self) -> List[str]:
@@ -53,6 +75,8 @@ class Settings(BaseSettings):
     LLM_MODEL: str = "llama3.1:8b"
     LLM_TEMPERATURE: float = 0.7
     LLM_MAX_TOKENS: int = 1000
+    # Ollama: cap context window for faster attention (omit by setting 0 or use model default if unset)
+    OLLAMA_NUM_CTX: int = 4096
     
     # Provider-specific API keys
     OPENAI_API_KEY: Optional[str] = None
@@ -138,7 +162,7 @@ class Settings(BaseSettings):
     
     # Admin credentials (created on first run if no admin exists)
     # Set ADMIN_PASSWORD to empty string to disable auto-creation
-    ADMIN_EMAIL: str = "admin@sitechat.in"
+    ADMIN_EMAIL: str = "admin@example.com"
     ADMIN_PASSWORD: str = ""
     
     # Password policy
@@ -170,7 +194,18 @@ class Settings(BaseSettings):
     # ===========================================
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
-    RETRIEVAL_K: int = 5
+    # Fewer chunks = less prompt text = faster LLM (raise for richer answers)
+    RETRIEVAL_K: int = 3
+    # Vector search returns k * oversample candidates before grading (2 = faster than 4)
+    RAG_RETRIEVAL_OVERSAMPLE: int = 2
+    # Max characters per retrieved chunk in the chat prompt (lower = faster)
+    RAG_CONTEXT_CHUNK_MAX_CHARS: int = 900
+    # Recent messages included in prompt; each message truncated for speed
+    CHAT_HISTORY_MAX_MESSAGES: int = 4
+    CHAT_HISTORY_MESSAGE_MAX_CHARS: int = 350
+    # When true, load history, Q&A check, and vector retrieval in parallel (faster RAG path).
+    # Set false if Q&A hits are common and you want to skip wasted retrieval work.
+    CHAT_SPECULATIVE_PREFETCH: bool = True
     
     # ===========================================
     # Crawler settings

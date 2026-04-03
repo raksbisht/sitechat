@@ -273,6 +273,7 @@ body { margin: 0; }
 .landing > footer {
   position: relative;
   z-index: 1;
+  top:10px;
 }
 
 /* ——— Header ——— */
@@ -319,26 +320,34 @@ body { margin: 0; }
 
 .landing-logo--footer .landing-logo-mark { opacity: 0.7; }
 
+/* Desktop: logo left; links + GitHub + auth CTA grouped on the right (see min-width: 900px). */
 .landing-nav-links {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(0.65rem, 2vw, 1.25rem);
+}
+
+.landing-nav-primary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: clamp(1rem, 3vw, 2rem);
 }
 
-.landing-nav-links > a:not(.btn) {
+.landing-nav-primary > a:not(.btn) {
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--muted);
   transition: color 0.2s;
 }
 
-.landing-nav-links > a:not(.btn):hover { color: var(--ink); }
+.landing-nav-primary > a:not(.btn):hover { color: var(--ink); }
 
 .landing-nav-cta {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: 0.5rem;
 }
 
 .landing-nav-overlay { display: none; }
@@ -444,17 +453,25 @@ body.landing-nav-open {
     width: auto !important;
     max-width: none !important;
     height: auto !important;
+    flex: 0 1 auto !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 0 0 auto !important;
     flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
+    justify-content: flex-end !important;
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
-    gap: clamp(1rem, 2vw, 1.75rem) !important;
+    gap: clamp(0.75rem, 2vw, 1.5rem) !important;
   }
 
-  .landing-nav-links > a:not(.btn) {
+  .landing-nav-primary {
+    flex-wrap: nowrap !important;
+  }
+
+  .landing-nav-primary > a:not(.btn),
+  .landing-nav-primary .landing-nav-github {
     padding: 0 !important;
     border: none !important;
   }
@@ -462,7 +479,7 @@ body.landing-nav-open {
   .landing-nav-cta {
     flex-direction: row !important;
     margin-top: 0 !important;
-    margin-left: 0.25rem !important;
+    margin-left: 0 !important;
     width: auto !important;
   }
 
@@ -499,9 +516,17 @@ body.landing-nav-open {
     -webkit-overflow-scrolling: touch;
   }
 
+  .landing-nav-primary {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0;
+  }
+
   .landing-nav-links.is-open { transform: translateX(0); }
 
-  .landing-nav-links > a:not(.btn) {
+  .landing-nav-primary > a:not(.btn),
+  .landing-nav-primary .landing-nav-github {
     padding: 1rem 0;
     border-bottom: 1px solid var(--line);
   }
@@ -2061,8 +2086,21 @@ body.landing-nav-open {
   min-width: 0 !important;
 }
 
+/* Header actions row (live agent + close) — must stay visible inside overflow:hidden panel */
+.sitechat-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 2;
+}
+
 /* Close button */
-.sitechat-close-btn {
+.sitechat-close-btn,
+.sitechat-header-close {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
@@ -2077,7 +2115,8 @@ body.landing-nav-open {
   transition: background 0.15s;
 }
 
-.sitechat-close-btn:hover {
+.sitechat-close-btn:hover,
+.sitechat-header-close:hover {
   background: rgba(255, 255, 255, 0.28);
 }
 

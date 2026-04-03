@@ -100,7 +100,8 @@ async def chat_stream(request: Request, body: ChatRequest):
                 async for chunk in rag_engine.chat_stream(
                     message=body.message,
                     session_id=body.session_id,
-                    user_id=body.user_id
+                    user_id=body.user_id,
+                    site_id=body.site_id,
                 ):
                     yield f"data: {chunk}\n\n"
                 yield "data: [DONE]\n\n"

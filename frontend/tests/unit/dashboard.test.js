@@ -58,13 +58,13 @@ describe('SiteChat Dashboard', () => {
     });
 
     test('should parse user data correctly', () => {
-      const userData = { email: 'admin@sitechat.in', role: 'admin', name: 'Admin' };
+      const userData = { email: 'admin@example.com', role: 'admin', name: 'Admin' };
       localStorage.setItem('user', JSON.stringify(userData));
       
       const userStr = localStorage.getItem('user');
       const currentUser = JSON.parse(userStr);
       
-      expect(currentUser.email).toBe('admin@sitechat.in');
+      expect(currentUser.email).toBe('admin@example.com');
       expect(currentUser.role).toBe('admin');
       expect(currentUser.name).toBe('Admin');
     });

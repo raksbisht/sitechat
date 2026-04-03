@@ -39,17 +39,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             # Permissions policy
             response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
             
-            # Content Security Policy (relaxed for dashboard)
+            # Content-Security-Policy for HTML pages: set CONTENT_SECURITY_POLICY in .env (see .env.example).
             if not request.url.path.startswith("/api/"):
-                response.headers["Content-Security-Policy"] = (
-                    "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                    "font-src 'self' https://fonts.gstatic.com; "
-                    "img-src 'self' data: https:; "
-                    "connect-src 'self' *; "
-                    "frame-ancestors 'none';"
-                )
+                csp = settings.content_security_policy_non_api
+                if csp:
+                    response.headers["Content-Security-Policy"] = csp
             
             # Strict Transport Security (only in production with HTTPS)
             if settings.is_production:

@@ -211,7 +211,7 @@ describe('SiteChat Widget', () => {
 
       const brandingEl = document.createElement('div');
       brandingEl.className = 'sitechat-branding';
-      brandingEl.innerHTML = '<a href="https://sitechat.in">Powered by <strong>SiteChat</strong></a>';
+      brandingEl.innerHTML = '<a href="https://example.com">Powered by <strong>SiteChat</strong></a>';
       document.body.appendChild(brandingEl);
 
       if (!config.hideBranding) {

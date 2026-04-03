@@ -8,6 +8,7 @@ RAG Engine with all best practices:
 - Source citations
 - Q&A pair matching for trained responses
 """
+import asyncio
 import re
 from typing import List, Dict, Optional, Tuple, AsyncGenerator
 from datetime import datetime
@@ -19,6 +20,12 @@ from app.config import settings
 from app.database import get_mongodb, get_vector_store
 from app.services.ollama import get_ollama_service
 from app.models.schemas import ChatResponse, SourceDocument
+
+
+def _truncate_text(text: str, max_chars: int) -> str:
+    if max_chars <= 0 or not text or len(text) <= max_chars:
+        return text or ""
+    return text[: max_chars - 1].rstrip() + "…"
 
 
 class RAGEngine:
@@ -154,15 +161,23 @@ class RAGEngine:
                 logger.info(f"Filtering by site: {site_url_filter}")
         
         try:
-            # 1. Get conversation history
-            history = await mongodb.get_conversation_history(session_id)
-            
-            # 2. Use the original query directly to avoid extra LLM latency.
+            # 1–3. Overlap I/O: history + Q&A match, and optionally vector retrieval (speculative prefetch).
             rewritten_query = message
-            
-            # 3. Check for matching Q&A pair first
-            qa_match = await self._check_qa_match(rewritten_query, site_id)
-            
+            prefetch = getattr(settings, "CHAT_SPECULATIVE_PREFETCH", True)
+
+            if prefetch:
+                history, qa_match, retrieved_docs = await asyncio.gather(
+                    mongodb.get_conversation_history(session_id),
+                    self._check_qa_match(rewritten_query, site_id),
+                    self._retrieve_documents(rewritten_query, site_url_filter=site_url_filter),
+                )
+            else:
+                history, qa_match = await asyncio.gather(
+                    mongodb.get_conversation_history(session_id),
+                    self._check_qa_match(rewritten_query, site_id),
+                )
+                retrieved_docs = None
+
             if qa_match:
                 qa_pair, qa_score = qa_match
                 logger.info(f"Using Q&A pair response (score: {qa_score:.3f})")
@@ -206,8 +221,9 @@ class RAGEngine:
                     session_id=session_id
                 )
             
-            # 4. No Q&A match - proceed with normal RAG retrieval
-            retrieved_docs = await self._retrieve_documents(rewritten_query, site_url_filter=site_url_filter)
+            # 4. No Q&A match - use prefetched retrieval or fetch now
+            if retrieved_docs is None:
+                retrieved_docs = await self._retrieve_documents(rewritten_query, site_url_filter=site_url_filter)
             
             # 5. Grade documents for relevance
             relevant_docs = await self._grade_documents(rewritten_query, retrieved_docs)
@@ -261,35 +277,51 @@ class RAGEngine:
         self,
         message: str,
         session_id: str,
-        user_id: str = None
+        user_id: str = None,
+        site_id: str = None,
     ) -> AsyncGenerator[str, None]:
-        """Stream a chat response."""
+        """Stream a chat response (history + retrieval run in parallel)."""
         mongodb = await get_mongodb()
-        
+
+        site_url_filter = None
+        site_name = None
+        if site_id:
+            site = await mongodb.db.sites.find_one({"site_id": site_id})
+            if site:
+                site_url_filter = site.get("url", "").rstrip("/")
+                site_name = site.get("name") or site_url_filter.replace("https://", "").replace("http://", "")
+
         try:
-            # Get context (same as non-streaming)
-            history = await mongodb.get_conversation_history(session_id)
-            # Use the original query directly to avoid extra LLM latency.
             rewritten_query = message
-            retrieved_docs = await self._retrieve_documents(rewritten_query)
+            history, retrieved_docs = await asyncio.gather(
+                mongodb.get_conversation_history(session_id),
+                self._retrieve_documents(rewritten_query, site_url_filter=site_url_filter),
+            )
             relevant_docs = await self._grade_documents(rewritten_query, retrieved_docs)
             context, sources = self._build_context(relevant_docs)
-            
-            # Build prompt
+
             prompt = self._build_prompt(message, context, history)
-            system_prompt = self._get_system_prompt()
-            
-            # Stream response
+            system_prompt = self._get_system_prompt(site_name)
+
             full_response = ""
-            async for chunk in self.ollama.generate_stream(prompt, system_prompt):
+            async for chunk in self.ollama.generate_stream(
+                prompt,
+                system_prompt,
+                temperature=settings.LLM_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
+            ):
                 full_response += chunk
                 yield chunk
-            
-            # Save to history after streaming completes
-            await mongodb.save_message(session_id, "user", message)
+
             await mongodb.save_message(
-                session_id, "assistant", full_response,
-                sources=[s.dict() for s in sources]
+                session_id, "user", message, site_id=site_id
+            )
+            await mongodb.save_message(
+                session_id,
+                "assistant",
+                full_response,
+                sources=[s.dict() for s in sources],
+                site_id=site_id,
             )
             
         except Exception as e:
@@ -337,26 +369,26 @@ Rewritten search query (just the query, no explanation):"""
         k: int = None,
         site_url_filter: str = None
     ) -> List[Tuple[Document, float]]:
-        """Retrieve relevant documents using hybrid search."""
-        k = k or settings.RETRIEVAL_K
-        
-        # Semantic search with scores (get more to allow filtering)
-        results = self.vector_store.similarity_search_with_score(query, k=k * 4)
-        
-        # Filter by site URL if provided
-        if site_url_filter:
-            filtered_results = []
-            for doc, score in results:
-                doc_url = doc.metadata.get("url", "") or doc.metadata.get("source", "")
-                if doc_url.startswith(site_url_filter):
-                    filtered_results.append((doc, score))
-            results = filtered_results
-            logger.info(f"Filtered to {len(results)} docs for site: {site_url_filter}")
-        
-        # Sort by score (lower is better for FAISS)
-        results.sort(key=lambda x: x[1])
-        
-        return results[:k]
+        """Retrieve relevant documents using hybrid search (runs in a thread pool so it can overlap I/O)."""
+        k_val = k or settings.RETRIEVAL_K
+        oversample = max(1, getattr(settings, "RAG_RETRIEVAL_OVERSAMPLE", 2))
+        vs = self.vector_store
+        sf = site_url_filter
+
+        def _sync_retrieve() -> List[Tuple[Document, float]]:
+            results = vs.similarity_search_with_score(query, k=k_val * oversample)
+            if sf:
+                filtered_results = []
+                for doc, score in results:
+                    doc_url = doc.metadata.get("url", "") or doc.metadata.get("source", "")
+                    if doc_url.startswith(sf):
+                        filtered_results.append((doc, score))
+                results = filtered_results
+                logger.info(f"Filtered to {len(results)} docs for site: {sf}")
+            results.sort(key=lambda x: x[1])
+            return results[:k_val]
+
+        return await asyncio.to_thread(_sync_retrieve)
     
     async def _grade_documents(
         self,
@@ -397,9 +429,11 @@ Rewritten search query (just the query, no explanation):"""
         sources = []
         seen_urls = set()
         
+        chunk_limit = getattr(settings, "RAG_CONTEXT_CHUNK_MAX_CHARS", 900)
         for doc, score in docs:
+            body = _truncate_text(doc.page_content, chunk_limit)
             # Add to context
-            context_parts.append(f"[Source: {doc.metadata.get('title', 'Unknown')}]\n{doc.page_content}")
+            context_parts.append(f"[Source: {doc.metadata.get('title', 'Unknown')}]\n{body}")
             
             # Add to sources (deduplicate by URL)
             url = doc.metadata.get("url", "")
@@ -416,34 +450,14 @@ Rewritten search query (just the query, no explanation):"""
         return context, sources
     
     def _get_system_prompt(self, site_name: str = None) -> str:
-        """Get the system prompt for the chatbot."""
+        """Get the system prompt for the chatbot (kept compact for lower latency)."""
         site_desc = site_name if site_name else "this website"
-        return f"""You are a friendly and helpful AI assistant for {site_desc}.
-
-Your role is to help users by answering their questions naturally and conversationally.
-
-IMPORTANT - Response style guidelines:
-- Respond naturally as if you already know the information - NEVER say phrases like:
-  - "Based on the provided context..."
-  - "According to the context..."
-  - "From the information provided..."
-  - "The context shows..."
-  - "Based on my knowledge base..."
-- Just answer directly and confidently
-- Be conversational, warm, and helpful
-- Keep responses concise but complete
-- Use simple, clear language
-
-Content guidelines:
-- Only answer based on the information you have about this website
-- If you don't have relevant information, say something like "I'm not sure about that" or "I don't have details on that topic"
-- Never make up information or guess
-- If a question is unclear, ask for clarification
-
-Format guidelines:
-- Use short paragraphs for readability
-- Use bullet points for lists
-- Bold important terms when helpful"""
+        return (
+            f"You are a helpful assistant for {site_desc}. "
+            "Answer in plain language; default to a short reply (a few sentences) unless the user asks for steps, a list, or depth. "
+            "Never say phrases like \"based on the context\" or \"according to the provided information\". "
+            "If you lack information, say you're not sure. Use short paragraphs; bullets for lists."
+        )
     
     def _build_prompt(
         self,
@@ -455,9 +469,11 @@ Format guidelines:
         # Format history
         history_text = ""
         if history:
+            hmax = getattr(settings, "CHAT_HISTORY_MAX_MESSAGES", 4)
+            cmax = getattr(settings, "CHAT_HISTORY_MESSAGE_MAX_CHARS", 350)
             history_text = "\n".join([
-                f"{m['role'].title()}: {m['content']}"
-                for m in history[-6:]
+                f"{m['role'].title()}: {_truncate_text(m.get('content', '') or '', cmax)}"
+                for m in history[-hmax:]
             ])
             history_text = f"Previous conversation:\n{history_text}\n\n"
         
@@ -468,7 +484,7 @@ Format guidelines:
 {question}
 
 [Instructions]
-Answer the user's question naturally and conversationally. Do NOT mention "context", "provided information", or "knowledge base" in your response. Just answer as if you naturally know about this website."""
+Answer the user's question naturally and conversationally. Be brief by default; expand only if the question requires it. Do NOT mention "context", "provided information", or "knowledge base" in your response. Just answer as if you naturally know about this website."""
         
         return prompt
     
@@ -491,7 +507,12 @@ Answer the user's question naturally and conversationally. Do NOT mention "conte
             if user_memory:
                 system_prompt += f"\n\nUser preferences: {user_memory}"
         
-        response = await self.ollama.generate(prompt, system_prompt)
+        response = await self.ollama.generate(
+            prompt,
+            system_prompt,
+            temperature=settings.LLM_TEMPERATURE,
+            max_tokens=settings.LLM_MAX_TOKENS,
+        )
         return response.strip()
     
     async def _generate_follow_ups(

@@ -448,7 +448,7 @@ class AuthService:
             logger.info(f"Admin user created: {settings.ADMIN_EMAIL}")
             
             # Security warning for default email
-            if settings.ADMIN_EMAIL == "admin@sitechat.in":
+            if settings.ADMIN_EMAIL == "admin@example.com":
                 logger.warning("SECURITY: Using default admin email. Consider changing ADMIN_EMAIL")
                 
         except Exception as e:
