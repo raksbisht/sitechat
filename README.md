@@ -1,58 +1,74 @@
+<div align="center">
+
+<h1><img src="docs/images/sitechat-logo.svg" alt="SiteChat" width="280" height="62" /></h1>
+
 ### AI-Powered Customer Support Platform
 
-[Python](https://python.org)
-[FastAPI](https://fastapi.tiangolo.com)
-[MongoDB](https://mongodb.com)
-[LangChain](https://langchain.com)
-[License](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![LangChain](https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)](https://langchain.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
 A production-ready **RAG (Retrieval Augmented Generation)** chatbot platform that enables businesses to create intelligent, context-aware chatbots for their websites.
 
 [Quick Start](#quick-start) · [API Docs](#api-reference) · [Widget Integration](#widget-integration) · [Contributing](#contributing)
 
+</div>
+
 ---
 
 ## ✨ Why SiteChat?
 
-
-|     | Feature                  | Description                                                                                                                               |
-| --- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔒  | **Privacy First**        | Run entirely on your infrastructure. Use local LLMs (Ollama) for complete data isolation—your conversations never touch external servers. |
-| ♾️  | **Unlimited Everything** | One deployment = unlimited sites, unlimited chatbots, unlimited conversations. No per-site fees, no usage caps.                           |
-| 🏠  | **Self-Hosted**          | Your data stays on your servers. Full privacy and control over your customer interactions.                                                |
-| 🔄  | **No Vendor Lock-in**    | Swap between Ollama, OpenAI, Anthropic, or Azure with a single env var.                                                                   |
-| 🚀  | **Production Ready**     | Security headers, rate limiting, JWT auth, and 415+ tests included.                                                                       |
-| 🎨  | **White-Label**          | Fully customizable branding for the platform and chat widget.                                                                             |
-| 📦  | **Easy Integration**     | Single `<script>` tag to add chat to any website.                                                                                         |
-
+| | Feature | Description |
+|:--:|---------|-------------|
+| 🔒 | **Privacy First** | Run entirely on your infrastructure. Use local LLMs (Ollama) for complete data isolation—your conversations never touch external servers. |
+| ♾️ | **Unlimited Everything** | One deployment = unlimited sites, unlimited chatbots, unlimited conversations. No per-site fees, no usage caps. |
+| 🏠 | **Self-Hosted** | Your data stays on your servers. Full privacy and control over your customer interactions. |
+| 🔄 | **No Vendor Lock-in** | Swap between Ollama, OpenAI, Anthropic, or Azure with a single env var. |
+| 🚀 | **Production Ready** | Security headers, rate limiting, JWT auth, and 440+ tests included. |
+| 🎨 | **White-Label** | Fully customizable branding for the platform and chat widget. |
+| 📦 | **Easy Integration** | Single `<script>` tag to add chat to any website. |
 
 ---
 
 ## 📸 Screenshots
 
-**Chat Widget**
+<details open>
+<summary><strong>Chat Widget</strong></summary>
 
 The embeddable chat widget that visitors interact with on your website.
 
-Chat Widget
+![Chat Widget](docs/images/widget.png)
 
-**Dashboard & Widget Customization**
+</details>
+
+<details open>
+<summary><strong>Dashboard & Widget Customization</strong></summary>
 
 Manage your sites, customize widget appearance, and see a live preview of your chatbot.
 
-Dashboard
+![Dashboard](docs/images/dashboard.png)
 
-**Q&A Training**
+</details>
+
+<details open>
+<summary><strong>Q&A Training</strong></summary>
 
 Create custom question-answer pairs to improve chatbot responses and train your AI.
 
-Q&A Training
+![Q&A Training](docs/images/training.png)
 
-**Embed Code**
+</details>
+
+<details open>
+<summary><strong>Embed Code</strong></summary>
 
 Get a ready-to-use embed code to add the chatbot to any website with a single script tag.
 
-Embed Code
+![Embed Code](docs/images/embed-code.png)
+
+</details>
 
 ---
 
@@ -60,21 +76,19 @@ Embed Code
 
 Many businesses rely on cloud-based chatbot services that charge recurring subscription fees and store customer data on third-party servers. SiteChat offers a fundamentally different approach:
 
-
-| Aspect                  | Commercial SaaS Platforms                              | SiteChat                                                    |
-| ----------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
-| **Pricing**             | Monthly subscriptions ($49-$500+/mo), usage-based fees | One-time deployment, no recurring fees ever                 |
-| **Sites & Chatbots**    | Pay per site, limited chatbots per plan                | **Unlimited sites, unlimited chatbots** from single install |
-| **Conversations**       | Metered usage, overage charges                         | Unlimited conversations, no caps                            |
-| **Data Privacy**        | Your data on their servers, shared infrastructure      | **100% self-hosted**, data never leaves your control        |
-| **AI Model Privacy**    | All queries sent to cloud APIs                         | Run local LLMs (Ollama) for **complete data isolation**     |
-| **Page/Content Limits** | Tiered limits (50-5000 pages), overages charged        | Unlimited pages and documents                               |
-| **LLM Flexibility**     | Locked to their chosen model (usually one provider)    | Swap between Ollama, OpenAI, Anthropic, or Azure freely     |
-| **Customization**       | Limited branding options, "Powered by" badges          | Full white-labeling, complete UI control                    |
-| **Compliance**          | Limited compliance options                             | GDPR/HIPAA-ready, air-gapped deployments possible           |
-| **Vendor Lock-in**      | Proprietary formats, no data export                    | Open source, standard formats, full portability             |
-| **API Access**          | Limited or premium-tier only                           | Full API access included                                    |
-
+| Aspect | Commercial SaaS Platforms | SiteChat |
+|--------|---------------------------|----------|
+| **Pricing** | Monthly subscriptions ($49-$500+/mo), usage-based fees | One-time deployment, no recurring fees ever |
+| **Sites & Chatbots** | Pay per site, limited chatbots per plan | **Unlimited sites, unlimited chatbots** from single install |
+| **Conversations** | Metered usage, overage charges | Unlimited conversations, no caps |
+| **Data Privacy** | Your data on their servers, shared infrastructure | **100% self-hosted**, data never leaves your control |
+| **AI Model Privacy** | All queries sent to cloud APIs | Run local LLMs (Ollama) for **complete data isolation** |
+| **Page/Content Limits** | Tiered limits (50-5000 pages), overages charged | Unlimited pages and documents |
+| **LLM Flexibility** | Locked to their chosen model (usually one provider) | Swap between Ollama, OpenAI, Anthropic, or Azure freely |
+| **Customization** | Limited branding options, "Powered by" badges | Full white-labeling, complete UI control |
+| **Compliance** | Limited compliance options | GDPR/HIPAA-ready, air-gapped deployments possible |
+| **Vendor Lock-in** | Proprietary formats, no data export | Open source, standard formats, full portability |
+| **API Access** | Limited or premium-tier only | Full API access included |
 
 ### When to Choose SiteChat
 
@@ -94,14 +108,12 @@ SiteChat requires self-hosting infrastructure and technical expertise to deploy 
 
 ## 📑 Table of Contents
 
-
-| Getting Started                      | Reference                                              | Operations                                                |
-| ------------------------------------ | ------------------------------------------------------ | --------------------------------------------------------- |
-| [🚀 Quick Start](#-quick-start)      | [📚 API Reference](#-api-reference)                    | [🧪 Testing](#-testing)                                   |
-| [⚙️ Configuration](#️-configuration) | [🔌 Widget Integration](#-widget-integration)          | [🔒 Production Security](#-production-security-checklist) |
-| [🏗️ Architecture](#️-architecture)  | [🎯 Features](#-features)                              | [🤝 Contributing](#-contributing)                         |
-| [📸 Screenshots](#-screenshots)      | [🔄 Comparison](#-sitechat-vs-commercial-alternatives) | [🆕 Recent updates](#-recent-updates)                     |
-
+| Getting Started | Reference | Operations |
+|:----------------|:----------|:-----------|
+| [🚀 Quick Start](#-quick-start) | [📚 API Reference](#-api-reference) | [🧪 Testing](#-testing) |
+| [⚙️ Configuration](#️-configuration) | [🔌 Widget Integration](#-widget-integration) | [🔒 Production Security](#-production-security-checklist) |
+| [🏗️ Architecture](#️-architecture) | [🎯 Features](#-features) | [🤝 Contributing](#-contributing) |
+| [📸 Screenshots](#-screenshots) | [🔄 Comparison](#-sitechat-vs-commercial-alternatives) | [🆕 Recent updates](#-recent-updates) |
 
 ---
 
@@ -121,7 +133,7 @@ Highlights from the latest platform and dashboard work:
 
 - **JWT on conversation routes** — Listing, search, detail, notes, tags, status, export, delete, and related operations require a valid Bearer token.
 - **Role-scoped data** — **Admins** see all sites (optional `site_id` filter). **Support agents** see only conversations for sites in `assigned_site_ids` (multi-site queries use a `site_id` `$in` filter). **Site owners** see only their own sites’ conversations.
-- **Agent restrictions** — Agents cannot export conversations or delete (single or bulk). `**POST /api/conversations/auto-close`** is **admin-only**. Exports for non-admins require explicit `site_id` and/or `session_ids` scoped to sites they can access.
+- **Agent restrictions** — Agents cannot export conversations or delete (single or bulk). **`POST /api/conversations/auto-close`** is **admin-only**. Exports for non-admins require explicit `site_id` and/or `session_ids` scoped to sites they can access.
 
 ### Human handoff and widget
 
@@ -145,31 +157,33 @@ Highlights from the latest platform and dashboard work:
 ### Configuration and widget build
 
 - **Default CORS** — Includes `http://localhost:8015` and `http://127.0.0.1:8015` for common alternate dev ports.
-- **Widget build** — If `npm run build` fails with “source missing”, restore `**frontend/src/widget/chatbot.js`** from the repo; `frontend/widget/` is build output only.
+- **Widget build** — If `npm run build` fails with “source missing”, restore **`frontend/src/widget/chatbot.js`** from the repo; `frontend/widget/` is build output only.
 
 ---
 
 ## 🎯 Features
 
-
-| Category       | Features                                                                                        |
-| -------------- | ----------------------------------------------------------------------------------------------- |
-| **Core**       | Site management, document upload, RAG chatbot, multi-LLM support                                |
-| **Widget**     | Embeddable chat, customizable appearance, proactive triggers, lead capture                      |
-| **Operations** | Conversation history, analytics dashboard, human handoff, Q&A training                          |
-| **Admin**      | JWT auth, role-based access, mandatory admin password setup, security hardening, white-labeling |
-
+| Category | Features |
+|----------|----------|
+| **Core** | Site management, document upload, RAG chatbot, multi-LLM support |
+| **Widget** | Embeddable chat, customizable appearance, proactive triggers, lead capture |
+| **Operations** | Conversation history, analytics dashboard, human handoff, Q&A training |
+| **Admin** | JWT auth, role-based access, mandatory admin password setup, security hardening, white-labeling |
 
 ### Core
 
-**Site & Document Management**
+<details open>
+<summary><strong>Site & Document Management</strong></summary>
 
 - **Website Crawling** - Automatically crawl and index website content with status tracking
 - **Multi-site Support** - Manage multiple websites from a single dashboard
 - **Scheduled Re-crawling** - Daily/weekly/monthly auto-crawl with URL filtering
 - **Document Upload** - PDF, DOCX, TXT, MD with automatic chunking and vector embeddings
 
-**AI Chatbot with RAG**
+</details>
+
+<details open>
+<summary><strong>AI Chatbot with RAG</strong></summary>
 
 - **Intelligent Responses** - Context-aware answers using retrieved content
 - **Source Citations** - Responses include references to source documents
@@ -178,9 +192,12 @@ Highlights from the latest platform and dashboard work:
 - **Streaming Responses** - Real-time streaming for better UX
 - **Multi-LLM Support** - Ollama, OpenAI, Anthropic, Azure OpenAI
 
+</details>
+
 ### Widget & Engagement
 
-**Embeddable Chat Widget**
+<details open>
+<summary><strong>Embeddable Chat Widget</strong></summary>
 
 - **Single Script Tag** - Easy integration on any website
 - **Customizable** - Colors, title, welcome message, position
@@ -189,14 +206,20 @@ Highlights from the latest platform and dashboard work:
 - **Embed Code Generator** - Copy-paste ready integration code
 - **Behavior Config** - System prompt, temperature, max tokens
 
-**Proactive Triggers**
+</details>
+
+<details open>
+<summary><strong>Proactive Triggers</strong></summary>
 
 - **Conditions** - Time on page, scroll depth, exit intent, URL patterns, visit count
 - **Actions** - Nudge notification or auto-open chat
 - **Settings** - Custom messages, cooldown periods
 - **Analytics** - Track impressions, clicks, and conversions
 
-**Lead Generation**
+</details>
+
+<details open>
+<summary><strong>Lead Generation</strong></summary>
 
 - **Widget Capture** - Collect visitor email and name during chat sessions
 - **Duplicate Prevention** - Automatically skip re-prompting for existing leads
@@ -205,9 +228,12 @@ Highlights from the latest platform and dashboard work:
 - **Search & Pagination** - Easily browse and search captured leads
 - **Access Control** - Dashboard lead APIs enforce per-site access; **agents cannot delete** leads
 
+</details>
+
 ### Operations
 
-**Conversation Management**
+<details open>
+<summary><strong>Conversation Management</strong></summary>
 
 - **Authenticated API** - List, search, detail, tags, notes, and exports require JWT; access is limited by role (admin / site owner / agent)
 - **Full History** - Admins see all sites; agents only assigned sites; owners only their sites
@@ -217,14 +243,20 @@ Highlights from the latest platform and dashboard work:
 - **Auto-close** - Inactive conversation cleanup is **admin-only**
 - **Session Tracking** - Track user sessions and engagement
 
-**Analytics Dashboard**
+</details>
+
+<details open>
+<summary><strong>Analytics Dashboard</strong></summary>
 
 - **Metrics** - Conversations, messages, confidence scores, response times
 - **Time Periods** - Day, week, month views
 - **Visualizations** - Interactive charts with Chart.js
 - **Per-site Filtering** - Drill down by specific sites
 
-**Human Handoff**
+</details>
+
+<details open>
+<summary><strong>Human Handoff</strong></summary>
 
 - **Triggers** - User-initiated, AI-suggested (low confidence), phrase detection
 - **Visitor Abandon** - Visitors can abandon a handoff when leaving the page; widget calls the public abandon endpoint with session verification
@@ -233,7 +265,10 @@ Highlights from the latest platform and dashboard work:
 - **Business Hours** - Configurable schedule, timezone support, offline messages
 - **Live Chat** - Real-time messaging between agent and visitor (blocked for resolved/abandoned sessions)
 
-**Q&A Training**
+</details>
+
+<details open>
+<summary><strong>Q&A Training</strong></summary>
 
 - **Custom Q&A Pairs** - Create question-answer pairs to improve chatbot responses
 - **From Conversations** - Convert existing chat exchanges into training data
@@ -242,9 +277,12 @@ Highlights from the latest platform and dashboard work:
 - **RAG Integration** - Q&A pairs are automatically used in response generation
 - **Statistics** - Track total, enabled, and recently added Q&A pairs
 
+</details>
+
 ### Admin & Security
 
-**Authentication & Authorization**
+<details open>
+<summary><strong>Authentication & Authorization</strong></summary>
 
 - **JWT Authentication** - Secure token-based auth
 - **Role-based Access** - Admin, site owner (`user`), and support **agent** roles with scoped data access
@@ -253,7 +291,10 @@ Highlights from the latest platform and dashboard work:
 - **Password Policy** - Configurable complexity requirements
 - **Session Management** - Secure login/logout; `must_change_password` exposed in user responses
 
-**Security Features**
+</details>
+
+<details open>
+<summary><strong>Security Features</strong></summary>
 
 - **Headers** - X-Frame-Options, CSP, HSTS, X-XSS-Protection
 - **CORS** - Configurable origins, no wildcards in production
@@ -262,28 +303,31 @@ Highlights from the latest platform and dashboard work:
 - **Spam Protection** - Honeypot fields on lead capture and handoff to silently block bots
 - **Environment Modes** - Development, staging, production with auto-warnings
 
-**White-labeling**
+</details>
+
+<details open>
+<summary><strong>White-labeling</strong></summary>
 
 - **Platform** - Custom name, logo, favicon, colors, footer
 - **Widget** - Hide "Powered by" branding, custom branding text/link
+
+</details>
 
 ---
 
 ## 🛠️ Tech Stack
 
-
-| Layer              | Technology                                           |
-| ------------------ | ---------------------------------------------------- |
-| **Backend**        | FastAPI, Python 3.10+, Pydantic                      |
-| **Database**       | MongoDB (Motor async driver)                         |
-| **Vector Store**   | FAISS (swappable: Chroma, Pinecone, Qdrant)          |
-| **LLM**            | LangChain + Ollama/OpenAI/Anthropic/Azure            |
-| **Embeddings**     | HuggingFace Sentence Transformers                    |
-| **Auth**           | JWT (python-jose), passlib, SlowAPI (rate limiting)  |
-| **Frontend**       | Vanilla JS, CSS Variables, Chart.js                  |
-| **Widget**         | Standalone JS (obfuscated via javascript-obfuscator) |
-| **Doc Processing** | PyPDF, docx2txt, BeautifulSoup4                      |
-
+| Layer | Technology |
+|-------|------------|
+| **Backend** | FastAPI, Python 3.10+, Pydantic |
+| **Database** | MongoDB (Motor async driver) |
+| **Vector Store** | FAISS (swappable: Chroma, Pinecone, Qdrant) |
+| **LLM** | LangChain + Ollama/OpenAI/Anthropic/Azure |
+| **Embeddings** | HuggingFace Sentence Transformers |
+| **Auth** | JWT (python-jose), passlib, SlowAPI (rate limiting) |
+| **Frontend** | Vanilla JS, CSS Variables, Chart.js |
+| **Widget** | Standalone JS (obfuscated via javascript-obfuscator) |
+| **Doc Processing** | PyPDF, docx2txt, BeautifulSoup4 |
 
 ## 🏗️ Architecture
 
@@ -291,16 +335,14 @@ SiteChat uses a **Provider Pattern** for all infrastructure components, making i
 
 ### Supported Providers
 
-
-| Component        | Options                            | Default     |
-| ---------------- | ---------------------------------- | ----------- |
-| **LLM**          | Ollama, OpenAI, Anthropic, Azure   | Ollama      |
-| **Embeddings**   | HuggingFace, OpenAI, Ollama        | HuggingFace |
-| **Vector Store** | FAISS, Chroma, Pinecone, Qdrant    | FAISS       |
-| **Database**     | MongoDB, PostgreSQL (planned)      | MongoDB     |
-| **Storage**      | Local, S3 (planned), GCS (planned) | Local       |
-| **Cache**        | Memory, Redis (planned)            | Memory      |
-
+| Component | Options | Default |
+|-----------|---------|---------|
+| **LLM** | Ollama, OpenAI, Anthropic, Azure | Ollama |
+| **Embeddings** | HuggingFace, OpenAI, Ollama | HuggingFace |
+| **Vector Store** | FAISS, Chroma, Pinecone, Qdrant | FAISS |
+| **Database** | MongoDB, PostgreSQL (planned) | MongoDB |
+| **Storage** | Local, S3 (planned), GCS (planned) | Local |
+| **Cache** | Memory, Redis (planned) | Memory |
 
 ### Switching Providers
 
@@ -374,14 +416,12 @@ sitechat/
 
 ### Prerequisites
 
-
-| Requirement | Version | Purpose                 |
-| ----------- | ------- | ----------------------- |
-| Python      | 3.10+   | Backend server          |
-| MongoDB     | 6.0+    | Database                |
-| Ollama      | Latest  | Local LLM               |
-| Node.js     | 18+     | Widget build (optional) |
-
+| Requirement | Version | Purpose |
+|-------------|---------|---------|
+| Python | 3.10+ | Backend server |
+| MongoDB | 6.0+ | Database |
+| Ollama | Latest | Local LLM |
+| Node.js | 18+ | Widget build (optional) |
 
 ### Setup & Run
 
@@ -409,22 +449,20 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### Access Points
 
+| URL | Description |
+|-----|-------------|
+| http://localhost:8000 | Marketing landing |
+| http://localhost:8000/app | Dashboard (after login) |
+| http://localhost:8000/dashboard | Same as `/app` |
+| http://localhost:8000/login | Sign in |
+| http://localhost:8000/api/docs | API Documentation |
+| http://localhost:8000/demo | Widget Demo |
 
-| URL                                                                | Description             |
-| ------------------------------------------------------------------ | ----------------------- |
-| [http://localhost:8000](http://localhost:8000)                     | Marketing landing       |
-| [http://localhost:8000/app](http://localhost:8000/app)             | Dashboard (after login) |
-| [http://localhost:8000/dashboard](http://localhost:8000/dashboard) | Same as `/app`          |
-| [http://localhost:8000/login](http://localhost:8000/login)         | Sign in                 |
-| [http://localhost:8000/api/docs](http://localhost:8000/api/docs)   | API Documentation       |
-| [http://localhost:8000/demo](http://localhost:8000/demo)           | Widget Demo             |
-
-
-> **Seeing “It works!”?** That is Apache on port **80**, not SiteChat. Use **[http://localhost:8000](http://localhost:8000)** above, or run `./scripts/run-sitechat.sh` from the repo root (opens the browser). To serve SiteChat on plain `http://localhost`, see [deploy/APACHE_PROXY.md](deploy/APACHE_PROXY.md).
+> **Seeing “It works!”?** That is Apache on port **80**, not SiteChat. Use **http://localhost:8000** above, or run `./scripts/run-sitechat.sh` from the repo root (opens the browser). To serve SiteChat on plain `http://localhost`, see [deploy/APACHE_PROXY.md](deploy/APACHE_PROXY.md).
 
 ### Default Login
 
-- **Email**: [admin@sitechat.in](mailto:admin@sitechat.in)
+- **Email**: admin@sitechat.in
 - **Password**: Admin123!
 
 > ⚠️ **Change these credentials in production!**
@@ -524,133 +562,115 @@ Full documentation available at `/api/docs` (Swagger UI) when running the server
 
 ### Core Endpoints
 
-
-| Method | Endpoint                    | Description                                                                                     |
-| ------ | --------------------------- | ----------------------------------------------------------------------------------------------- |
-| POST   | `/api/auth/login`           | User login                                                                                      |
-| POST   | `/api/auth/register`        | User registration                                                                               |
-| GET    | `/api/auth/me`              | Get current user (includes `must_change_password` when applicable)                              |
-| PATCH  | `/api/auth/me`              | Update profile; set `new_password` without current password when `must_change_password` is true |
-| PATCH  | `/api/auth/users/{user_id}` | Admin: update site owner name/password (`role=user`)                                            |
-| GET    | `/api/sites`                | List all sites                                                                                  |
-| POST   | `/api/sites`                | Create new site                                                                                 |
-| GET    | `/api/sites/{site_id}`      | Get site details                                                                                |
-| DELETE | `/api/sites/{site_id}`      | Delete site                                                                                     |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/login` | User login |
+| POST | `/api/auth/register` | User registration |
+| GET | `/api/auth/me` | Get current user (includes `must_change_password` when applicable) |
+| PATCH | `/api/auth/me` | Update profile; set `new_password` without current password when `must_change_password` is true |
+| PATCH | `/api/auth/users/{user_id}` | Admin: update site owner name/password (`role=user`) |
+| GET | `/api/sites` | List all sites |
+| POST | `/api/sites` | Create new site |
+| GET | `/api/sites/{site_id}` | Get site details |
+| DELETE | `/api/sites/{site_id}` | Delete site |
 
 ### Chat & Documents
 
-
-| Method | Endpoint                   | Description                  |
-| ------ | -------------------------- | ---------------------------- |
-| POST   | `/api/chat`                | Send message (JSON)          |
-| POST   | `/api/chat/stream`         | Send message (SSE streaming) |
-| POST   | `/api/chat/feedback`       | Submit feedback              |
-| POST   | `/api/documents/upload`    | Upload document              |
-| GET    | `/api/documents/{site_id}` | List documents               |
-| DELETE | `/api/documents/{doc_id}`  | Delete document              |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/chat` | Send message (JSON) |
+| POST | `/api/chat/stream` | Send message (SSE streaming) |
+| POST | `/api/chat/feedback` | Submit feedback |
+| POST | `/api/documents/upload` | Upload document |
+| GET | `/api/documents/{site_id}` | List documents |
+| DELETE | `/api/documents/{doc_id}` | Delete document |
 
 ### Crawling
 
-
-| Method | Endpoint                              | Description              |
-| ------ | ------------------------------------- | ------------------------ |
-| POST   | `/api/crawl`                          | Start website crawl      |
-| GET    | `/api/crawl/status/{site_id}`         | Check crawl status       |
-| GET    | `/api/sites/{site_id}/crawl-schedule` | Get schedule config      |
-| PUT    | `/api/sites/{site_id}/crawl-schedule` | Update schedule          |
-| POST   | `/api/sites/{site_id}/crawl-now`      | Trigger immediate crawl  |
-| GET    | `/api/sites/{site_id}/crawl-history`  | Get crawl history        |
-| GET    | `/api/sites/{site_id}/crawl-status`   | Get current crawl status |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/crawl` | Start website crawl |
+| GET | `/api/crawl/status/{site_id}` | Check crawl status |
+| GET | `/api/sites/{site_id}/crawl-schedule` | Get schedule config |
+| PUT | `/api/sites/{site_id}/crawl-schedule` | Update schedule |
+| POST | `/api/sites/{site_id}/crawl-now` | Trigger immediate crawl |
+| GET | `/api/sites/{site_id}/crawl-history` | Get crawl history |
+| GET | `/api/sites/{site_id}/crawl-status` | Get current crawl status |
 
 ### Conversations & Analytics
 
 All `/api/conversations/*` routes require authentication; list/search/detail respect admin vs site-owner vs **agent** site scope. Agents cannot export or delete.
 
-
-| Method | Endpoint                          | Description                                              |
-| ------ | --------------------------------- | -------------------------------------------------------- |
-| GET    | `/api/conversations`              | List conversations (scoped by role)                      |
-| GET    | `/api/conversations/search`       | Search by message content (scoped)                       |
-| GET    | `/api/conversations/{session_id}` | Get conversation                                         |
-| DELETE | `/api/conversations/{session_id}` | Delete conversation (not agents)                         |
-| POST   | `/api/conversations/bulk-delete`  | Delete multiple conversations (not agents)               |
-| POST   | `/api/conversations/export`       | Export conversations (not agents; scoped for non-admins) |
-| POST   | `/api/conversations/auto-close`   | Close inactive conversations (**admin only**)            |
-| GET    | `/api/analytics/overview`         | Dashboard overview                                       |
-| GET    | `/api/analytics/sites/{site_id}`  | Site-specific analytics                                  |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/conversations` | List conversations (scoped by role) |
+| GET | `/api/conversations/search` | Search by message content (scoped) |
+| GET | `/api/conversations/{session_id}` | Get conversation |
+| DELETE | `/api/conversations/{session_id}` | Delete conversation (not agents) |
+| POST | `/api/conversations/bulk-delete` | Delete multiple conversations (not agents) |
+| POST | `/api/conversations/export` | Export conversations (not agents; scoped for non-admins) |
+| POST | `/api/conversations/auto-close` | Close inactive conversations (**admin only**) |
+| GET | `/api/analytics/overview` | Dashboard overview |
+| GET | `/api/analytics/sites/{site_id}` | Site-specific analytics |
 
 ### Triggers
 
-
-| Method | Endpoint                                  | Description       |
-| ------ | ----------------------------------------- | ----------------- |
-| GET    | `/api/sites/{site_id}/triggers`           | List triggers     |
-| POST   | `/api/sites/{site_id}/triggers`           | Create trigger    |
-| PUT    | `/api/sites/{site_id}/triggers/{id}`      | Update trigger    |
-| DELETE | `/api/sites/{site_id}/triggers/{id}`      | Delete trigger    |
-| GET    | `/api/sites/{site_id}/triggers/analytics` | Trigger analytics |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/sites/{site_id}/triggers` | List triggers |
+| POST | `/api/sites/{site_id}/triggers` | Create trigger |
+| PUT | `/api/sites/{site_id}/triggers/{id}` | Update trigger |
+| DELETE | `/api/sites/{site_id}/triggers/{id}` | Delete trigger |
+| GET | `/api/sites/{site_id}/triggers/analytics` | Trigger analytics |
 
 ### Human Handoff
 
-
-| Method | Endpoint                              | Description                                                               |
-| ------ | ------------------------------------- | ------------------------------------------------------------------------- |
-| POST   | `/api/handoff`                        | Create handoff request (re-post while pending bumps visitor queue signal) |
-| POST   | `/api/handoff/{handoff_id}/abandon`   | Visitor abandons handoff (`session_id` in body); public, rate-limited     |
-| GET    | `/api/handoff/{id}`                   | Get handoff status                                                        |
-| GET    | `/api/handoff/{id}/messages`          | Get messages                                                              |
-| POST   | `/api/handoff/{id}/messages`          | Send visitor message                                                      |
-| POST   | `/api/handoff/{id}/agent-message`     | Send agent message                                                        |
-| PUT    | `/api/handoff/{id}/status`            | Update status (claim/resolve)                                             |
-| GET    | `/api/sites/{site_id}/handoff/queue`  | Get agent queue (agents: unassigned + assigned to them)                   |
-| GET    | `/api/sites/{site_id}/handoff/config` | Get handoff config                                                        |
-| PUT    | `/api/sites/{site_id}/handoff/config` | Update handoff config                                                     |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/handoff` | Create handoff request (re-post while pending bumps visitor queue signal) |
+| POST | `/api/handoff/{handoff_id}/abandon` | Visitor abandons handoff (`session_id` in body); public, rate-limited |
+| GET | `/api/handoff/{id}` | Get handoff status |
+| GET | `/api/handoff/{id}/messages` | Get messages |
+| POST | `/api/handoff/{id}/messages` | Send visitor message |
+| POST | `/api/handoff/{id}/agent-message` | Send agent message |
+| PUT | `/api/handoff/{id}/status` | Update status (claim/resolve) |
+| GET | `/api/sites/{site_id}/handoff/queue` | Get agent queue (agents: unassigned + assigned to them) |
+| GET | `/api/sites/{site_id}/handoff/config` | Get handoff config |
+| PUT | `/api/sites/{site_id}/handoff/config` | Update handoff config |
 
 ### Lead Generation
 
 Dashboard lead routes require auth and per-site access; agents cannot delete.
 
-
-| Method | Endpoint                                  | Description                 |
-| ------ | ----------------------------------------- | --------------------------- |
-| POST   | `/api/leads`                              | Capture a new lead (widget) |
-| GET    | `/api/leads/check/{site_id}/{session_id}` | Check if lead exists        |
-| GET    | `/api/sites/{site_id}/leads`              | List leads (paginated)      |
-| GET    | `/api/sites/{site_id}/leads/export`       | Export leads as CSV         |
-| GET    | `/api/sites/{site_id}/leads/count`        | Get total leads count       |
-| DELETE | `/api/leads/{lead_id}`                    | Delete a lead (not agents)  |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/leads` | Capture a new lead (widget) |
+| GET | `/api/leads/check/{site_id}/{session_id}` | Check if lead exists |
+| GET | `/api/sites/{site_id}/leads` | List leads (paginated) |
+| GET | `/api/sites/{site_id}/leads/export` | Export leads as CSV |
+| GET | `/api/sites/{site_id}/leads/count` | Get total leads count |
+| DELETE | `/api/leads/{lead_id}` | Delete a lead (not agents) |
 
 ### Q&A Training
 
-
-| Method | Endpoint                                    | Description                |
-| ------ | ------------------------------------------- | -------------------------- |
-| POST   | `/api/sites/{site_id}/qa`                   | Create Q&A pair            |
-| GET    | `/api/sites/{site_id}/qa`                   | List Q&A pairs (paginated) |
-| GET    | `/api/sites/{site_id}/qa/stats`             | Get Q&A statistics         |
-| GET    | `/api/sites/{site_id}/qa/{qa_id}`           | Get single Q&A pair        |
-| PUT    | `/api/sites/{site_id}/qa/{qa_id}`           | Update Q&A pair            |
-| DELETE | `/api/sites/{site_id}/qa/{qa_id}`           | Delete Q&A pair            |
-| POST   | `/api/sites/{site_id}/qa/from-conversation` | Create from conversation   |
-| POST   | `/api/sites/{site_id}/qa/{qa_id}/toggle`    | Toggle enabled status      |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/sites/{site_id}/qa` | Create Q&A pair |
+| GET | `/api/sites/{site_id}/qa` | List Q&A pairs (paginated) |
+| GET | `/api/sites/{site_id}/qa/stats` | Get Q&A statistics |
+| GET | `/api/sites/{site_id}/qa/{qa_id}` | Get single Q&A pair |
+| PUT | `/api/sites/{site_id}/qa/{qa_id}` | Update Q&A pair |
+| DELETE | `/api/sites/{site_id}/qa/{qa_id}` | Delete Q&A pair |
+| POST | `/api/sites/{site_id}/qa/from-conversation` | Create from conversation |
+| POST | `/api/sites/{site_id}/qa/{qa_id}/toggle` | Toggle enabled status |
 
 ### Platform
 
-
-| Method | Endpoint                         | Description               |
-| ------ | -------------------------------- | ------------------------- |
-| GET    | `/api/platform/whitelabel`       | Get white-label config    |
-| PUT    | `/api/platform/whitelabel`       | Update config (admin)     |
-| POST   | `/api/platform/whitelabel/reset` | Reset to defaults (admin) |
-
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/platform/whitelabel` | Get white-label config |
+| PUT | `/api/platform/whitelabel` | Update config (admin) |
+| POST | `/api/platform/whitelabel/reset` | Reset to defaults (admin) |
 
 ## 🔌 Widget Integration
 
@@ -669,16 +689,14 @@ Add the chatbot to any website with a single script tag:
 
 ### Widget Options
 
-
-| Attribute       | Description                                                                                                                    | Default                   |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
-| `data-site-id`  | Site ID (required)                                                                                                             | -                         |
-| `data-api-url`  | Backend API base URL (omit when the page is same-origin with the API; set when the marketing site and API use different hosts) | -                         |
-| `data-color`    | Primary theme color                                                                                                            | `#0D9488`                 |
-| `data-title`    | Chat header title                                                                                                              | `Chat with us`            |
-| `data-welcome`  | Welcome message                                                                                                                | `Hi! How can I help you?` |
-| `data-position` | Widget position                                                                                                                | `bottom-right`            |
-
+| Attribute | Description | Default |
+|-----------|-------------|---------|
+| `data-site-id` | Site ID (required) | - |
+| `data-api-url` | Backend API base URL (omit when the page is same-origin with the API; set when the marketing site and API use different hosts) | - |
+| `data-color` | Primary theme color | `#0D9488` |
+| `data-title` | Chat header title | `Chat with us` |
+| `data-welcome` | Welcome message | `Hi! How can I help you?` |
+| `data-position` | Widget position | `bottom-right` |
 
 ### Widget Development
 
@@ -740,7 +758,6 @@ ADMIN_PASSWORD=
 ### 5. Security Headers
 
 Security headers are automatically added in production:
-
 - `X-Frame-Options: DENY` - Prevents clickjacking
 - `X-Content-Type-Options: nosniff` - Prevents MIME sniffing
 - `X-XSS-Protection: 1; mode=block` - Enables XSS filtering
@@ -772,7 +789,6 @@ Use SRI hashes to ensure the widget script hasn't been tampered with:
 ```
 
 To get your SRI hash:
-
 ```bash
 curl https://yourdomain.com/api/embed/security/YOUR_SITE_ID
 ```
@@ -781,15 +797,13 @@ curl https://yourdomain.com/api/embed/security/YOUR_SITE_ID
 
 Configure widget security in the dashboard under **Site Settings → Security**:
 
-
-| Setting                       | Description                                                         |
-| ----------------------------- | ------------------------------------------------------------------- |
-| **Enforce Domain Validation** | Only allow widget to load on whitelisted domains                    |
-| **Allowed Domains**           | List of permitted domains (supports wildcards like `*.example.com`) |
-| **Require Referrer Header**   | Reject API requests without a valid Referer header                  |
-| **Rate Limit (per session)**  | Maximum API requests per session per minute (10-200)                |
-| **Secure Embed Code**         | Copy-ready embed code with SRI hash included                        |
-
+| Setting | Description |
+|---------|-------------|
+| **Enforce Domain Validation** | Only allow widget to load on whitelisted domains |
+| **Allowed Domains** | List of permitted domains (supports wildcards like `*.example.com`) |
+| **Require Referrer Header** | Reject API requests without a valid Referer header |
+| **Rate Limit (per session)** | Maximum API requests per session per minute (10-200) |
+| **Secure Embed Code** | Copy-ready embed code with SRI hash included |
 
 #### Domain Whitelisting
 
@@ -802,12 +816,10 @@ Restrict where your widget can be embedded:
 
 #### API Endpoints
 
-
-| Endpoint                            | Description                                   |
-| ----------------------------------- | --------------------------------------------- |
-| `GET /api/embed/script/{site_id}`   | Get embed code with optional SRI              |
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/embed/script/{site_id}` | Get embed code with optional SRI |
 | `GET /api/embed/security/{site_id}` | Get security info (SRI hash, allowed domains) |
-
 
 ### 7. Additional Recommendations
 
@@ -821,7 +833,7 @@ Restrict where your widget can be embedded:
 
 ## 🧪 Testing
 
-The project includes **415+ tests** across backend, frontend, and end-to-end test suites.
+The project includes **440+ tests** across backend, frontend, and end-to-end test suites.
 
 ### Quick Start
 
@@ -878,26 +890,22 @@ npm run test:report   # View HTML report
 
 ### Test Summary
 
-
-| Category    | Location                     | Tests | Description                             |
-| ----------- | ---------------------------- | ----- | --------------------------------------- |
-| Unit        | `backend/tests/unit/`        | 120   | RAG engine, crawler, document processor |
-| Integration | `backend/tests/integration/` | 176   | REST API endpoints                      |
-| Security    | `backend/tests/security/`    | 55    | Auth, JWT, input sanitization, SRI      |
-| Providers   | `backend/tests/providers/`   | 91    | LLM, embeddings, vector store, database |
-| Frontend    | `frontend/tests/`            | 60+   | Widget and dashboard JS functions       |
-| E2E         | `e2e/tests/`                 | ~25   | Full user flows (login, sites, chat)    |
-
+| Category | Location | Tests | Description |
+|----------|----------|-------|-------------|
+| Unit | `backend/tests/unit/` | 120 | RAG engine, crawler, document processor |
+| Integration | `backend/tests/integration/` | 176 | REST API endpoints |
+| Security | `backend/tests/security/` | 55 | Auth, JWT, input sanitization, SRI |
+| Providers | `backend/tests/providers/` | 91 | LLM, embeddings, vector store, database |
+| Frontend | `frontend/tests/` | 60+ | Widget and dashboard JS functions |
+| E2E | `e2e/tests/` | ~25 | Full user flows (login, sites, chat) |
 
 ### Writing New Tests
 
-
-| Type     | Location                    | Pattern     | Notes                                                             |
-| -------- | --------------------------- | ----------- | ----------------------------------------------------------------- |
-| Backend  | `backend/tests/<category>/` | `test_*.py` | Use fixtures from `conftest.py`, `@pytest.mark.asyncio` for async |
-| Frontend | `frontend/tests/`           | `*.test.js` | Use mocks from `setup.js`                                         |
-| E2E      | `e2e/tests/`                | `*.spec.js` | Follow Playwright patterns                                        |
-
+| Type | Location | Pattern | Notes |
+|------|----------|---------|-------|
+| Backend | `backend/tests/<category>/` | `test_*.py` | Use fixtures from `conftest.py`, `@pytest.mark.asyncio` for async |
+| Frontend | `frontend/tests/` | `*.test.js` | Use mocks from `setup.js` |
+| E2E | `e2e/tests/` | `*.spec.js` | Follow Playwright patterns |
 
 Mock external dependencies (MongoDB, vector store, LLM APIs) in all test types.
 
@@ -917,6 +925,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
+<div align="center">
+
 **[⬆ Back to Top](#-sitechat)**
 
 Built with ❤️ using FastAPI, LangChain, and MongoDB
+
+</div>
