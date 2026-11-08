@@ -4,6 +4,7 @@ Fixtures specific to security tests.
 Security tests focus on authentication, authorization, and security controls.
 Global fixtures from the parent conftest.py are automatically available.
 """
+
 import pytest
 
 

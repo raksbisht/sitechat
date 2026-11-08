@@ -1,6 +1,7 @@
 """
 Human Handoff API Routes.
 """
+
 import asyncio
 import json
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
@@ -26,10 +27,18 @@ from app.core.site_access import (
 )
 from app.services.auth import AuthService, UserRole
 from app.models.schemas import (
-    HandoffRequest, HandoffSession, HandoffMessage, HandoffMessageRequest,
+    HandoffRequest,
+    HandoffSession,
+    HandoffMessage,
+    HandoffMessageRequest,
     HandoffAbandonRequest,
-    HandoffStatusUpdate, HandoffAssignRequest, HandoffListItem, HandoffQueueResponse,
-    HandoffAvailabilityResponse, HandoffConfig, BusinessHoursConfig
+    HandoffStatusUpdate,
+    HandoffAssignRequest,
+    HandoffListItem,
+    HandoffQueueResponse,
+    HandoffAvailabilityResponse,
+    HandoffConfig,
+    BusinessHoursConfig,
 )
 
 router = APIRouter(tags=["handoff"])
@@ -68,6 +77,7 @@ def _serialize_datetime(obj):
 
 # ==================== Public Widget Endpoints ====================
 
+
 @router.post("/api/handoff", response_model=dict)
 @limiter.limit("5/minute")
 async def create_handoff(request: Request, body: HandoffRequest):
@@ -75,7 +85,11 @@ async def create_handoff(request: Request, body: HandoffRequest):
     # Honeypot check
     if body.website:
         logger.warning(f"Honeypot triggered on handoff create from {get_client_ip(request)}")
-        return {"handoff_id": "blocked", "status": "pending", "message": "Handoff request created. An agent will be with you shortly."}
+        return {
+            "handoff_id": "blocked",
+            "status": "pending",
+            "message": "Handoff request created. An agent will be with you shortly.",
+        }
 
     mongodb = await get_mongodb()
 
@@ -87,7 +101,7 @@ async def create_handoff(request: Request, body: HandoffRequest):
         return {
             "handoff_id": existing["handoff_id"],
             "status": existing["status"],
-            "message": "Handoff already exists for this session"
+            "message": "Handoff already exists for this session",
         }
 
     ai_summary = None
@@ -107,15 +121,15 @@ async def create_handoff(request: Request, body: HandoffRequest):
         visitor_email=body.visitor_email,
         visitor_name=body.visitor_name,
         ai_conversation=body.ai_conversation,
-        ai_summary=ai_summary
+        ai_summary=ai_summary,
     )
 
     logger.info(f"Created handoff {handoff['handoff_id']} for session {body.session_id}")
-    
+
     return {
         "handoff_id": handoff["handoff_id"],
         "status": "pending",
-        "message": "Handoff request created. An agent will be with you shortly."
+        "message": "Handoff request created. An agent will be with you shortly.",
     }
 
 
@@ -123,62 +137,52 @@ async def create_handoff(request: Request, body: HandoffRequest):
 async def get_handoff(handoff_id: str):
     """Get handoff session details (public for widget polling)."""
     mongodb = await get_mongodb()
-    
+
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
-    
+
     return {
         "handoff_id": handoff["handoff_id"],
         "status": handoff["status"],
         "assigned_agent_name": handoff.get("assigned_agent_name"),
         "created_at": handoff["created_at"],
-        "updated_at": handoff["updated_at"]
+        "updated_at": handoff["updated_at"],
     }
 
 
 @router.get("/api/handoff/{handoff_id}/messages")
-async def get_handoff_messages(
-    handoff_id: str,
-    since: Optional[datetime] = None
-):
+async def get_handoff_messages(handoff_id: str, since: Optional[datetime] = None):
     """Poll for new messages in a handoff session (public for widget)."""
     mongodb = await get_mongodb()
-    
+
     result = await mongodb.get_handoff_messages(handoff_id, since)
     if not result:
         raise HTTPException(status_code=404, detail="Handoff not found")
-    
+
     return result
 
 
 @router.post("/api/handoff/{handoff_id}/messages")
 @limiter.limit("30/minute")
-async def send_visitor_message(
-    request: Request,
-    handoff_id: str,
-    body: HandoffMessageRequest
-):
+async def send_visitor_message(request: Request, handoff_id: str, body: HandoffMessageRequest):
     """Send a message as the visitor (public for widget)."""
     mongodb = await get_mongodb()
-    
+
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
-    
+
     if handoff["status"] == "resolved":
         raise HTTPException(status_code=400, detail="This conversation has been resolved")
 
     if handoff["status"] == "abandoned":
         raise HTTPException(status_code=400, detail="This conversation has ended")
-    
+
     message = await mongodb.add_handoff_message(
-        handoff_id=handoff_id,
-        role="visitor",
-        content=body.content,
-        sender_name=body.sender_name or "Visitor"
+        handoff_id=handoff_id, role="visitor", content=body.content, sender_name=body.sender_name or "Visitor"
     )
-    
+
     return {"success": True, "message": message}
 
 
@@ -221,18 +225,19 @@ async def abandon_handoff_public(
 async def check_availability(site_id: str):
     """Check if human agents are available (public for widget)."""
     mongodb = await get_mongodb()
-    
+
     result = await mongodb.check_business_hours(site_id)
-    
+
     return HandoffAvailabilityResponse(
         available=result.get("available", True),
         is_within_hours=result.get("is_within_hours", True),
         offline_message=result.get("offline_message"),
-        next_available=result.get("next_available")
+        next_available=result.get("next_available"),
     )
 
 
 # ==================== Authenticated Dashboard Endpoints ====================
+
 
 @router.get("/api/sites/{site_id}/handoff/queue", response_model=HandoffQueueResponse)
 async def get_handoff_queue(
@@ -240,7 +245,7 @@ async def get_handoff_queue(
     status: Optional[str] = Query(None, pattern="^(pending|active|resolved|abandoned)$"),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    user: dict = Depends(require_auth)
+    user: dict = Depends(require_auth),
 ):
     """Get handoff queue for a site, or all sites (admin / site owners / assigned agents).
 
@@ -248,7 +253,7 @@ async def get_handoff_queue(
     via PUT /api/handoff/{id}/assign. Admins and site owners see all handoffs for the site(s).
     """
     mongodb = await get_mongodb()
-    
+
     status_list = [status] if status else None
 
     if site_id == "all":
@@ -309,23 +314,20 @@ async def get_handoff_queue(
             limit=limit,
             agent_queue_user_id=agent_uid,
         )
-    
+
     return HandoffQueueResponse(
         handoffs=[HandoffListItem(**h) for h in handoffs],
         total=total,
         pending_count=pending_count,
-        active_count=active_count
+        active_count=active_count,
     )
 
 
 @router.get("/api/handoff/{handoff_id}/full")
-async def get_handoff_full(
-    handoff_id: str,
-    user: dict = Depends(require_auth)
-):
+async def get_handoff_full(handoff_id: str, user: dict = Depends(require_auth)):
     """Get full handoff details including conversation history."""
     mongodb = await get_mongodb()
-    
+
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
@@ -335,6 +337,7 @@ async def get_handoff_full(
         raise HTTPException(status_code=403, detail="Access denied")
 
     from datetime import timezone as tz
+
     created_at = handoff.get("created_at")
     if created_at and isinstance(created_at, datetime):
         now = datetime.now(tz.utc)
@@ -348,14 +351,10 @@ async def get_handoff_full(
 
 
 @router.put("/api/handoff/{handoff_id}/status")
-async def update_handoff_status(
-    handoff_id: str,
-    request: HandoffStatusUpdate,
-    user: dict = Depends(require_auth)
-):
+async def update_handoff_status(handoff_id: str, request: HandoffStatusUpdate, user: dict = Depends(require_auth)):
     """Update handoff status (claim, resolve, abandon)."""
     mongodb = await get_mongodb()
-    
+
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
@@ -366,29 +365,26 @@ async def update_handoff_status(
 
     if handoff["status"] == "abandoned":
         raise HTTPException(status_code=400, detail="Handoff was abandoned by the visitor")
-    
+
     agent_id = None
     agent_name = None
-    
+
     if request.status == "active":
         if handoff["status"] == "active":
             raise HTTPException(status_code=409, detail="Handoff already claimed by another agent")
         if handoff["status"] == "pending":
             agent_id = str(user["_id"])
             agent_name = user.get("name") or user.get("email", "Agent")
-    
+
     updated = await mongodb.update_handoff_status(
-        handoff_id=handoff_id,
-        status=request.status,
-        agent_id=agent_id,
-        agent_name=agent_name
+        handoff_id=handoff_id, status=request.status, agent_id=agent_id, agent_name=agent_name
     )
-    
+
     if not updated:
         raise HTTPException(status_code=500, detail="Failed to update status")
-    
+
     logger.info(f"Handoff {handoff_id} status updated to {request.status} by {user.get('email')}")
-    
+
     return {"success": True, "handoff": updated}
 
 
@@ -442,22 +438,17 @@ async def assign_handoff_to_agent(
         raise HTTPException(status_code=500, detail="Failed to assign agent")
 
     logger.info(
-        f"Handoff {handoff_id} assigned to agent {agent_name} "
-        f"({request.agent_id}) by {caller.get('email')}"
+        f"Handoff {handoff_id} assigned to agent {agent_name} " f"({request.agent_id}) by {caller.get('email')}"
     )
 
     return {"success": True, "handoff": updated}
 
 
 @router.post("/api/handoff/{handoff_id}/agent-message")
-async def send_agent_message(
-    handoff_id: str,
-    request: HandoffMessageRequest,
-    user: dict = Depends(require_auth)
-):
+async def send_agent_message(handoff_id: str, request: HandoffMessageRequest, user: dict = Depends(require_auth)):
     """Send a message as the agent."""
     mongodb = await get_mongodb()
-    
+
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
         raise HTTPException(status_code=404, detail="Handoff not found")
@@ -465,46 +456,41 @@ async def send_agent_message(
     site = await mongodb.get_site(handoff["site_id"])
     if not can_access_handoff_session(user, handoff["site_id"], site):
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     if handoff["status"] == "resolved":
         raise HTTPException(status_code=400, detail="Cannot message a resolved handoff")
 
     if handoff["status"] == "abandoned":
         raise HTTPException(status_code=400, detail="Cannot message an abandoned handoff")
-    
+
     if handoff["status"] == "pending":
         await mongodb.update_handoff_status(
             handoff_id=handoff_id,
             status="active",
             agent_id=str(user["_id"]),
-            agent_name=user.get("name") or user.get("email", "Agent")
+            agent_name=user.get("name") or user.get("email", "Agent"),
         )
-    
+
     sender_name = request.sender_name or user.get("name") or user.get("email", "Agent")
-    
+
     message = await mongodb.add_handoff_message(
-        handoff_id=handoff_id,
-        role="agent",
-        content=request.content,
-        sender_name=sender_name
+        handoff_id=handoff_id, role="agent", content=request.content, sender_name=sender_name
     )
-    
+
     updated_handoff = await mongodb.get_handoff_session(handoff_id)
     return {
         "success": True,
         "message": message,
         "handoff_status": updated_handoff["status"],
-        "assigned_agent_name": updated_handoff.get("assigned_agent_name")
+        "assigned_agent_name": updated_handoff.get("assigned_agent_name"),
     }
 
 
 # ==================== Business Hours Configuration ====================
 
+
 @router.get("/api/sites/{site_id}/handoff/config")
-async def get_handoff_config(
-    site_id: str,
-    user: dict = Depends(require_auth)
-):
+async def get_handoff_config(site_id: str, user: dict = Depends(require_auth)):
     """Get handoff configuration for a site."""
     mongodb = await get_mongodb()
 
@@ -513,17 +499,13 @@ async def get_handoff_config(
         raise HTTPException(status_code=404, detail="Site not found")
     if not can_view_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     config = await mongodb.get_site_handoff_config(site_id)
     return config or {}
 
 
 @router.put("/api/sites/{site_id}/handoff/config")
-async def update_handoff_config(
-    site_id: str,
-    config: HandoffConfig,
-    user: dict = Depends(require_auth)
-):
+async def update_handoff_config(site_id: str, config: HandoffConfig, user: dict = Depends(require_auth)):
     """Update handoff configuration for a site."""
     mongodb = await get_mongodb()
 
@@ -532,16 +514,16 @@ async def update_handoff_config(
         raise HTTPException(status_code=404, detail="Site not found")
     if not can_manage_site(user, site):
         raise HTTPException(status_code=403, detail="Access denied")
-    
+
     config_dict = config.model_dump()
     if config.business_hours:
         config_dict["business_hours"] = config.business_hours.model_dump()
-    
+
     success = await mongodb.update_site_handoff_config(site_id, config_dict)
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Site not found")
-    
+
     return {"success": True, "config": config_dict}
 
 
@@ -549,7 +531,7 @@ async def update_handoff_config(
 async def get_business_hours(site_id: str):
     """Get business hours for a site (public for widget)."""
     mongodb = await get_mongodb()
-    
+
     config = await mongodb.get_site_handoff_config(site_id)
     if not config:
         return BusinessHoursConfig().model_dump()
@@ -579,8 +561,10 @@ async def stream_handoff_queue(
     """
     user = await _get_user_from_token(token)
     if not user:
+
         async def _unauth():
             yield f"event: error\ndata: {json.dumps({'error': 'Unauthorized'})}\n\n"
+
         return StreamingResponse(_unauth(), media_type="text/event-stream", status_code=401)
 
     mongodb = await get_mongodb()
@@ -670,8 +654,10 @@ async def stream_handoff_messages(
 
     handoff = await mongodb.get_handoff_session(handoff_id)
     if not handoff:
+
         async def _not_found():
             yield f"event: error\ndata: {json.dumps({'error': 'Handoff not found'})}\n\n"
+
         return StreamingResponse(_not_found(), media_type="text/event-stream", status_code=404)
 
     async def generator():
@@ -699,7 +685,9 @@ async def stream_handoff_messages(
                             mm["timestamp"] = ts.isoformat()
                         safe_messages.append(mm)
 
-                    current_hash = f"{status}:{len(safe_messages)}:{safe_messages[-1].get('id') if safe_messages else ''}"
+                    current_hash = (
+                        f"{status}:{len(safe_messages)}:{safe_messages[-1].get('id') if safe_messages else ''}"
+                    )
                     if current_hash != last_hash:
                         last_hash = current_hash
                         payload = {

@@ -25,6 +25,7 @@
 ### 2.1 Развернуть окружение и прогнать тесты ✅ верификация базы
 - [x] Создать venv, `pip install -r requirements.txt` (зависимости установлены в системный interpreter; `requirements-dev.txt` пока нет)
 - [x] Запустить `pytest` локально (с мок-БД / фикстурами) — **481 passed, 13 skipped, 0 failed** (запуск: `python -m pytest tests -p no:libtmux`)
+      Примечание: при исчерпании диска песочницы venv был облегчён удалением неиспользуемых GPU/ML-пакетов (torch, nvidia-*, triton, numba, llvmlite, sympy); тесты восстановлены: **484 passed, 13 skipped**
 - [x] Зафиксировать падающие тесты — исправлены по факту: атомарность `first_response_at`, валидация паролей (`app/core/security.py`), подключение `MongoDBProvider.connect()` (патч `motor.motor_asyncio.AsyncIOMotorClient`), миграция `ChatOllama` → пакет `langchain-ollama`
 
 ### 2.2 Чистка git
@@ -51,23 +52,24 @@
 - Примечание: сборка образа локально не проверялась (в песочнице нет Docker); YAML валиден, пути контекста/файлов верифицированы
 
 ### 3.2 Качество кода
-- [ ] Линтеры/форматтеры в pre-commit: `ruff`, `black`, конфиг в репозитории (CI-гейты ruff/black уже настроены в п. 2.3)
+- [x] Линтеры/форматтеры в pre-commit: `.pre-commit-config.yaml` (ruff --fix, black --check, детектор секретов/приватных ключей); `black` прогнан по всему backend (65 файлов отформатировано), CI lint-джоб теперь зелёный — **484 passed, 13 skipped**
 - [ ] Мипинг/проверка типов критичных модулей (`pydantic`-схемы уже есть; опционально `mypy`)
-- [ ] `pip-audit` / Dependabot (или Renovate) для аудита зависимостей
+- [x] Dependabot настроен (`.github/dependabot.yml`: pip /backend + github-actions, weekly). `pip-audit` как локальный скрипт — опционально
 
 ### 3.3 Безопасность
-- [ ] Ротация секретов, попавших в историю git: пароль MongoDB Atlas в `backend/.env.example` (выполнить в Atlas → Database Access), затем проверить JWT_SECRET/ADMIN_PASSWORD в боевом `.env`
-- [ ] Ротация/проверка секретов: JWT-ключ, ключи шифрования API-токенов OpenAI
-- [ ] Настроить GitHub Secret Scanning push protection (на уровне организации/репозитория)
-- [ ] Rate limiting на публичный эндпоинт чата виджета
-- [ ] Проверка CORS-настроек по сайтам
+- [ ] Ротация секретов, попавших в историю git: пароль MongoDB Atlas в `backend/.env.example` (выполнить в Atlas → Database Access), затем проверить JWT_SECRET/ADMIN_PASSWORD в боевом `.env` — ⚠️ только вручную
+- [ ] Ротация/проверка секретов: JWT-ключ, ключи шифрования API-токенов OpenAI — ⚠️ только вручную
+- [ ] Настроить GitHub Secret Scanning push protection (на уровне организации/репозитория) — ⚠️ настройка на GitHub
+- [x] Rate limiting на публичные эндпоинты виджета: чат POST /api/chat и /api/chat/stream (20/мин, slowapi), POST /api/leads (5/мин), GET /api/leads/check (30/мин, добавлено), POST /widget/{site}/triggers/event (60/мин, добавлено); плюс Origin-whitelist (`app/core/widget_security.py`) на чате и лидах
+- [x] Проверка CORS-настроек по сайтам: глобальный CORS берётся из `settings.cors_origins_list`; для публичных widget-эндпоинтов добавлена пер-сайтовая проверка Origin/Referer по `allowed_domains` сайта (enforce_site_origin)
 
 ---
 
 ## 4. Среднесрочно (1–3 месяца)
 
 ### 4.1 Модулизация фронтенда (главный техдолг)
-- [ ] Разбить `frontend/js/app.js` (~8.6k строк) на ES-модули по областям: auth, sites, documents, chat, settings, ui-компоненты
+- [x] Первый шаг (безрисковый): разбит `frontend/js/app.js` (8593 строки) на 14 файлов-областей в `frontend/js/modules/` (core, analytics, customization, conversations, quick_prompts, triggers, handoffs, security, whitelabel, settings, team, crawling, leads, qa_training); добавлен генератор `frontend/build-dashboard.js` (`npm run build:dashboard`) — собирает обратно единый классический скрипт `app.js`, байт-в-байт эквивалентный оригиналу (проверено diff с git HEAD; `node --check` OK; jest 57 passed). Источником истины теперь являются модули, `app.js` — генерируемый артефакт.
+- [ ] Дальнейшая декомпозиция: из core.js выделить auth/sites/documents/ui (следующий инкремент), затем переход к нативным ES-модулям (`<script type="module">`) с удалением конкатенатора и window-глобалов
 - [ ] Сборка через esbuild/Vite без потери «vanilla» - простоты деплоя (статические файлы)
 - [ ] Виджет (`widget/`) — отдельный минифицированный бандл + автоматизация сборки в CI
 - [ ] Смоук-тесты фронтенда (Playwright) хотя бы для ключевых сценариев: логин → загрузка документа → вопрос в чате

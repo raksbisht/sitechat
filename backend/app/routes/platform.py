@@ -1,6 +1,7 @@
 """
 Platform settings API routes for white-labeling and global configuration.
 """
+
 from fastapi import APIRouter, HTTPException, Depends
 from loguru import logger
 
@@ -19,33 +20,30 @@ async def get_whitelabel_config():
     """
     mongodb = await get_mongodb()
     config = await mongodb.get_platform_whitelabel()
-    
+
     if not config:
         return PlatformWhiteLabelConfig()
-    
+
     return PlatformWhiteLabelConfig(**config)
 
 
 @router.put("/whitelabel", response_model=PlatformWhiteLabelConfig)
-async def update_whitelabel_config(
-    update: PlatformWhiteLabelUpdate,
-    user: dict = Depends(require_admin)
-):
+async def update_whitelabel_config(update: PlatformWhiteLabelUpdate, user: dict = Depends(require_admin)):
     """
     Update platform white-label configuration.
     Only admins can update platform settings.
     """
     mongodb = await get_mongodb()
-    
+
     current_config = await mongodb.get_platform_whitelabel() or {}
-    
+
     update_data = update.model_dump(exclude_unset=True)
     current_config.update(update_data)
-    
+
     updated = await mongodb.update_platform_whitelabel(current_config)
-    
+
     logger.info(f"Platform white-label config updated by user {user.get('email')}")
-    
+
     return PlatformWhiteLabelConfig(**updated) if updated else PlatformWhiteLabelConfig()
 
 
@@ -56,11 +54,11 @@ async def reset_whitelabel_config(user: dict = Depends(require_admin)):
     Only admins can reset platform settings.
     """
     mongodb = await get_mongodb()
-    
+
     default_config = PlatformWhiteLabelConfig().model_dump()
-    
+
     await mongodb.update_platform_whitelabel(default_config)
-    
+
     logger.info(f"Platform white-label config reset by user {user.get('email')}")
-    
+
     return PlatformWhiteLabelConfig()

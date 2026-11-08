@@ -7,7 +7,9 @@
     "build:watch": "nodemon --watch src -e js --exec 'npm run build'",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "build:dashboard": "node build-dashboard.js",
+    "check:dashboard": "node --check js/app.js"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

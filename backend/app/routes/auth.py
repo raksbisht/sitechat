@@ -8,9 +8,19 @@ from pydantic import BaseModel, EmailStr, field_validator
 from app.database import get_mongodb
 from app.core.security import get_client_ip
 from app.services.auth import (
-    AuthService, UserCreate, UserLogin, UserResponse, TokenResponse,
-    UserRole, create_access_token, decode_token, user_to_response,
-    AgentCreate, AgentUpdate, ProfileUpdate, SiteOwnerUpdate,
+    AuthService,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    TokenResponse,
+    UserRole,
+    create_access_token,
+    decode_token,
+    user_to_response,
+    AgentCreate,
+    AgentUpdate,
+    ProfileUpdate,
+    SiteOwnerUpdate,
 )
 
 limiter = Limiter(key_func=get_client_ip)
@@ -21,27 +31,31 @@ _ADMIN_PASSWORD_RESET_PATH = "/api/auth/me"
 
 class AdminUserCreate(BaseModel):
     """Admin creates a site-owner account."""
+
     email: EmailStr
     password: str
     name: str
 
-    @field_validator('password')
+    @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(v)
         if not is_valid:
             raise ValueError(error_message)
         return v
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
         from app.core.security import sanitize_input
+
         v = sanitize_input(v, max_length=100)
         if len(v) < 2:
             raise ValueError("Name must be at least 2 characters")
         return v
+
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 security = HTTPBearer(auto_error=False)
@@ -50,11 +64,11 @@ security = HTTPBearer(auto_error=False)
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[dict]:
     if not credentials:
         return None
-    
+
     token_data = decode_token(credentials.credentials)
     if not token_data or not token_data.user_id:
         return None
-    
+
     mongodb = await get_mongodb()
     auth_service = AuthService(mongodb)
     user = await auth_service.get_user_by_id(token_data.user_id)
@@ -67,28 +81,23 @@ async def require_auth(
 ) -> dict:
     if not credentials:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"}
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated", headers={"WWW-Authenticate": "Bearer"}
         )
-    
+
     token_data = decode_token(credentials.credentials)
     if not token_data or not token_data.user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     mongodb = await get_mongodb()
     auth_service = AuthService(mongodb)
     user = await auth_service.get_user_by_id(token_data.user_id)
-    
+
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     if user.get("role") == UserRole.ADMIN.value and user.get("must_change_password"):
         path = request.url.path.rstrip("/") or "/"
@@ -101,26 +110,20 @@ async def require_auth(
                     "message": "You must set a new password before using the dashboard.",
                 },
             )
-    
+
     return user
 
 
 async def require_admin(user: dict = Depends(require_auth)) -> dict:
     if user.get("role") != UserRole.ADMIN.value:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
 
 
 async def require_admin_or_user(user: dict = Depends(require_auth)) -> dict:
     """Allow admin and site-owner users; block agents from management endpoints."""
     if user.get("role") == UserRole.AGENT.value:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
     return user
 
 
@@ -129,20 +132,20 @@ async def require_admin_or_user(user: dict = Depends(require_auth)) -> dict:
 # async def signup(user_data: UserCreate):
 #     mongodb = await get_mongodb()
 #     auth_service = AuthService(mongodb)
-#     
+#
 #     user = await auth_service.create_user(user_data)
 #     if not user:
 #         raise HTTPException(
 #             status_code=status.HTTP_400_BAD_REQUEST,
 #             detail="Email already registered"
 #         )
-#     
+#
 #     access_token = create_access_token(data={
 #         "sub": str(user["_id"]),
 #         "email": user["email"],
 #         "role": user["role"]
 #     })
-#     
+#
 #     return TokenResponse(
 #         access_token=access_token,
 #         user=user_to_response(user)
@@ -154,24 +157,14 @@ async def require_admin_or_user(user: dict = Depends(require_auth)) -> dict:
 async def login(request: Request, credentials: UserLogin):
     mongodb = await get_mongodb()
     auth_service = AuthService(mongodb)
-    
+
     user = await auth_service.authenticate_user(credentials.email, credentials.password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
-        )
-    
-    access_token = create_access_token(data={
-        "sub": str(user["_id"]),
-        "email": user["email"],
-        "role": user["role"]
-    })
-    
-    return TokenResponse(
-        access_token=access_token,
-        user=user_to_response(user)
-    )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+
+    access_token = create_access_token(data={"sub": str(user["_id"]), "email": user["email"], "role": user["role"]})
+
+    return TokenResponse(access_token=access_token, user=user_to_response(user))
 
 
 @router.get("/me", response_model=UserResponse)
@@ -233,11 +226,11 @@ async def list_users(user: dict = Depends(require_admin)):
 async def update_user_role(user_id: str, role: UserRole, admin: dict = Depends(require_admin)):
     mongodb = await get_mongodb()
     auth_service = AuthService(mongodb)
-    
+
     success = await auth_service.update_user_role(user_id, role)
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     return {"message": "Role updated successfully"}
 
 

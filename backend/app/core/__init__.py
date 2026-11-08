@@ -1,6 +1,7 @@
 """
 Core module - dependency injection, security, and application setup.
 """
+
 from .dependencies import (
     get_db,
     get_storage,
@@ -9,7 +10,7 @@ from .dependencies import (
     get_embeddings,
     get_vector_store,
     init_providers,
-    shutdown_providers
+    shutdown_providers,
 )
 
 from .security import (
@@ -30,7 +31,7 @@ from .security import (
     validate_widget_domain,
     get_request_origin,
     generate_sri_hash,
-    generate_sri_hash_for_file
+    generate_sri_hash_for_file,
 )
 
 __all__ = [
@@ -61,5 +62,5 @@ __all__ = [
     "validate_widget_domain",
     "get_request_origin",
     "generate_sri_hash",
-    "generate_sri_hash_for_file"
+    "generate_sri_hash_for_file",
 ]

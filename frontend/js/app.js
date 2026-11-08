@@ -1,3 +1,7 @@
+// GENERATED FILE - do not edit.
+// Built from frontend/js/modules/ by `npm run build:dashboard`.
+
+// ---- module: core.js ----
 const API_BASE = window.location.origin + '/api';
 
 let sites = [];
@@ -462,908 +466,7 @@ function setupEventListeners() {
     });
 }
 
-async function loadSites() {
-    try {
-        const response = await fetch(`${API_BASE}/sites`, {
-            headers: getAuthHeaders()
-        });
-        
-        if (response.status === 401) {
-            logout();
-            return;
-        }
-        
-        sites = await response.json();
-        renderSites();
-    } catch (error) {
-        console.error('Failed to load sites:', error);
-    }
-}
 
-function renderSites() {
-    const sitesList = elements.sitesList || document.getElementById('sites-list');
-    if (!sitesList) return;
-    
-    const existingItems = sitesList.querySelectorAll('.site-list-item');
-    existingItems.forEach(item => item.remove());
-    
-    if (sites.length === 0) {
-        currentDetailSite = null;
-        if (elements.emptyState) elements.emptyState.style.display = 'flex';
-        showDetailEmptyState();
-        clearSiteDetailHash();
-    } else {
-        if (elements.emptyState) elements.emptyState.style.display = 'none';
-        sites.forEach(site => {
-            const item = createSiteListItem(site);
-            sitesList.appendChild(item);
-        });
-        
-        if (!currentDetailSite && sites.length > 0) {
-            selectSite(sites[0]);
-        }
-    }
-}
-
-function createSiteListItem(site) {
-    const item = document.createElement('div');
-    item.className = 'site-list-item';
-    item.dataset.siteId = site.site_id;
-    
-    if (currentDetailSite && currentDetailSite.site_id === site.site_id) {
-        item.classList.add('active');
-    }
-    
-    item.onclick = () => selectSite(site);
-    
-    const domain = site.url.replace(/https?:\/\//, '').replace(/\/$/, '');
-    const initial = domain.charAt(0).toUpperCase();
-    const statusClass = site.status === 'completed' ? 'completed' : site.status;
-    const statusText = site.status === 'completed' ? 'Ready' : site.status.charAt(0).toUpperCase() + site.status.slice(1);
-    
-    item.innerHTML = `
-        <div class="site-list-icon">${initial}</div>
-        <div class="site-list-info">
-            <div class="site-list-name">${site.name || domain}</div>
-            <div class="site-list-url">${domain}</div>
-        </div>
-        <span class="site-list-status ${statusClass}">${statusText}</span>
-    `;
-    
-    return item;
-}
-
-function selectSite(site) {
-    document.querySelectorAll('.site-list-item').forEach(item => item.classList.remove('active'));
-    const siteItem = document.querySelector(`.site-list-item[data-site-id="${site.site_id}"]`);
-    if (siteItem) siteItem.classList.add('active');
-    
-    openSiteDetails(site);
-}
-
-function showDetailEmptyState() {
-    const detailContent = elements.detailContent || document.getElementById('detail-content');
-    const detailEmpty = elements.detailEmptyState || document.getElementById('detail-empty-state');
-    
-    if (detailContent) detailContent.style.display = 'none';
-    if (detailEmpty) detailEmpty.style.display = 'flex';
-}
-
-function showDetailContent() {
-    const detailContent = elements.detailContent || document.getElementById('detail-content');
-    const detailEmpty = elements.detailEmptyState || document.getElementById('detail-empty-state');
-    
-    if (detailContent) detailContent.style.display = 'flex';
-    if (detailEmpty) detailEmpty.style.display = 'none';
-}
-
-function createSiteCard(site) {
-    const card = document.createElement('div');
-    card.className = 'site-card';
-    card.dataset.siteId = site.site_id;
-    card.onclick = () => {
-        // Remove active class from all cards
-        document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
-        // Add active class to clicked card
-        card.classList.add('active');
-        openSiteDetails(site);
-    };
-    
-    const domain = site.url.replace(/https?:\/\//, '').replace(/\/$/, '');
-    const initial = domain.charAt(0).toUpperCase();
-    const statusClass = site.status === 'completed' ? 'ready' : site.status;
-    const statusText = site.status === 'completed' ? 'Ready' : site.status.charAt(0).toUpperCase() + site.status.slice(1);
-    
-    card.innerHTML = `
-        <div class="site-card-header">
-            <div class="site-info">
-                <div class="site-favicon">${initial}</div>
-                <div>
-                    <div class="site-name">${site.name || domain}</div>
-                    <div class="site-url">${domain}</div>
-                </div>
-            </div>
-            <span class="status-badge ${statusClass}">
-                <span class="dot"></span>
-                ${statusText}
-            </span>
-        </div>
-        ${site.status === 'failed' && site.error ? `
-            <div class="site-card-error">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span>${site.error}</span>
-            </div>
-        ` : `
-            <div class="site-card-stats">
-                <div class="site-stat">
-                    <span class="site-stat-value">${site.pages_crawled || 0}</span>
-                    <span class="site-stat-label">Pages</span>
-                </div>
-                <div class="site-stat">
-                    <span class="site-stat-value">${site.pages_indexed || 0}</span>
-                    <span class="site-stat-label">Indexed</span>
-                </div>
-            </div>
-        `}
-    `;
-    
-    return card;
-}
-
-function openAddSiteModal() {
-    elements.addSiteModal.classList.add('active');
-    showSourceTypeStep();
-}
-
-function closeAddSiteModal() {
-    elements.addSiteModal.classList.remove('active');
-    resetModalState();
-}
-
-function resetModalState() {
-    currentSourceType = null;
-    selectedFiles = [];
-    selectedFilesBoth = [];
-    
-    // Reset forms
-    document.getElementById('website-form')?.reset();
-    document.getElementById('documents-form')?.reset();
-    document.getElementById('both-form')?.reset();
-    
-    // Clear file lists
-    document.getElementById('file-list').innerHTML = '';
-    document.getElementById('file-list-both').innerHTML = '';
-    
-    // Reset submit buttons
-    document.getElementById('submit-documents').disabled = true;
-    
-    // Reset source type selection
-    document.querySelectorAll('.source-type-card').forEach(c => c.classList.remove('selected'));
-    
-    // Show first step
-    showSourceTypeStep();
-}
-
-function showSourceTypeStep() {
-    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
-    document.getElementById('step-source-type').classList.add('active');
-    document.getElementById('modal-title').textContent = 'Add Knowledge Source';
-}
-
-function handleSourceTypeSelect(type) {
-    currentSourceType = type;
-    
-    // Update visual selection
-    document.querySelectorAll('.source-type-card').forEach(c => c.classList.remove('selected'));
-    document.querySelector(`[data-type="${type}"]`).classList.add('selected');
-    
-    // Show appropriate step
-    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
-    
-    if (type === 'website') {
-        document.getElementById('step-website').classList.add('active');
-        document.getElementById('modal-title').textContent = 'Crawl Website';
-        document.getElementById('site-url').focus();
-    } else if (type === 'documents') {
-        document.getElementById('step-documents').classList.add('active');
-        document.getElementById('modal-title').textContent = 'Upload Documents';
-        document.getElementById('doc-site-name').focus();
-    } else if (type === 'both') {
-        document.getElementById('step-both').classList.add('active');
-        document.getElementById('modal-title').textContent = 'Website + Documents';
-        document.getElementById('both-site-url').focus();
-    }
-}
-
-function switchFormTab(tabId) {
-    document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
-    
-    document.querySelectorAll('.form-tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-}
-
-// File upload zone setup
-function setupUploadZone(zoneId, inputId, listId, filesVar) {
-    const zone = document.getElementById(zoneId);
-    const input = document.getElementById(inputId);
-    const list = document.getElementById(listId);
-    
-    if (!zone || !input) return;
-    
-    // Click to open file picker
-    zone.addEventListener('click', () => input.click());
-    
-    // Drag and drop events
-    zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        zone.classList.add('dragover');
-    });
-    
-    zone.addEventListener('dragleave', () => {
-        zone.classList.remove('dragover');
-    });
-    
-    zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('dragover');
-        handleFiles(e.dataTransfer.files, filesVar, listId);
-    });
-    
-    // File input change
-    input.addEventListener('change', () => {
-        handleFiles(input.files, filesVar, listId);
-        input.value = '';
-    });
-}
-
-function handleFiles(fileList, filesVar, listId) {
-    const files = Array.from(fileList);
-    const validExtensions = ['.pdf', '.docx', '.doc', '.txt', '.md', '.csv', '.pptx', '.xlsx', '.html', '.htm'];
-    
-    files.forEach(file => {
-        const ext = '.' + file.name.split('.').pop().toLowerCase();
-        if (!validExtensions.includes(ext)) {
-            alert(`${file.name} is not a supported file type.`);
-            return;
-        }
-        
-        if (file.size > 50 * 1024 * 1024) {
-            alert(`${file.name} is too large (max 50MB).`);
-            return;
-        }
-        
-        // Add to appropriate array
-        if (filesVar === 'selectedFiles') {
-            selectedFiles.push(file);
-        } else if (filesVar === 'selectedFilesBoth') {
-            selectedFilesBoth.push(file);
-        } else if (filesVar === 'selectedFilesExisting') {
-            selectedFilesExisting.push(file);
-        }
-    });
-    
-    // Update file list display
-    renderFileList(filesVar, listId);
-    
-    // Update submit button state
-    updateDocumentSubmitButton();
-}
-
-function renderFileList(filesVar, listId) {
-    const list = document.getElementById(listId);
-    let files;
-    
-    if (filesVar === 'selectedFiles') files = selectedFiles;
-    else if (filesVar === 'selectedFilesBoth') files = selectedFilesBoth;
-    else if (filesVar === 'selectedFilesExisting') files = selectedFilesExisting;
-    
-    list.innerHTML = files.map((file, idx) => {
-        const ext = file.name.split('.').pop().toLowerCase();
-        const iconClass = getFileIconClass(ext);
-        const size = formatFileSize(file.size);
-        
-        return `
-            <div class="file-item" data-index="${idx}">
-                <div class="file-icon ${iconClass}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                </div>
-                <div class="file-info">
-                    <div class="file-name">${file.name}</div>
-                    <div class="file-size">${size}</div>
-                </div>
-                <button type="button" class="file-remove" onclick="removeFile('${filesVar}', ${idx}, '${listId}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-            </div>
-        `;
-    }).join('');
-}
-
-function removeFile(filesVar, index, listId) {
-    if (filesVar === 'selectedFiles') {
-        selectedFiles.splice(index, 1);
-    } else if (filesVar === 'selectedFilesBoth') {
-        selectedFilesBoth.splice(index, 1);
-    } else if (filesVar === 'selectedFilesExisting') {
-        selectedFilesExisting.splice(index, 1);
-    }
-    renderFileList(filesVar, listId);
-    updateDocumentSubmitButton();
-}
-
-window.removeFile = removeFile;
-
-function getFileIconClass(ext) {
-    const iconMap = {
-        'pdf': 'pdf',
-        'docx': 'doc', 'doc': 'doc',
-        'txt': 'txt', 'md': 'txt',
-        'csv': 'csv',
-        'pptx': 'ppt', 'ppt': 'ppt',
-        'xlsx': 'xls', 'xls': 'xls',
-        'html': 'txt', 'htm': 'txt'
-    };
-    return iconMap[ext] || 'default';
-}
-
-function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-function updateDocumentSubmitButton() {
-    const submitDocs = document.getElementById('submit-documents');
-    const submitUpload = document.getElementById('submit-upload');
-    
-    if (submitDocs) {
-        submitDocs.disabled = selectedFiles.length === 0;
-    }
-    if (submitUpload) {
-        submitUpload.disabled = selectedFilesExisting.length === 0;
-    }
-}
-
-// Form submission handlers
-async function handleWebsiteSubmit(e) {
-    e.preventDefault();
-    
-    const url = document.getElementById('site-url').value;
-    const name = document.getElementById('site-name').value;
-    const maxPages = parseInt(document.getElementById('max-pages').value) || 50;
-    
-    const submitBtn = document.getElementById('submit-website');
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    
-    try {
-        const setupResponse = await fetch(`${API_BASE}/embed/setup`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ url, name, max_pages: maxPages })
-        });
-        
-        if (setupResponse.status === 401) {
-            logout();
-            return;
-        }
-        
-        if (!setupResponse.ok) {
-            const err = await setupResponse.json();
-            throw new Error(err.detail || 'Failed to setup site');
-        }
-        
-        const setupData = await setupResponse.json();
-        
-        closeAddSiteModal();
-        await loadSites();
-        pollSiteStatus(setupData.site_id);
-        
-    } catch (error) {
-        console.error('Failed to add site:', error);
-        alert(error.message || 'Failed to add site. Please try again.');
-    } finally {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-    }
-}
-
-async function handleDocumentsSubmit(e) {
-    e.preventDefault();
-    
-    const name = document.getElementById('doc-site-name').value;
-    
-    if (selectedFiles.length === 0) {
-        alert('Please select at least one file to upload.');
-        return;
-    }
-    
-    const submitBtn = document.getElementById('submit-documents');
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    
-    try {
-        // First create the site
-        const siteId = generateSiteId(name);
-        const token = localStorage.getItem('token');
-        
-        // Create site entry
-        const setupResponse = await fetch(`${API_BASE}/embed/setup`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ 
-                url: `docs://${siteId}`,
-                name: name 
-            })
-        });
-        
-        if (!setupResponse.ok) {
-            throw new Error('Failed to create knowledge base');
-        }
-        
-        const setupData = await setupResponse.json();
-        
-        // Upload documents
-        const formData = new FormData();
-        selectedFiles.forEach(file => formData.append('files', file));
-        
-        const uploadResponse = await fetch(`${API_BASE}/documents/upload/${setupData.site_id}`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        });
-        
-        if (!uploadResponse.ok) {
-            throw new Error('Failed to upload documents');
-        }
-        
-        const uploadResult = await uploadResponse.json();
-        
-        closeAddSiteModal();
-        await loadSites();
-        alert(`Successfully uploaded ${uploadResult.total_uploaded} documents!`);
-        
-    } catch (error) {
-        console.error('Failed to upload documents:', error);
-        alert(error.message || 'Failed to upload documents. Please try again.');
-    } finally {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-    }
-}
-
-async function handleBothSubmit(e) {
-    e.preventDefault();
-    
-    const url = document.getElementById('both-site-url').value;
-    const name = document.getElementById('both-site-name').value;
-    const maxPages = parseInt(document.getElementById('both-max-pages').value) || 50;
-    
-    const submitBtn = document.getElementById('submit-both');
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    
-    try {
-        // Setup site and crawl with max_pages
-        const setupResponse = await fetch(`${API_BASE}/embed/setup`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ url, name, max_pages: maxPages })
-        });
-        
-        if (!setupResponse.ok) {
-            throw new Error('Failed to setup site');
-        }
-        
-        const setupData = await setupResponse.json();
-        
-        // Upload documents if any
-        if (selectedFilesBoth.length > 0) {
-            const token = localStorage.getItem('token');
-            const formData = new FormData();
-            selectedFilesBoth.forEach(file => formData.append('files', file));
-            
-            await fetch(`${API_BASE}/documents/upload/${setupData.site_id}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-        }
-        
-        closeAddSiteModal();
-        await loadSites();
-        pollSiteStatus(setupData.site_id);
-        
-    } catch (error) {
-        console.error('Failed to create chatbot:', error);
-        alert(error.message || 'Failed to create chatbot. Please try again.');
-    } finally {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-    }
-}
-
-function generateSiteId(name) {
-    const hash = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const random = Math.random().toString(36).substring(2, 8);
-    return `${hash.substring(0, 6)}${random}`;
-}
-
-// Upload modal for existing sites
-function openUploadModal() {
-    selectedFilesExisting = [];
-    document.getElementById('file-list-existing').innerHTML = '';
-    document.getElementById('submit-upload').disabled = true;
-    elements.uploadModal.classList.add('active');
-}
-
-function closeUploadModal() {
-    elements.uploadModal.classList.remove('active');
-    selectedFilesExisting = [];
-}
-
-async function handleExistingUpload(e) {
-    e.preventDefault();
-    
-    if (!currentDetailSite || selectedFilesExisting.length === 0) return;
-    
-    const submitBtn = document.getElementById('submit-upload');
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    
-    try {
-        const token = localStorage.getItem('token');
-        const formData = new FormData();
-        selectedFilesExisting.forEach(file => formData.append('files', file));
-        
-        const response = await fetch(`${API_BASE}/documents/upload/${currentDetailSite.site_id}`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to upload documents');
-        }
-        
-        const result = await response.json();
-        
-        closeUploadModal();
-        await loadSiteDocuments(currentDetailSite.site_id);
-        alert(`Successfully uploaded ${result.total_uploaded} documents!`);
-        
-    } catch (error) {
-        console.error('Failed to upload:', error);
-        alert(error.message || 'Failed to upload documents.');
-    } finally {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-    }
-}
-
-function pollSiteStatus(siteId) {
-    const interval = setInterval(async () => {
-        try {
-            const response = await fetch(`${API_BASE}/embed/status/${siteId}`);
-            const data = await response.json();
-            
-            if (data.status === 'completed' || data.status === 'failed') {
-                clearInterval(interval);
-            }
-            
-            await loadSites();
-        } catch (error) {
-            console.error('Failed to poll status:', error);
-        }
-    }, 3000);
-}
-
-let currentDetailSite = null;
-
-const VALID_DETAIL_TABS = [
-    'appearance', 'embed', 'behavior', 'quick-prompts', 'triggers', 'training',
-    'handoff', 'leads', 'security', 'crawling'
-];
-
-const DETAIL_TAB_LABELS = {
-    appearance: 'Appearance',
-    embed: 'Embed',
-    behavior: 'Behavior',
-    'quick-prompts': 'Quick Prompts',
-    triggers: 'Triggers',
-    training: 'Training',
-    handoff: 'Handoff',
-    leads: 'Leads',
-    security: 'Security',
-    crawling: 'Crawling'
-};
-
-const SIDEBAR_COLLAPSED_KEY = 'sitechat-sidebar-collapsed';
-
-function getDetailTabFromHash() {
-    const raw = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
-    if (!raw) return 'appearance';
-    const tab = raw.split(/[?&]/)[0];
-    return VALID_DETAIL_TABS.includes(tab) ? tab : 'appearance';
-}
-
-function clearSiteDetailHash() {
-    const base = window.location.pathname + window.location.search;
-    if (window.location.hash) {
-        history.replaceState(null, '', base);
-    }
-}
-
-function setSiteDetailHash(tabId) {
-    if (!currentDetailSite) return;
-    const base = window.location.pathname + window.location.search;
-    history.replaceState(null, '', `${base}#${tabId}`);
-}
-
-function updateDetailBreadcrumbSection(tabId) {
-    const sectionEl = document.getElementById('detail-breadcrumb-section');
-    if (!sectionEl) return;
-    const label = DETAIL_TAB_LABELS[tabId] || tabId;
-    sectionEl.textContent = label;
-}
-
-function navigateDetailBreadcrumbSites() {
-    currentDetailSite = null;
-    document.querySelectorAll('.site-card, .site-list-item').forEach(c => c.classList.remove('active'));
-    showDetailEmptyState();
-    clearSiteDetailHash();
-    // Mobile: exit full-screen detail mode
-    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
-    if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
-    mobileNav.pop();
-}
-
-/** @param {{ skipHash?: boolean }} [opts] */
-function activateDetailTab(tabId, opts = {}) {
-    const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
-    const panel = document.getElementById('detail-tab-content');
-    if (!tabs.length) return;
-
-    const valid = VALID_DETAIL_TABS.includes(tabId) ? tabId : 'appearance';
-
-    tabs.forEach(t => {
-        const on = t.dataset.tab === valid;
-        t.classList.toggle('active', on);
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-        if (on && panel && t.id) {
-            panel.setAttribute('aria-labelledby', t.id);
-        }
-    });
-
-    loadDetailTabContent(valid);
-    if (!opts.skipHash) {
-        setSiteDetailHash(valid);
-    }
-    updateDetailBreadcrumbSection(valid);
-}
-
-function initSiteDetailHashRouting() {
-    window.addEventListener('hashchange', () => {
-        if (!currentDetailSite) return;
-        const sitesView = document.getElementById('sites-view');
-        if (!sitesView?.classList.contains('active')) return;
-        activateDetailTab(getDetailTabFromHash(), { skipHash: true });
-        updateAppearanceEmbedCode();
-        updateWidgetPreview();
-    });
-}
-
-/** Mobile back-navigation stack */
-const mobileNav = {
-    _action: null,
-
-    push(action, title) {
-        this._action = action;
-        document.body.classList.add('mobile-has-back');
-        const titleEl = document.getElementById('mobile-topbar-title');
-        if (titleEl) titleEl.textContent = title || '';
-    },
-
-    pop() {
-        this._action = null;
-        document.body.classList.remove('mobile-has-back');
-        const titleEl = document.getElementById('mobile-topbar-title');
-        if (titleEl) titleEl.textContent = '';
-    },
-
-    trigger() {
-        if (typeof this._action === 'function') {
-            this._action();
-        }
-        this.pop();
-    }
-};
-
-function initMobileSidebar() {
-    const menuBtn = document.getElementById('mobile-menu-btn');
-    const backBtn = document.getElementById('mobile-back-btn');
-    const overlay = document.getElementById('mobile-sidebar-overlay');
-    const sidebar = document.getElementById('dashboard-sidebar');
-
-    function openSidebar() {
-        document.body.classList.add('sidebar-mobile-open');
-        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
-    }
-
-    function closeSidebar() {
-        document.body.classList.remove('sidebar-mobile-open');
-        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
-    }
-
-    menuBtn?.addEventListener('click', () => {
-        if (document.body.classList.contains('sidebar-mobile-open')) {
-            closeSidebar();
-        } else {
-            openSidebar();
-        }
-    });
-
-    backBtn?.addEventListener('click', () => mobileNav.trigger());
-
-    overlay?.addEventListener('click', closeSidebar);
-
-    // Close on nav item click on mobile
-    sidebar?.addEventListener('click', (e) => {
-        if (window.matchMedia('(max-width: 768px)').matches) {
-            if (e.target.closest('.menu-item, .sidebar-util-link')) {
-                closeSidebar();
-            }
-        }
-    });
-
-    // Close on resize back to desktop
-    window.matchMedia('(max-width: 768px)').addEventListener('change', (e) => {
-        if (!e.matches) {
-            closeSidebar();
-            mobileNav.pop();
-        }
-    });
-}
-
-function initSidebarCollapse() {
-    const btn = document.getElementById('sidebar-toggle');
-    const mq = window.matchMedia('(min-width: 769px)');
-
-    function applyCollapsed(collapsed) {
-        if (!mq.matches) {
-            document.body.classList.remove('sidebar-collapsed');
-            if (btn) {
-                btn.setAttribute('aria-expanded', 'true');
-                btn.title = 'Collapse sidebar';
-                btn.setAttribute('aria-label', 'Collapse sidebar');
-            }
-            return;
-        }
-        document.body.classList.toggle('sidebar-collapsed', collapsed);
-        if (btn) {
-            btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-            btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
-            btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-        }
-    }
-
-    applyCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
-
-    mq.addEventListener('change', () => {
-        applyCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
-    });
-
-    btn?.addEventListener('click', () => {
-        if (!mq.matches) return;
-        const next = !document.body.classList.contains('sidebar-collapsed');
-        applyCollapsed(next);
-        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
-    });
-}
-
-async function openSiteDetails(site) {
-    currentDetailSite = site;
-
-    // Mobile: switch to full-screen detail mode
-    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
-    if (sitesLayout) sitesLayout.classList.add('mobile-detail-open');
-    const siteName = site.name || site.url;
-    mobileNav.push(() => {
-        if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
-    }, siteName.replace(/https?:\/\//, '').replace(/\/$/, ''));
-
-    showDetailContent();
-
-    const iconLetter = siteName.replace(/https?:\/\//, '').charAt(0).toUpperCase();
-    const detailIcon = document.getElementById('detail-icon');
-    if (detailIcon) detailIcon.textContent = iconLetter;
-    
-    const nameEl = document.getElementById('detail-site-name');
-    if (nameEl) nameEl.textContent = siteName;
-    
-    const urlEl = document.getElementById('detail-url-small');
-    if (urlEl) {
-        urlEl.textContent = site.url.replace(/https?:\/\//, '');
-        urlEl.href = site.url;
-    }
-    
-    const statusEl = document.getElementById('detail-status');
-    if (statusEl) {
-        const statusClass = site.status === 'completed' ? 'ready' : site.status;
-        const statusText = site.status === 'completed' ? 'Ready' : site.status.charAt(0).toUpperCase() + site.status.slice(1);
-        statusEl.innerHTML = `<span class="status-badge ${statusClass}"><span class="dot"></span>${statusText}</span>`;
-    }
-    
-    const pagesEl = document.getElementById('detail-pages');
-    if (pagesEl) pagesEl.textContent = site.pages_crawled || 0;
-    
-    const indexedEl = document.getElementById('detail-indexed');
-    if (indexedEl) indexedEl.textContent = site.pages_indexed || 0;
-    
-    const docs = await loadSiteDocuments(site.site_id);
-    const docsCountEl = document.getElementById('detail-docs-count');
-    if (docsCountEl) docsCountEl.textContent = docs?.length || 0;
-    
-    await loadSiteConfig(site.site_id);
-
-    const breadcrumbSite = document.getElementById('detail-breadcrumb-site-name');
-    if (breadcrumbSite) breadcrumbSite.textContent = siteName;
-
-    activateDetailTab(getDetailTabFromHash());
-
-    updateAppearanceEmbedCode();
-    updateWidgetPreview();
-
-    setupDetailTabs();
-    setupQuickActions();
-}
-
-function setupQuickActions() {
-    const recrawlBtn = document.getElementById('recrawl-site');
-    if (recrawlBtn) {
-        recrawlBtn.onclick = recrawlSite;
-    }
-    
-    const addDocsBtn = document.getElementById('add-documents-btn');
-    if (addDocsBtn) {
-        addDocsBtn.onclick = openUploadModal;
-    }
-    
-    const deleteBtn = document.getElementById('delete-site');
-    if (deleteBtn) {
-        deleteBtn.onclick = deleteSite;
-    }
-}
-
-function closeSidePanel() {
-    if (elements.siteDetailsPanel) {
-        elements.siteDetailsPanel.classList.remove('active');
-    }
-    if (elements.sidePanelOverlay) {
-        elements.sidePanelOverlay.classList.remove('active');
-    }
-    document.body.style.overflow = '';
-    document.querySelectorAll('.site-card, .site-list-item').forEach(c => c.classList.remove('active'));
-}
-
-function setupDetailTabs() {
-    const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
-
-    tabs.forEach(tab => {
-        tab.onclick = () => activateDetailTab(tab.dataset.tab);
-    });
-}
 
 /** Jump to a site-detail tab (e.g. from header "Get code" → Embed). */
 function switchToDetailTab(tabId) {
@@ -2210,160 +1313,7 @@ async function sendPreviewMessage() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-async function loadSiteDocuments(siteId) {
-    try {
-        const response = await fetch(`${API_BASE}/documents/${siteId}`, {
-            headers: getAuthHeaders()
-        });
-        
-        if (!response.ok) return [];
-        
-        const data = await response.json();
-        renderSiteDocuments(data.documents);
-        return data.documents || [];
-    } catch (error) {
-        console.error('Failed to load documents:', error);
-        return [];
-    }
-}
 
-function renderSiteDocuments(documents) {
-    const list = elements.documentsList;
-    if (!list) return;
-    
-    if (!documents || documents.length === 0) {
-        list.innerHTML = `
-            <div class="empty-docs">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                <p>No documents yet</p>
-                <span>Upload PDFs, docs, and more</span>
-            </div>
-        `;
-        return;
-    }
-    
-    list.innerHTML = documents.map(doc => {
-        const ext = doc.file_type.replace('.', '');
-        const iconClass = getFileIconClass(ext);
-        const statusIcon = doc.status === 'indexed' 
-            ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
-            : (doc.status === 'error' 
-                ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
-                : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="3"><circle cx="12" cy="12" r="1"/></svg>');
-        
-        return `
-            <div class="doc-item">
-                <div class="file-icon ${iconClass}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                </div>
-                <div class="file-info">
-                    <div class="file-name">${doc.filename}</div>
-                    <div class="file-meta">${doc.word_count?.toLocaleString() || 0} words · ${doc.chunks || 0} chunks</div>
-                </div>
-                <span class="doc-status">${statusIcon}</span>
-                <button type="button" class="doc-delete" onclick="deleteDocument('${doc.id}')" title="Delete document">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                    </svg>
-                </button>
-            </div>
-        `;
-    }).join('');
-}
-
-async function deleteDocument(docId) {
-    if (!currentDetailSite) return;
-    
-    if (!confirm('Are you sure you want to delete this document?')) return;
-    
-    try {
-        const response = await fetch(`${API_BASE}/documents/${currentDetailSite.site_id}/${docId}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        });
-        
-        if (response.ok) {
-            await loadSiteDocuments(currentDetailSite.site_id);
-        } else {
-            alert('Failed to delete document');
-        }
-    } catch (error) {
-        console.error('Failed to delete document:', error);
-    }
-}
-
-window.deleteDocument = deleteDocument;
-
-function closeDetailsModal() {
-    closeSidePanel();
-}
-
-async function copyDetailEmbed() {
-    const code = document.getElementById('detail-embed-code').textContent;
-    try {
-        await navigator.clipboard.writeText(code);
-        const btn = document.getElementById('copy-detail-embed');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Copied!';
-        setTimeout(() => btn.innerHTML = originalHTML, 2000);
-    } catch (error) {
-        console.error('Failed to copy:', error);
-    }
-}
-
-async function recrawlSite() {
-    if (!currentDetailSite) return;
-    
-    const btn = document.getElementById('recrawl-site');
-    btn.disabled = true;
-    btn.textContent = 'Crawling...';
-    
-    try {
-        await fetch(`${API_BASE}/crawl`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ url: currentDetailSite.url, max_pages: 50 })
-        });
-        
-        closeDetailsModal();
-        await loadSites();
-        pollSiteStatus(currentDetailSite.site_id);
-    } catch (error) {
-        console.error('Failed to recrawl:', error);
-        alert('Failed to start crawl. Please try again.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Re-crawl';
-    }
-}
-
-async function deleteSite() {
-    if (!currentDetailSite) return;
-    
-    if (!confirm(`Are you sure you want to delete "${currentDetailSite.name || currentDetailSite.url}"?`)) {
-        return;
-    }
-    
-    try {
-        await fetch(`${API_BASE}/sites/${currentDetailSite.site_id}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders()
-        });
-        
-        closeDetailsModal();
-        await loadSites();
-    } catch (error) {
-        console.error('Failed to delete:', error);
-        alert('Failed to delete site. Please try again.');
-    }
-}
 
 function updateSiteSelector() {
     if (!elements.chatSiteSelect) return;
@@ -2528,6 +1478,1074 @@ async function checkHealth() {
     }
 }
 
+// ---- module: sites.js ----
+// Site management: list, create (website/documents/both), upload modal, status polling.
+// Extracted from core.js in ROADMAP 4.1 increment 3 (sites CRUD).
+async function loadSites() {
+    try {
+        const response = await fetch(`${API_BASE}/sites`, {
+            headers: getAuthHeaders()
+        });
+        
+        if (response.status === 401) {
+            logout();
+            return;
+        }
+        
+        sites = await response.json();
+        renderSites();
+    } catch (error) {
+        console.error('Failed to load sites:', error);
+    }
+}
+
+function renderSites() {
+    const sitesList = elements.sitesList || document.getElementById('sites-list');
+    if (!sitesList) return;
+    
+    const existingItems = sitesList.querySelectorAll('.site-list-item');
+    existingItems.forEach(item => item.remove());
+    
+    if (sites.length === 0) {
+        currentDetailSite = null;
+        if (elements.emptyState) elements.emptyState.style.display = 'flex';
+        showDetailEmptyState();
+        clearSiteDetailHash();
+    } else {
+        if (elements.emptyState) elements.emptyState.style.display = 'none';
+        sites.forEach(site => {
+            const item = createSiteListItem(site);
+            sitesList.appendChild(item);
+        });
+        
+        if (!currentDetailSite && sites.length > 0) {
+            selectSite(sites[0]);
+        }
+    }
+}
+
+function createSiteListItem(site) {
+    const item = document.createElement('div');
+    item.className = 'site-list-item';
+    item.dataset.siteId = site.site_id;
+    
+    if (currentDetailSite && currentDetailSite.site_id === site.site_id) {
+        item.classList.add('active');
+    }
+    
+    item.onclick = () => selectSite(site);
+    
+    const domain = site.url.replace(/https?:\/\//, '').replace(/\/$/, '');
+    const initial = domain.charAt(0).toUpperCase();
+    const statusClass = site.status === 'completed' ? 'completed' : site.status;
+    const statusText = site.status === 'completed' ? 'Ready' : site.status.charAt(0).toUpperCase() + site.status.slice(1);
+    
+    item.innerHTML = `
+        <div class="site-list-icon">${initial}</div>
+        <div class="site-list-info">
+            <div class="site-list-name">${site.name || domain}</div>
+            <div class="site-list-url">${domain}</div>
+        </div>
+        <span class="site-list-status ${statusClass}">${statusText}</span>
+    `;
+    
+    return item;
+}
+
+function selectSite(site) {
+    document.querySelectorAll('.site-list-item').forEach(item => item.classList.remove('active'));
+    const siteItem = document.querySelector(`.site-list-item[data-site-id="${site.site_id}"]`);
+    if (siteItem) siteItem.classList.add('active');
+    
+    openSiteDetails(site);
+}
+
+function showDetailEmptyState() {
+    const detailContent = elements.detailContent || document.getElementById('detail-content');
+    const detailEmpty = elements.detailEmptyState || document.getElementById('detail-empty-state');
+    
+    if (detailContent) detailContent.style.display = 'none';
+    if (detailEmpty) detailEmpty.style.display = 'flex';
+}
+
+function showDetailContent() {
+    const detailContent = elements.detailContent || document.getElementById('detail-content');
+    const detailEmpty = elements.detailEmptyState || document.getElementById('detail-empty-state');
+    
+    if (detailContent) detailContent.style.display = 'flex';
+    if (detailEmpty) detailEmpty.style.display = 'none';
+}
+
+function createSiteCard(site) {
+    const card = document.createElement('div');
+    card.className = 'site-card';
+    card.dataset.siteId = site.site_id;
+    card.onclick = () => {
+        // Remove active class from all cards
+        document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
+        // Add active class to clicked card
+        card.classList.add('active');
+        openSiteDetails(site);
+    };
+    
+    const domain = site.url.replace(/https?:\/\//, '').replace(/\/$/, '');
+    const initial = domain.charAt(0).toUpperCase();
+    const statusClass = site.status === 'completed' ? 'ready' : site.status;
+    const statusText = site.status === 'completed' ? 'Ready' : site.status.charAt(0).toUpperCase() + site.status.slice(1);
+    
+    card.innerHTML = `
+        <div class="site-card-header">
+            <div class="site-info">
+                <div class="site-favicon">${initial}</div>
+                <div>
+                    <div class="site-name">${site.name || domain}</div>
+                    <div class="site-url">${domain}</div>
+                </div>
+            </div>
+            <span class="status-badge ${statusClass}">
+                <span class="dot"></span>
+                ${statusText}
+            </span>
+        </div>
+        ${site.status === 'failed' && site.error ? `
+            <div class="site-card-error">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>${site.error}</span>
+            </div>
+        ` : `
+            <div class="site-card-stats">
+                <div class="site-stat">
+                    <span class="site-stat-value">${site.pages_crawled || 0}</span>
+                    <span class="site-stat-label">Pages</span>
+                </div>
+                <div class="site-stat">
+                    <span class="site-stat-value">${site.pages_indexed || 0}</span>
+                    <span class="site-stat-label">Indexed</span>
+                </div>
+            </div>
+        `}
+    `;
+    
+    return card;
+}
+
+function openAddSiteModal() {
+    elements.addSiteModal.classList.add('active');
+    showSourceTypeStep();
+}
+
+function closeAddSiteModal() {
+    elements.addSiteModal.classList.remove('active');
+    resetModalState();
+}
+
+function resetModalState() {
+    currentSourceType = null;
+    selectedFiles = [];
+    selectedFilesBoth = [];
+    
+    // Reset forms
+    document.getElementById('website-form')?.reset();
+    document.getElementById('documents-form')?.reset();
+    document.getElementById('both-form')?.reset();
+    
+    // Clear file lists
+    document.getElementById('file-list').innerHTML = '';
+    document.getElementById('file-list-both').innerHTML = '';
+    
+    // Reset submit buttons
+    document.getElementById('submit-documents').disabled = true;
+    
+    // Reset source type selection
+    document.querySelectorAll('.source-type-card').forEach(c => c.classList.remove('selected'));
+    
+    // Show first step
+    showSourceTypeStep();
+}
+
+function showSourceTypeStep() {
+    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-source-type').classList.add('active');
+    document.getElementById('modal-title').textContent = 'Add Knowledge Source';
+}
+
+function handleSourceTypeSelect(type) {
+    currentSourceType = type;
+    
+    // Update visual selection
+    document.querySelectorAll('.source-type-card').forEach(c => c.classList.remove('selected'));
+    document.querySelector(`[data-type="${type}"]`).classList.add('selected');
+    
+    // Show appropriate step
+    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
+    
+    if (type === 'website') {
+        document.getElementById('step-website').classList.add('active');
+        document.getElementById('modal-title').textContent = 'Crawl Website';
+        document.getElementById('site-url').focus();
+    } else if (type === 'documents') {
+        document.getElementById('step-documents').classList.add('active');
+        document.getElementById('modal-title').textContent = 'Upload Documents';
+        document.getElementById('doc-site-name').focus();
+    } else if (type === 'both') {
+        document.getElementById('step-both').classList.add('active');
+        document.getElementById('modal-title').textContent = 'Website + Documents';
+        document.getElementById('both-site-url').focus();
+    }
+}
+
+function switchFormTab(tabId) {
+    document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    
+    document.querySelectorAll('.form-tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
+
+// File upload zone setup
+function setupUploadZone(zoneId, inputId, listId, filesVar) {
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(listId);
+    
+    if (!zone || !input) return;
+    
+    // Click to open file picker
+    zone.addEventListener('click', () => input.click());
+    
+    // Drag and drop events
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+    
+    zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+    });
+    
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files, filesVar, listId);
+    });
+    
+    // File input change
+    input.addEventListener('change', () => {
+        handleFiles(input.files, filesVar, listId);
+        input.value = '';
+    });
+}
+
+function handleFiles(fileList, filesVar, listId) {
+    const files = Array.from(fileList);
+    const validExtensions = ['.pdf', '.docx', '.doc', '.txt', '.md', '.csv', '.pptx', '.xlsx', '.html', '.htm'];
+    
+    files.forEach(file => {
+        const ext = '.' + file.name.split('.').pop().toLowerCase();
+        if (!validExtensions.includes(ext)) {
+            alert(`${file.name} is not a supported file type.`);
+            return;
+        }
+        
+        if (file.size > 50 * 1024 * 1024) {
+            alert(`${file.name} is too large (max 50MB).`);
+            return;
+        }
+        
+        // Add to appropriate array
+        if (filesVar === 'selectedFiles') {
+            selectedFiles.push(file);
+        } else if (filesVar === 'selectedFilesBoth') {
+            selectedFilesBoth.push(file);
+        } else if (filesVar === 'selectedFilesExisting') {
+            selectedFilesExisting.push(file);
+        }
+    });
+    
+    // Update file list display
+    renderFileList(filesVar, listId);
+    
+    // Update submit button state
+    updateDocumentSubmitButton();
+}
+
+function renderFileList(filesVar, listId) {
+    const list = document.getElementById(listId);
+    let files;
+    
+    if (filesVar === 'selectedFiles') files = selectedFiles;
+    else if (filesVar === 'selectedFilesBoth') files = selectedFilesBoth;
+    else if (filesVar === 'selectedFilesExisting') files = selectedFilesExisting;
+    
+    list.innerHTML = files.map((file, idx) => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const iconClass = getFileIconClass(ext);
+        const size = formatFileSize(file.size);
+        
+        return `
+            <div class="file-item" data-index="${idx}">
+                <div class="file-icon ${iconClass}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${size}</div>
+                </div>
+                <button type="button" class="file-remove" onclick="removeFile('${filesVar}', ${idx}, '${listId}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function removeFile(filesVar, index, listId) {
+    if (filesVar === 'selectedFiles') {
+        selectedFiles.splice(index, 1);
+    } else if (filesVar === 'selectedFilesBoth') {
+        selectedFilesBoth.splice(index, 1);
+    } else if (filesVar === 'selectedFilesExisting') {
+        selectedFilesExisting.splice(index, 1);
+    }
+    renderFileList(filesVar, listId);
+    updateDocumentSubmitButton();
+}
+
+window.removeFile = removeFile;
+
+function getFileIconClass(ext) {
+    const iconMap = {
+        'pdf': 'pdf',
+        'docx': 'doc', 'doc': 'doc',
+        'txt': 'txt', 'md': 'txt',
+        'csv': 'csv',
+        'pptx': 'ppt', 'ppt': 'ppt',
+        'xlsx': 'xls', 'xls': 'xls',
+        'html': 'txt', 'htm': 'txt'
+    };
+    return iconMap[ext] || 'default';
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function updateDocumentSubmitButton() {
+    const submitDocs = document.getElementById('submit-documents');
+    const submitUpload = document.getElementById('submit-upload');
+    
+    if (submitDocs) {
+        submitDocs.disabled = selectedFiles.length === 0;
+    }
+    if (submitUpload) {
+        submitUpload.disabled = selectedFilesExisting.length === 0;
+    }
+}
+
+// Form submission handlers
+async function handleWebsiteSubmit(e) {
+    e.preventDefault();
+    
+    const url = document.getElementById('site-url').value;
+    const name = document.getElementById('site-name').value;
+    const maxPages = parseInt(document.getElementById('max-pages').value) || 50;
+    
+    const submitBtn = document.getElementById('submit-website');
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    
+    try {
+        const setupResponse = await fetch(`${API_BASE}/embed/setup`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ url, name, max_pages: maxPages })
+        });
+        
+        if (setupResponse.status === 401) {
+            logout();
+            return;
+        }
+        
+        if (!setupResponse.ok) {
+            const err = await setupResponse.json();
+            throw new Error(err.detail || 'Failed to setup site');
+        }
+        
+        const setupData = await setupResponse.json();
+        
+        closeAddSiteModal();
+        await loadSites();
+        pollSiteStatus(setupData.site_id);
+        
+    } catch (error) {
+        console.error('Failed to add site:', error);
+        alert(error.message || 'Failed to add site. Please try again.');
+    } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+    }
+}
+
+async function handleDocumentsSubmit(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('doc-site-name').value;
+    
+    if (selectedFiles.length === 0) {
+        alert('Please select at least one file to upload.');
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submit-documents');
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    
+    try {
+        // First create the site
+        const siteId = generateSiteId(name);
+        const token = localStorage.getItem('token');
+        
+        // Create site entry
+        const setupResponse = await fetch(`${API_BASE}/embed/setup`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ 
+                url: `docs://${siteId}`,
+                name: name 
+            })
+        });
+        
+        if (!setupResponse.ok) {
+            throw new Error('Failed to create knowledge base');
+        }
+        
+        const setupData = await setupResponse.json();
+        
+        // Upload documents
+        const formData = new FormData();
+        selectedFiles.forEach(file => formData.append('files', file));
+        
+        const uploadResponse = await fetch(`${API_BASE}/documents/upload/${setupData.site_id}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        
+        if (!uploadResponse.ok) {
+            throw new Error('Failed to upload documents');
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        
+        closeAddSiteModal();
+        await loadSites();
+        alert(`Successfully uploaded ${uploadResult.total_uploaded} documents!`);
+        
+    } catch (error) {
+        console.error('Failed to upload documents:', error);
+        alert(error.message || 'Failed to upload documents. Please try again.');
+    } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+    }
+}
+
+async function handleBothSubmit(e) {
+    e.preventDefault();
+    
+    const url = document.getElementById('both-site-url').value;
+    const name = document.getElementById('both-site-name').value;
+    const maxPages = parseInt(document.getElementById('both-max-pages').value) || 50;
+    
+    const submitBtn = document.getElementById('submit-both');
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    
+    try {
+        // Setup site and crawl with max_pages
+        const setupResponse = await fetch(`${API_BASE}/embed/setup`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ url, name, max_pages: maxPages })
+        });
+        
+        if (!setupResponse.ok) {
+            throw new Error('Failed to setup site');
+        }
+        
+        const setupData = await setupResponse.json();
+        
+        // Upload documents if any
+        if (selectedFilesBoth.length > 0) {
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            selectedFilesBoth.forEach(file => formData.append('files', file));
+            
+            await fetch(`${API_BASE}/documents/upload/${setupData.site_id}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+        }
+        
+        closeAddSiteModal();
+        await loadSites();
+        pollSiteStatus(setupData.site_id);
+        
+    } catch (error) {
+        console.error('Failed to create chatbot:', error);
+        alert(error.message || 'Failed to create chatbot. Please try again.');
+    } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+    }
+}
+
+function generateSiteId(name) {
+    const hash = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const random = Math.random().toString(36).substring(2, 8);
+    return `${hash.substring(0, 6)}${random}`;
+}
+
+// Upload modal for existing sites
+function openUploadModal() {
+    selectedFilesExisting = [];
+    document.getElementById('file-list-existing').innerHTML = '';
+    document.getElementById('submit-upload').disabled = true;
+    elements.uploadModal.classList.add('active');
+}
+
+function closeUploadModal() {
+    elements.uploadModal.classList.remove('active');
+    selectedFilesExisting = [];
+}
+
+async function handleExistingUpload(e) {
+    e.preventDefault();
+    
+    if (!currentDetailSite || selectedFilesExisting.length === 0) return;
+    
+    const submitBtn = document.getElementById('submit-upload');
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        selectedFilesExisting.forEach(file => formData.append('files', file));
+        
+        const response = await fetch(`${API_BASE}/documents/upload/${currentDetailSite.site_id}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to upload documents');
+        }
+        
+        const result = await response.json();
+        
+        closeUploadModal();
+        await loadSiteDocuments(currentDetailSite.site_id);
+        alert(`Successfully uploaded ${result.total_uploaded} documents!`);
+        
+    } catch (error) {
+        console.error('Failed to upload:', error);
+        alert(error.message || 'Failed to upload documents.');
+    } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+    }
+}
+
+function pollSiteStatus(siteId) {
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch(`${API_BASE}/embed/status/${siteId}`);
+            const data = await response.json();
+            
+            if (data.status === 'completed' || data.status === 'failed') {
+                clearInterval(interval);
+            }
+            
+            await loadSites();
+        } catch (error) {
+            console.error('Failed to poll status:', error);
+        }
+    }, 3000);
+}
+
+let currentDetailSite = null;
+
+const VALID_DETAIL_TABS = [
+    'appearance', 'embed', 'behavior', 'quick-prompts', 'triggers', 'training',
+    'handoff', 'leads', 'security', 'crawling'
+];
+
+const DETAIL_TAB_LABELS = {
+    appearance: 'Appearance',
+    embed: 'Embed',
+    behavior: 'Behavior',
+    'quick-prompts': 'Quick Prompts',
+    triggers: 'Triggers',
+    training: 'Training',
+    handoff: 'Handoff',
+    leads: 'Leads',
+    security: 'Security',
+    crawling: 'Crawling'
+};
+
+const SIDEBAR_COLLAPSED_KEY = 'sitechat-sidebar-collapsed';
+
+// ---- module: site_detail.js ----
+// Site detail panel: tab routing, sidebar (mobile/collapse), quick actions, side panel.
+// Extracted from core.js in ROADMAP 4.1 increment 3.
+function getDetailTabFromHash() {
+    const raw = (window.location.hash || '').replace(/^#/, '').trim().toLowerCase();
+    if (!raw) return 'appearance';
+    const tab = raw.split(/[?&]/)[0];
+    return VALID_DETAIL_TABS.includes(tab) ? tab : 'appearance';
+}
+
+function clearSiteDetailHash() {
+    const base = window.location.pathname + window.location.search;
+    if (window.location.hash) {
+        history.replaceState(null, '', base);
+    }
+}
+
+function setSiteDetailHash(tabId) {
+    if (!currentDetailSite) return;
+    const base = window.location.pathname + window.location.search;
+    history.replaceState(null, '', `${base}#${tabId}`);
+}
+
+function updateDetailBreadcrumbSection(tabId) {
+    const sectionEl = document.getElementById('detail-breadcrumb-section');
+    if (!sectionEl) return;
+    const label = DETAIL_TAB_LABELS[tabId] || tabId;
+    sectionEl.textContent = label;
+}
+
+function navigateDetailBreadcrumbSites() {
+    currentDetailSite = null;
+    document.querySelectorAll('.site-card, .site-list-item').forEach(c => c.classList.remove('active'));
+    showDetailEmptyState();
+    clearSiteDetailHash();
+    // Mobile: exit full-screen detail mode
+    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
+    if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
+    mobileNav.pop();
+}
+
+/** @param {{ skipHash?: boolean }} [opts] */
+function activateDetailTab(tabId, opts = {}) {
+    const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
+    const panel = document.getElementById('detail-tab-content');
+    if (!tabs.length) return;
+
+    const valid = VALID_DETAIL_TABS.includes(tabId) ? tabId : 'appearance';
+
+    tabs.forEach(t => {
+        const on = t.dataset.tab === valid;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        if (on && panel && t.id) {
+            panel.setAttribute('aria-labelledby', t.id);
+        }
+    });
+
+    loadDetailTabContent(valid);
+    if (!opts.skipHash) {
+        setSiteDetailHash(valid);
+    }
+    updateDetailBreadcrumbSection(valid);
+}
+
+function initSiteDetailHashRouting() {
+    window.addEventListener('hashchange', () => {
+        if (!currentDetailSite) return;
+        const sitesView = document.getElementById('sites-view');
+        if (!sitesView?.classList.contains('active')) return;
+        activateDetailTab(getDetailTabFromHash(), { skipHash: true });
+        updateAppearanceEmbedCode();
+        updateWidgetPreview();
+    });
+}
+
+/** Mobile back-navigation stack */
+const mobileNav = {
+    _action: null,
+
+    push(action, title) {
+        this._action = action;
+        document.body.classList.add('mobile-has-back');
+        const titleEl = document.getElementById('mobile-topbar-title');
+        if (titleEl) titleEl.textContent = title || '';
+    },
+
+    pop() {
+        this._action = null;
+        document.body.classList.remove('mobile-has-back');
+        const titleEl = document.getElementById('mobile-topbar-title');
+        if (titleEl) titleEl.textContent = '';
+    },
+
+    trigger() {
+        if (typeof this._action === 'function') {
+            this._action();
+        }
+        this.pop();
+    }
+};
+
+function initMobileSidebar() {
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const backBtn = document.getElementById('mobile-back-btn');
+    const overlay = document.getElementById('mobile-sidebar-overlay');
+    const sidebar = document.getElementById('dashboard-sidebar');
+
+    function openSidebar() {
+        document.body.classList.add('sidebar-mobile-open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeSidebar() {
+        document.body.classList.remove('sidebar-mobile-open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    menuBtn?.addEventListener('click', () => {
+        if (document.body.classList.contains('sidebar-mobile-open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+
+    backBtn?.addEventListener('click', () => mobileNav.trigger());
+
+    overlay?.addEventListener('click', closeSidebar);
+
+    // Close on nav item click on mobile
+    sidebar?.addEventListener('click', (e) => {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            if (e.target.closest('.menu-item, .sidebar-util-link')) {
+                closeSidebar();
+            }
+        }
+    });
+
+    // Close on resize back to desktop
+    window.matchMedia('(max-width: 768px)').addEventListener('change', (e) => {
+        if (!e.matches) {
+            closeSidebar();
+            mobileNav.pop();
+        }
+    });
+}
+
+function initSidebarCollapse() {
+    const btn = document.getElementById('sidebar-toggle');
+    const mq = window.matchMedia('(min-width: 769px)');
+
+    function applyCollapsed(collapsed) {
+        if (!mq.matches) {
+            document.body.classList.remove('sidebar-collapsed');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'true');
+                btn.title = 'Collapse sidebar';
+                btn.setAttribute('aria-label', 'Collapse sidebar');
+            }
+            return;
+        }
+        document.body.classList.toggle('sidebar-collapsed', collapsed);
+        if (btn) {
+            btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+            btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+        }
+    }
+
+    applyCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+
+    mq.addEventListener('change', () => {
+        applyCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    });
+
+    btn?.addEventListener('click', () => {
+        if (!mq.matches) return;
+        const next = !document.body.classList.contains('sidebar-collapsed');
+        applyCollapsed(next);
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+    });
+}
+
+async function openSiteDetails(site) {
+    currentDetailSite = site;
+
+    // Mobile: switch to full-screen detail mode
+    const sitesLayout = document.querySelector('#sites-view .master-detail-layout');
+    if (sitesLayout) sitesLayout.classList.add('mobile-detail-open');
+    const siteName = site.name || site.url;
+    mobileNav.push(() => {
+        if (sitesLayout) sitesLayout.classList.remove('mobile-detail-open');
+    }, siteName.replace(/https?:\/\//, '').replace(/\/$/, ''));
+
+    showDetailContent();
+
+    const iconLetter = siteName.replace(/https?:\/\//, '').charAt(0).toUpperCase();
+    const detailIcon = document.getElementById('detail-icon');
+    if (detailIcon) detailIcon.textContent = iconLetter;
+    
+    const nameEl = document.getElementById('detail-site-name');
+    if (nameEl) nameEl.textContent = siteName;
+    
+    const urlEl = document.getElementById('detail-url-small');
+    if (urlEl) {
+        urlEl.textContent = site.url.replace(/https?:\/\//, '');
+        urlEl.href = site.url;
+    }
+    
+    const statusEl = document.getElementById('detail-status');
+    if (statusEl) {
+        const statusClass = site.status === 'completed' ? 'ready' : site.status;
+        const statusText = site.status === 'completed' ? 'Ready' : site.status.charAt(0).toUpperCase() + site.status.slice(1);
+        statusEl.innerHTML = `<span class="status-badge ${statusClass}"><span class="dot"></span>${statusText}</span>`;
+    }
+    
+    const pagesEl = document.getElementById('detail-pages');
+    if (pagesEl) pagesEl.textContent = site.pages_crawled || 0;
+    
+    const indexedEl = document.getElementById('detail-indexed');
+    if (indexedEl) indexedEl.textContent = site.pages_indexed || 0;
+    
+    const docs = await loadSiteDocuments(site.site_id);
+    const docsCountEl = document.getElementById('detail-docs-count');
+    if (docsCountEl) docsCountEl.textContent = docs?.length || 0;
+    
+    await loadSiteConfig(site.site_id);
+
+    const breadcrumbSite = document.getElementById('detail-breadcrumb-site-name');
+    if (breadcrumbSite) breadcrumbSite.textContent = siteName;
+
+    activateDetailTab(getDetailTabFromHash());
+
+    updateAppearanceEmbedCode();
+    updateWidgetPreview();
+
+    setupDetailTabs();
+    setupQuickActions();
+}
+
+function setupQuickActions() {
+    const recrawlBtn = document.getElementById('recrawl-site');
+    if (recrawlBtn) {
+        recrawlBtn.onclick = recrawlSite;
+    }
+    
+    const addDocsBtn = document.getElementById('add-documents-btn');
+    if (addDocsBtn) {
+        addDocsBtn.onclick = openUploadModal;
+    }
+    
+    const deleteBtn = document.getElementById('delete-site');
+    if (deleteBtn) {
+        deleteBtn.onclick = deleteSite;
+    }
+}
+
+function closeSidePanel() {
+    if (elements.siteDetailsPanel) {
+        elements.siteDetailsPanel.classList.remove('active');
+    }
+    if (elements.sidePanelOverlay) {
+        elements.sidePanelOverlay.classList.remove('active');
+    }
+    document.body.style.overflow = '';
+    document.querySelectorAll('.site-card, .site-list-item').forEach(c => c.classList.remove('active'));
+}
+
+function setupDetailTabs() {
+    const tabs = document.querySelectorAll('#detail-settings-nav .detail-tab');
+
+    tabs.forEach(tab => {
+        tab.onclick = () => activateDetailTab(tab.dataset.tab);
+    });
+}
+
+// ---- module: documents.js ----
+// Document management for the selected site: list, delete, embed copy, recrawl, delete site.
+// Extracted from core.js in ROADMAP 4.1 increment 3.
+async function loadSiteDocuments(siteId) {
+    try {
+        const response = await fetch(`${API_BASE}/documents/${siteId}`, {
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) return [];
+        
+        const data = await response.json();
+        renderSiteDocuments(data.documents);
+        return data.documents || [];
+    } catch (error) {
+        console.error('Failed to load documents:', error);
+        return [];
+    }
+}
+
+function renderSiteDocuments(documents) {
+    const list = elements.documentsList;
+    if (!list) return;
+    
+    if (!documents || documents.length === 0) {
+        list.innerHTML = `
+            <div class="empty-docs">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <p>No documents yet</p>
+                <span>Upload PDFs, docs, and more</span>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = documents.map(doc => {
+        const ext = doc.file_type.replace('.', '');
+        const iconClass = getFileIconClass(ext);
+        const statusIcon = doc.status === 'indexed' 
+            ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+            : (doc.status === 'error' 
+                ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+                : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="3"><circle cx="12" cy="12" r="1"/></svg>');
+        
+        return `
+            <div class="doc-item">
+                <div class="file-icon ${iconClass}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${doc.filename}</div>
+                    <div class="file-meta">${doc.word_count?.toLocaleString() || 0} words · ${doc.chunks || 0} chunks</div>
+                </div>
+                <span class="doc-status">${statusIcon}</span>
+                <button type="button" class="doc-delete" onclick="deleteDocument('${doc.id}')" title="Delete document">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+async function deleteDocument(docId) {
+    if (!currentDetailSite) return;
+    
+    if (!confirm('Are you sure you want to delete this document?')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/documents/${currentDetailSite.site_id}/${docId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            await loadSiteDocuments(currentDetailSite.site_id);
+        } else {
+            alert('Failed to delete document');
+        }
+    } catch (error) {
+        console.error('Failed to delete document:', error);
+    }
+}
+
+window.deleteDocument = deleteDocument;
+
+function closeDetailsModal() {
+    closeSidePanel();
+}
+
+async function copyDetailEmbed() {
+    const code = document.getElementById('detail-embed-code').textContent;
+    try {
+        await navigator.clipboard.writeText(code);
+        const btn = document.getElementById('copy-detail-embed');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Copied!';
+        setTimeout(() => btn.innerHTML = originalHTML, 2000);
+    } catch (error) {
+        console.error('Failed to copy:', error);
+    }
+}
+
+async function recrawlSite() {
+    if (!currentDetailSite) return;
+    
+    const btn = document.getElementById('recrawl-site');
+    btn.disabled = true;
+    btn.textContent = 'Crawling...';
+    
+    try {
+        await fetch(`${API_BASE}/crawl`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ url: currentDetailSite.url, max_pages: 50 })
+        });
+        
+        closeDetailsModal();
+        await loadSites();
+        pollSiteStatus(currentDetailSite.site_id);
+    } catch (error) {
+        console.error('Failed to recrawl:', error);
+        alert('Failed to start crawl. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Re-crawl';
+    }
+}
+
+async function deleteSite() {
+    if (!currentDetailSite) return;
+    
+    if (!confirm(`Are you sure you want to delete "${currentDetailSite.name || currentDetailSite.url}"?`)) {
+        return;
+    }
+    
+    try {
+        await fetch(`${API_BASE}/sites/${currentDetailSite.site_id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        
+        closeDetailsModal();
+        await loadSites();
+    } catch (error) {
+        console.error('Failed to delete:', error);
+        alert('Failed to delete site. Please try again.');
+    }
+}
+
+// ---- module: analytics.js ----
 // ==================== Analytics ====================
 
 let conversationsChart = null;
@@ -2938,6 +2956,7 @@ function setupAnalyticsPeriodButtons() {
     });
 }
 
+// ---- module: customization.js ----
 // ==================== Customization Panel ====================
 
 let currentSiteConfig = null;
@@ -3394,6 +3413,7 @@ async function resetConfig() {
     }
 }
 
+// ---- module: conversations.js ----
 // ==================== Conversation Management ====================
 
 let conversationsState = {
@@ -4436,6 +4456,7 @@ async function handleDelete() {
     }
 }
 
+// ---- module: quick_prompts.js ----
 // ==================== Quick Prompts Management ====================
 
 let quickPromptsState = {
@@ -4695,6 +4716,7 @@ async function saveQuickPrompts() {
     }
 }
 
+// ---- module: triggers.js ----
 // ==================== Proactive Chat Triggers ====================
 
 let triggersState = {
@@ -5234,7 +5256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
+// ---- module: handoffs.js ----
 // ==================== Human Handoffs ====================
 
 let handoffsState = {
@@ -6270,6 +6292,7 @@ async function saveHandoffConfig() {
     }
 }
 
+// ---- module: security.js ----
 // ==================== Security Settings ====================
 
 let securityAllowedDomains = [];
@@ -6550,6 +6573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSecuritySettings();
 });
 
+// ---- module: whitelabel.js ----
 // ==================== White-label Settings ====================
 
 let whiteLabelConfig = null;
@@ -6712,6 +6736,7 @@ function initWhiteLabelSettings() {
     loadWhiteLabelConfig();
 }
 
+// ---- module: settings.js ----
 // ==================== Settings Panels ====================
 
 let settingsPanelsInit = false;
@@ -6813,6 +6838,7 @@ function initProfileSettings() {
     });
 }
 
+// ---- module: team.js ----
 // ==================== Team Management ====================
 
 let teamListenersBound = false;
@@ -7250,6 +7276,7 @@ async function submitMemberForm() {
     }
 }
 
+// ---- module: crawling.js ----
 // ==================== Scheduled Crawling ====================
 
 let crawlScheduleConfig = null;
@@ -7659,6 +7686,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCrawlScheduleSettings();
 });
 
+// ---- module: leads.js ----
 // ==================== Lead Management ====================
 
 let leadsState = {
@@ -8038,6 +8066,7 @@ async function deleteLead(leadId) {
 
 window.deleteLead = deleteLead;
 
+// ---- module: qa_training.js ----
 // ==================== Q&A Training Functions ====================
 
 let qaState = {

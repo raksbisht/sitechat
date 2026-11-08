@@ -1,0 +1,32 @@
+# Pre-commit hooks (ROADMAP 3.2)
+# Install: pip install pre-commit && pre-commit install
+repos:
+  - repo: local
+    hooks:
+      # Ruff — fast linting of backend Python code
+      - id: ruff
+        name: ruff check (backend)
+        entry: .venv/bin/python -m ruff check --fix
+        language: system
+        files: ^backend/(app|tests)/.*\.py$
+        pass_filenames: false
+
+      # Black — formatting gate matching the CI lint job
+      - id: black
+        name: black --check (backend)
+        entry: .venv/bin/python -m black --check
+        language: system
+        files: ^backend/(app|tests)/.*\.py$
+        pass_filenames: false
+
+      # Prevent committing real secrets / credentials (ROADMAP 3.3)
+      - id: detect-secrets
+        name: detect secrets
+        entry: >-
+          .venv/bin/python -c "import re,sys;
+          pat=re.compile(r'(?i)(mongodb(?:\+srv)?://[^\\s\"'']*(?::[^@\\s\"'']+){2}@)|-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}');
+          bad=[f for f in sys.argv[1:] if not f.endswith(('.example','.lock')) and pat.search(open(f, errors='ignore').read())];
+          print('Possible secrets in:', *bad, sep='\\n  '); sys.exit(bool(bad))"
+        language: system
+        types: [text]
+        exclude: ^(docs/|.*\.md$|backend/tests/)

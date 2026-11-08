@@ -19,20 +19,22 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
-    
-    @field_validator('password')
+
+    @field_validator("password")
     @classmethod
     def validate_password_strength(cls, v: str) -> str:
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(v)
         if not is_valid:
             raise ValueError(error_message)
         return v
-    
-    @field_validator('name')
+
+    @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
         from app.core.security import sanitize_input
+
         v = sanitize_input(v, max_length=100)
         if len(v) < 2:
             raise ValueError("Name must be at least 2 characters")
@@ -49,23 +51,25 @@ class ProfileUpdate(BaseModel):
     current_password: Optional[str] = None
     new_password: Optional[str] = None
 
-    @field_validator('name')
+    @field_validator("name")
     @classmethod
     def validate_name(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         from app.core.security import sanitize_input
+
         v = sanitize_input(v, max_length=100)
         if len(v) < 2:
             raise ValueError("Name must be at least 2 characters")
         return v
 
-    @field_validator('new_password')
+    @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(v)
         if not is_valid:
             raise ValueError(error_message)
@@ -82,6 +86,7 @@ class AgentCreate(BaseModel):
     @classmethod
     def validate_password_strength_agent(cls, v: str) -> str:
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(v)
         if not is_valid:
             raise ValueError(error_message)
@@ -99,6 +104,7 @@ class AgentUpdate(BaseModel):
         if v is None or v == "":
             return None
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(v)
         if not is_valid:
             raise ValueError(error_message)
@@ -117,6 +123,7 @@ class SiteOwnerUpdate(BaseModel):
         if v is None:
             return v
         from app.core.security import sanitize_input
+
         v = sanitize_input(v, max_length=100)
         if len(v) < 2:
             raise ValueError("Name must be at least 2 characters")
@@ -128,6 +135,7 @@ class SiteOwnerUpdate(BaseModel):
         if v is None or v == "":
             return None
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(v)
         if not is_valid:
             raise ValueError(error_message)
@@ -162,11 +170,11 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 def get_password_hash(password: str) -> str:
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -195,13 +203,13 @@ class AuthService:
     def __init__(self, mongodb):
         # Use provider interface - mongodb is a database provider instance
         self._provider = mongodb
-    
+
     async def create_user(self, user_data: UserCreate, role: UserRole = UserRole.USER) -> Optional[dict]:
         # Use provider interface
         existing = await self._provider.get_user_by_email(user_data.email)
         if existing:
             return None
-        
+
         user_doc = {
             "email": user_data.email,
             "name": user_data.name,
@@ -209,14 +217,14 @@ class AuthService:
             "role": role.value,
             "must_change_password": False,
             "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
         }
-        
+
         user_id = await self._provider.create_user(user_doc)
         user_doc["_id"] = user_id
         user_doc["user_id"] = user_id
         return user_doc
-    
+
     async def authenticate_user(self, email: str, password: str) -> Optional[dict]:
         # Use provider interface
         user = await self._provider.get_user_by_email(email)
@@ -225,18 +233,18 @@ class AuthService:
         if not verify_password(password, user.get("password_hash", "")):
             return None
         return user
-    
+
     async def get_user_by_id(self, user_id: str) -> Optional[dict]:
         # Use provider interface
         return await self._provider.get_user_by_id(user_id)
-    
+
     async def get_user_by_email(self, email: str) -> Optional[dict]:
         # Use provider interface
         return await self._provider.get_user_by_email(email)
-    
+
     async def get_all_users(self) -> list:
         # Use provider interface if available, otherwise return empty list
-        if hasattr(self._provider, 'get_all_users'):
+        if hasattr(self._provider, "get_all_users"):
             return await self._provider.get_all_users()
         return []
 
@@ -265,10 +273,10 @@ class AuthService:
             await self._provider.update_user(user_id, updates)
 
         return await self._provider.get_user_by_id(user_id)
-    
+
     async def update_user_role(self, user_id: str, role: UserRole) -> bool:
         # Use provider interface if available
-        if hasattr(self._provider, 'update_user'):
+        if hasattr(self._provider, "update_user"):
             return await self._provider.update_user(user_id, {"role": role.value})
         return False
 
@@ -288,10 +296,10 @@ class AuthService:
         if hasattr(self._provider, "update_user"):
             await self._provider.update_user(user_id, updates)
         return await self._provider.get_user_by_id(user_id)
-    
+
     async def delete_user(self, user_id: str) -> bool:
         # Use provider interface if available
-        if hasattr(self._provider, 'delete_user'):
+        if hasattr(self._provider, "delete_user"):
             return await self._provider.delete_user(user_id)
         return False
 
@@ -392,7 +400,7 @@ class AuthService:
             transferred_agents = await self._provider.transfer_agents_to_user(user_id, admin_id)
             logger.info(f"Transferred {transferred_agents} agents from user {user_id} to admin {admin_id}")
         return await self.delete_user(user_id)
-    
+
     async def ensure_admin_exists(self):
         """
         Create initial admin user if no admin exists.
@@ -401,11 +409,11 @@ class AuthService:
         """
         # Check if admin exists using provider interface
         admin = await self._provider.get_user_by_email(settings.ADMIN_EMAIL) if settings.ADMIN_EMAIL else None
-        
+
         # Also check by role if we have that method
-        if not admin and hasattr(self._provider, 'get_user_by_role'):
+        if not admin and hasattr(self._provider, "get_user_by_role"):
             admin = await self._provider.get_user_by_role("admin")
-        
+
         if admin and admin.get("role") == "admin":
             # Legacy admins (created before this flag existed): require password change on first login.
             if admin.get("must_change_password") is None and hasattr(self._provider, "update_user"):
@@ -416,22 +424,23 @@ class AuthService:
                 )
             logger.info(f"Admin user exists: {admin.get('email')}")
             return
-        
+
         # Check if admin auto-creation is disabled
         if not settings.ADMIN_PASSWORD:
             logger.info("Admin auto-creation disabled (ADMIN_PASSWORD is empty)")
             logger.info("Create an admin user via API or set ADMIN_PASSWORD in .env")
             return
-        
+
         # Validate admin password meets requirements
         from app.core.security import validate_password
+
         is_valid, error_message = validate_password(settings.ADMIN_PASSWORD)
-        
+
         if not is_valid:
             logger.warning(f"Cannot create admin: {error_message}")
             logger.warning("Set a strong ADMIN_PASSWORD in .env or create admin via API")
             return
-        
+
         try:
             logger.info("Creating initial admin user...")
             admin_doc = {
@@ -441,16 +450,16 @@ class AuthService:
                 "role": UserRole.ADMIN.value,
                 "must_change_password": True,
                 "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.utcnow(),
             }
-            
+
             await self._provider.create_user(admin_doc)
             logger.info(f"Admin user created: {settings.ADMIN_EMAIL}")
-            
+
             # Security warning for default email
             if settings.ADMIN_EMAIL == "admin@example.com":
                 logger.warning("SECURITY: Using default admin email. Consider changing ADMIN_EMAIL")
-                
+
         except Exception as e:
             logger.error(f"Failed to create admin user: {e}")
 
