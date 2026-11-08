@@ -1,3 +1,7 @@
+// GENERATED FILE - do not edit.
+// Built from frontend/js/modules/ by `npm run build:dashboard`.
+
+// ---- module: core.js ----
 const API_BASE = window.location.origin + '/api';
 
 let sites = [];
@@ -2528,6 +2532,7 @@ async function checkHealth() {
     }
 }
 
+// ---- module: analytics.js ----
 // ==================== Analytics ====================
 
 let conversationsChart = null;
@@ -2938,6 +2943,7 @@ function setupAnalyticsPeriodButtons() {
     });
 }
 
+// ---- module: customization.js ----
 // ==================== Customization Panel ====================
 
 let currentSiteConfig = null;
@@ -3394,6 +3400,7 @@ async function resetConfig() {
     }
 }
 
+// ---- module: conversations.js ----
 // ==================== Conversation Management ====================
 
 let conversationsState = {
@@ -4436,6 +4443,7 @@ async function handleDelete() {
     }
 }
 
+// ---- module: quick_prompts.js ----
 // ==================== Quick Prompts Management ====================
 
 let quickPromptsState = {
@@ -4695,6 +4703,7 @@ async function saveQuickPrompts() {
     }
 }
 
+// ---- module: triggers.js ----
 // ==================== Proactive Chat Triggers ====================
 
 let triggersState = {
@@ -5234,7 +5243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
+// ---- module: handoffs.js ----
 // ==================== Human Handoffs ====================
 
 let handoffsState = {
@@ -6270,6 +6279,7 @@ async function saveHandoffConfig() {
     }
 }
 
+// ---- module: security.js ----
 // ==================== Security Settings ====================
 
 let securityAllowedDomains = [];
@@ -6550,6 +6560,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initSecuritySettings();
 });
 
+// ---- module: whitelabel.js ----
 // ==================== White-label Settings ====================
 
 let whiteLabelConfig = null;
@@ -6712,6 +6723,7 @@ function initWhiteLabelSettings() {
     loadWhiteLabelConfig();
 }
 
+// ---- module: settings.js ----
 // ==================== Settings Panels ====================
 
 let settingsPanelsInit = false;
@@ -6813,6 +6825,7 @@ function initProfileSettings() {
     });
 }
 
+// ---- module: team.js ----
 // ==================== Team Management ====================
 
 let teamListenersBound = false;
@@ -7250,6 +7263,7 @@ async function submitMemberForm() {
     }
 }
 
+// ---- module: crawling.js ----
 // ==================== Scheduled Crawling ====================
 
 let crawlScheduleConfig = null;
@@ -7659,6 +7673,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCrawlScheduleSettings();
 });
 
+// ---- module: leads.js ----
 // ==================== Lead Management ====================
 
 let leadsState = {
@@ -8038,6 +8053,7 @@ async function deleteLead(leadId) {
 
 window.deleteLead = deleteLead;
 
+// ---- module: qa_training.js ----
 // ==================== Q&A Training Functions ====================
 
 let qaState = {
