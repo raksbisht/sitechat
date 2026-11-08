@@ -67,7 +67,8 @@
 ## 4. Среднесрочно (1–3 месяца)
 
 ### 4.1 Модулизация фронтенда (главный техдолг)
-- [ ] Разбить `frontend/js/app.js` (~8.6k строк) на ES-модули по областям: auth, sites, documents, chat, settings, ui-компоненты
+- [x] Первый шаг (безрисковый): разбит `frontend/js/app.js` (8593 строки) на 14 файлов-областей в `frontend/js/modules/` (core, analytics, customization, conversations, quick_prompts, triggers, handoffs, security, whitelabel, settings, team, crawling, leads, qa_training); добавлен генератор `frontend/build-dashboard.js` (`npm run build:dashboard`) — собирает обратно единый классический скрипт `app.js`, байт-в-байт эквивалентный оригиналу (проверено diff с git HEAD; `node --check` OK; jest 57 passed). Источником истины теперь являются модули, `app.js` — генерируемый артефакт.
+- [ ] Дальнейшая декомпозиция: из core.js выделить auth/sites/documents/ui (следующий инкремент), затем переход к нативным ES-модулям (`<script type="module">`) с удалением конкатенатора и window-глобалов
 - [ ] Сборка через esbuild/Vite без потери «vanilla» - простоты деплоя (статические файлы)
 - [ ] Виджет (`widget/`) — отдельный минифицированный бандл + автоматизация сборки в CI
 - [ ] Смоук-тесты фронтенда (Playwright) хотя бы для ключевых сценариев: логин → загрузка документа → вопрос в чате
