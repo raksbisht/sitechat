@@ -14,7 +14,7 @@ from app.providers.cache.base import BaseCacheProvider
 # Singleton instances
 _db: Optional[BaseDatabaseProvider] = None
 _storage: Optional[BaseStorageProvider] = None
-_cache: Optional["MemoryCacheProvider"] = None
+_cache: Optional[BaseCacheProvider] = None
 
 
 # ===========================================

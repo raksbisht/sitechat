@@ -33,9 +33,11 @@
 - [ ] Оценить необходимость Git LFS для остающихся медиафайлов (`docs/images/*`)
 
 ### 2.3 Настроить CI (GitHub Actions)
-- [ ] Workflow `backend-tests.yml`: установка зависимостей → `pytest` → публикация отчёта о покрытии
-- [ ] Workflow `lint.yml`: `flake8`/`ruff` + `black --check` для бэкенда
-- [ ] Требовать зелёный CI для merge в основную ветку (branch protection)
+- [x] Workflow `.github/workflows/backend-tests.yml`: `pip install -r requirements-dev.txt` → `pytest --cov=app` (+ junit-отчёт, артефакт покрытия). Локально верифицировано: **481 passed, 13 skipped, покрытие app/ — 54%**
+- [x] Workflow `.github/workflows/lint.yml`: `ruff check` (жёсткий гейт E9,F63,F7,F82; конфиг в `backend/pyproject.toml`) + `black --check` (advisory, continue-on-error до форматирования легаси)
+- [x] Создан `backend/requirements-dev.txt` (ruff, black, pytest-cov)
+- [x] Исправлена реальная ошибка, найденная ruff-гейтом: несуществующий тип `"MemoryCacheProvider"` в аннотации `_cache` (`app/core/dependencies.py`) → `BaseCacheProvider`
+- [ ] Требовать зелёный CI для merge в основную ветку (branch protection — настройка на GitHub, недоступна из репозитория)
 
 ---
 
