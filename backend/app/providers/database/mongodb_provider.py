@@ -19,6 +19,9 @@ class MongoDBProvider(BaseDatabaseProvider):
     def __init__(self):
         self.client: Optional[AsyncIOMotorClient] = None
         self.db: Optional[AsyncIOMotorDatabase] = None
+        # Lazily-initialized legacy MongoDB wrapper used by all operations.
+        # Keeping operations in one place avoids duplicating query logic.
+        self._legacy = None
     
     # ===========================================
     # Connection Management
@@ -27,11 +30,16 @@ class MongoDBProvider(BaseDatabaseProvider):
     async def connect(self) -> None:
         """Connect to MongoDB."""
         try:
-            self.client = AsyncIOMotorClient(settings.MONGODB_URL)
-            self.db = self.client[settings.MONGODB_DB]
+            from app.database.mongodb import MongoDB
+
+            if self._legacy is None:
+                self._legacy = MongoDB()
+            if self._legacy.client is None:
+                await self._legacy.connect()
+            self.client = self._legacy.client
+            self.db = self._legacy.db
             await self.client.admin.command('ping')
             logger.info(f"Connected to MongoDB: {settings.MONGODB_DB}")
-            await self._create_indexes()
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise

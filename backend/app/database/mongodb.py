@@ -99,29 +99,27 @@ class MongoDB:
         if site_id:
             update_set["site_id"] = site_id
         
+        # Track first assistant response time (set only on insert, never overwritten)
+        set_on_insert = {
+            "created_at": datetime.utcnow(),
+            "status": "open",
+            "priority": "medium",
+            "tags": [],
+            "unread": True,
+            "notes": []
+        }
+        if role == "assistant":
+            set_on_insert["first_response_at"] = datetime.utcnow()
+
         result = await self.db.conversations.update_one(
             {"session_id": session_id},
             {
                 "$push": {"messages": message},
                 "$set": update_set,
-                "$setOnInsert": {
-                    "created_at": datetime.utcnow(),
-                    "status": "open",
-                    "priority": "medium",
-                    "tags": [],
-                    "unread": True,
-                    "notes": []
-                }
+                "$setOnInsert": set_on_insert
             },
             upsert=True
         )
-
-        # Track first assistant response time
-        if role == "assistant":
-            await self.db.conversations.update_one(
-                {"session_id": session_id, "first_response_at": {"$exists": False}},
-                {"$set": {"first_response_at": datetime.utcnow()}}
-            )
 
         return message["message_id"]
     
