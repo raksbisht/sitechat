@@ -182,7 +182,7 @@ class TestLLMFactory:
         mock_settings.LLM_TEMPERATURE = 0.7
         
         with patch("app.providers.factory.settings", mock_settings):
-            with patch("langchain_community.chat_models.ChatOllama") as mock_chat:
+            with patch("langchain_ollama.ChatOllama") as mock_chat:
                 from app.providers.factory import get_llm, clear_provider_cache
                 clear_provider_cache()
                 
@@ -216,7 +216,7 @@ class TestLLMFactory:
         mock_settings.LLM_TEMPERATURE = 0.7
         
         with patch("app.providers.factory.settings", mock_settings):
-            with patch("langchain_community.chat_models.ChatOllama") as mock_chat:
+            with patch("langchain_ollama.ChatOllama") as mock_chat:
                 from app.providers.factory import get_llm, clear_provider_cache
                 clear_provider_cache()
                 
@@ -607,7 +607,7 @@ class TestProviderCacheManagement:
         mock_settings.EMBEDDINGS_MODEL = "all-MiniLM-L6-v2"
         
         with patch("app.providers.factory.settings", mock_settings):
-            with patch("langchain_community.chat_models.ChatOllama") as mock_chat:
+            with patch("langchain_ollama.ChatOllama") as mock_chat:
                 with patch("langchain_community.embeddings.HuggingFaceEmbeddings") as mock_embeddings:
                     from app.providers.factory import get_llm, get_embeddings, clear_provider_cache
                     

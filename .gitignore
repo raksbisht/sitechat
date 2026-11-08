@@ -78,3 +78,8 @@ e2e/playwright/.cache/
 *.bak
 *.tmp
 *.temp
+
+# Local data / vector store artifacts (regenerated at runtime)
+backend/data/
+*.faiss
+*.pkl

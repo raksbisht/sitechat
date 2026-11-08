@@ -23,14 +23,13 @@
 ## 2. Приоритет СРОЧНО (этап 0–1 неделя)
 
 ### 2.1 Развернуть окружение и прогнать тесты ✅ верификация базы
-- [ ] Создать venv, `pip install -r requirements-dev.txt`
-- [ ] Запустить `pytest` локально (с мок-БД / фикстурами) — убедиться, что все ~440 тестов проходят
-- [ ] Зафиксировать в issue любые падающие тесты
+- [x] Создать venv, `pip install -r requirements.txt` (зависимости установлены в системный interpreter; `requirements-dev.txt` пока нет)
+- [x] Запустить `pytest` локально (с мок-БД / фикстурами) — **481 passed, 13 skipped, 0 failed** (запуск: `python -m pytest tests -p no:libtmux`)
+- [x] Зафиксировать падающие тесты — исправлены по факту: атомарность `first_response_at`, валидация паролей (`app/core/security.py`), подключение `MongoDBProvider.connect()` (патч `motor.motor_asyncio.AsyncIOMotorClient`), миграция `ChatOllama` → пакет `langchain-ollama`
 
 ### 2.2 Чистка git
-- [ ] Выявить бинарные артефакты в истории (`git ls-files` по размеру/типу)
-- [ ] Дополнить/исправить `.gitignore` (`__pycache__/`, `.venv/`, `*.pyc`, `node_modules/`, `.faiss/`, локальные БД)
-- [ ] Удалить артефакты из HEAD; при необходимости — миграция истории (`git filter-repo` или BFG)
+- [x] Выявить бинарные артефакты в истории (`git ls-files`): найдены `backend/data/chroma_db/faiss_index/index.faiss`, `index.pkl`
+- [x] Дополнить `.gitignore` (`backend/data/`, `*.faiss`, `*.pkl`; остальное — `__pycache__/`, `.venv/`, `node_modules/` — уже было) и удалить артефакты из HEAD (`git rm --cached`)
 - [ ] Оценить необходимость Git LFS для остающихся медиафайлов (`docs/images/*`)
 
 ### 2.3 Настроить CI (GitHub Actions)
