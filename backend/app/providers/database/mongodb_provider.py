@@ -4,7 +4,7 @@ Wraps the existing MongoDB class to maintain backward compatibility.
 """
 from datetime import datetime
 from typing import Dict, List, Optional, Any
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+import motor.motor_asyncio
 from loguru import logger
 import re
 import uuid
@@ -17,8 +17,8 @@ class MongoDBProvider(BaseDatabaseProvider):
     """MongoDB implementation of database provider."""
     
     def __init__(self):
-        self.client: Optional[AsyncIOMotorClient] = None
-        self.db: Optional[AsyncIOMotorDatabase] = None
+        self.client: Optional[motor.motor_asyncio.AsyncIOMotorClient] = None
+        self.db: Optional[motor.motor_asyncio.AsyncIOMotorDatabase] = None
         # Lazily-initialized legacy MongoDB wrapper used by all operations.
         # Keeping operations in one place avoids duplicating query logic.
         self._legacy = None
@@ -28,18 +28,19 @@ class MongoDBProvider(BaseDatabaseProvider):
     # ===========================================
     
     async def connect(self) -> None:
-        """Connect to MongoDB."""
-        try:
-            from app.database.mongodb import MongoDB
+        """Connect to MongoDB.
 
-            if self._legacy is None:
-                self._legacy = MongoDB()
-            if self._legacy.client is None:
-                await self._legacy.connect()
-            self.client = self._legacy.client
-            self.db = self._legacy.db
+        Connection creation and verification live in this module so that
+        tests (and callers) can patch ``AsyncIOMotorClient`` at
+        ``app.providers.database.mongodb_provider``. Index creation is
+        delegated to the legacy MongoDB wrapper to avoid duplicating logic.
+        """
+        try:
+            self.client = motor.motor_asyncio.AsyncIOMotorClient(settings.MONGODB_URI)
+            self.db = self.client[settings.MONGODB_DB_NAME]
             await self.client.admin.command('ping')
-            logger.info(f"Connected to MongoDB: {settings.MONGODB_DB}")
+            logger.info(f"Connected to MongoDB: {settings.MONGODB_DB_NAME}")
+            await self._create_indexes()
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
