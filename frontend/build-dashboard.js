@@ -14,6 +14,9 @@ const OUT = path.join(__dirname, 'js', 'app.js');
 // Load order matters: core first (globals, auth, navigation), then feature panels.
 const ORDER = [
     'core.js',
+    'sites.js',
+    'site_detail.js',
+    'documents.js',
     'analytics.js',
     'customization.js',
     'conversations.js',
