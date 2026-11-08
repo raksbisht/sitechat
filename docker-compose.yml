@@ -1,0 +1,46 @@
+# SiteChat quick start: docker compose up
+# Backend reads config from backend/.env (copy backend/.env.example to backend/.env first).
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: backend/.env
+        required: false   # falls back to defaults + environment overrides below
+    environment:
+      # Inside the compose network MongoDB is reachable as host `mongo`
+      MONGODB_URL: mongodb://mongo:27017
+      MONGODB_DB: ${MONGODB_DB:-SiteChat}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-backend-dot-env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sitechat.in}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!}
+      # Ollama on the host machine (Linux); use host.docker.internal with extra_hosts on macOS/Windows
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    volumes:
+      - sitechat_data:/app/data
+      - sitechat_logs:/app/logs
+    depends_on:
+      mongo:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  mongo_data:
+  sitechat_data:
+  sitechat_logs:

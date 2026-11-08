@@ -30,30 +30,35 @@
 ### 2.2 Чистка git
 - [x] Выявить бинарные артефакты в истории (`git ls-files`): найдены `backend/data/chroma_db/faiss_index/index.faiss`, `index.pkl`
 - [x] Дополнить `.gitignore` (`backend/data/`, `*.faiss`, `*.pkl`; остальное — `__pycache__/`, `.venv/`, `node_modules/` — уже было) и удалить артефакты из HEAD (`git rm --cached`)
-- [ ] Оценить необходимость Git LFS для остающихся медиафайлов (`docs/images/*`)
+- [x] Оценить необходимость Git LFS для остающихся медиафайлов (`docs/images/*`) — **LFS не требуется**: 6 файлов, суммарно 1.6 МБ, ни один не превышает 1 МБ
 
 ### 2.3 Настроить CI (GitHub Actions)
-- [ ] Workflow `backend-tests.yml`: установка зависимостей → `pytest` → публикация отчёта о покрытии
-- [ ] Workflow `lint.yml`: `flake8`/`ruff` + `black --check` для бэкенда
-- [ ] Требовать зелёный CI для merge в основную ветку (branch protection)
+- [x] Workflow `.github/workflows/backend-tests.yml`: `pip install -r requirements-dev.txt` → `pytest --cov=app` (+ junit-отчёт, артефакт покрытия). Локально верифицировано: **481 passed, 13 skipped, покрытие app/ — 54%**
+- [x] Workflow `.github/workflows/lint.yml`: `ruff check` (жёсткий гейт E9,F63,F7,F82; конфиг в `backend/pyproject.toml`) + `black --check` (advisory, continue-on-error до форматирования легаси)
+- [x] Создан `backend/requirements-dev.txt` (ruff, black, pytest-cov)
+- [x] Исправлена реальная ошибка, найденная ruff-гейтом: несуществующий тип `"MemoryCacheProvider"` в аннотации `_cache` (`app/core/dependencies.py`) → `BaseCacheProvider`
+- [ ] Требовать зелёный CI для merge в основную ветку (branch protection — настройка на GitHub, недоступна из репозитория)
 
 ---
 
 ## 3. Короткосрочно (2–4 недели)
 
 ### 3.1 Контейнеризация и простой запуск
-- [ ] `Dockerfile` для бэкенда (multi-stage)
-- [ ] `docker-compose.yml`: `api` (FastAPI/uvicorn) + `mongo` (+ том данных)
-- [ ] Инструкции быстрого старта в README (`docker compose up`)
-- [ ] `.env.example` с полным списком конфигурации (секреты не коммитить)
+- [x] `.env.example` с полным списком конфигурации (секреты не коммитить) — очищен от реальных кредов, добавлены блоки LLM/embeddings/vector-store/PostgreSQL/S3/Redis; ⚠️ **пароль MongoDB Atlas, ранее присутствовавший в истории git (`backend/.env.example`, коммиты c58ef22…5c3e605), требует ротации вручную**
+- [x] `Dockerfile` для бэкенда (`backend/Dockerfile`: multi-stage python:3.12-slim, non-root user, HEALTHCHECK, тома `/app/data`, `/app/logs`)
+- [x] `docker-compose.yml`: `api` (FastAPI/uvicorn, порт 8000) + `mongo:7` (+ тома данных, healthcheck, `MONGODB_URL=mongodb://mongo:27017`, Ollama через host.docker.internal)
+- [x] Инструкции быстрого старта в README (`docker compose up -d --build`)
+- Примечание: сборка образа локально не проверялась (в песочнице нет Docker); YAML валиден, пути контекста/файлов верифицированы
 
 ### 3.2 Качество кода
-- [ ] Линтеры/форматтеры в pre-commit: `ruff`, `black`, конфиг в репозитории
+- [ ] Линтеры/форматтеры в pre-commit: `ruff`, `black`, конфиг в репозитории (CI-гейты ruff/black уже настроены в п. 2.3)
 - [ ] Мипинг/проверка типов критичных модулей (`pydantic`-схемы уже есть; опционально `mypy`)
 - [ ] `pip-audit` / Dependabot (или Renovate) для аудита зависимостей
 
 ### 3.3 Безопасность
+- [ ] Ротация секретов, попавших в историю git: пароль MongoDB Atlas в `backend/.env.example` (выполнить в Atlas → Database Access), затем проверить JWT_SECRET/ADMIN_PASSWORD в боевом `.env`
 - [ ] Ротация/проверка секретов: JWT-ключ, ключи шифрования API-токенов OpenAI
+- [ ] Настроить GitHub Secret Scanning push protection (на уровне организации/репозитория)
 - [ ] Rate limiting на публичный эндпоинт чата виджета
 - [ ] Проверка CORS-настроек по сайтам
 

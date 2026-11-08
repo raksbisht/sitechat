@@ -1,0 +1,26 @@
+# ==============================
+# Ruff — linting (CI gate: E9,F63,F7,F82 = syntax/undefined-name errors)
+# ==============================
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = [".venv", "__pycache__", "data"]
+
+[tool.ruff.lint]
+# Hard gate for CI: fatal/static errors only. Broader rules are enabled
+# incrementally as legacy debt is paid off (see ROADMAP 3.2).
+select = ["E9", "F63", "F7", "F82"]
+
+# ==============================
+# Black — formatting (advisory in CI until codebase is reformatted)
+# ==============================
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+extend-exclude = '''
+/(
+  \.venv
+  | __pycache__
+  | data
+)/
+'''

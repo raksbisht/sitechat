@@ -18,6 +18,7 @@ from app.models.schemas import (
     LeadCreate, Lead, LeadListItem, LeadListResponse
 )
 from app.core.security import get_client_ip
+from app.core.widget_security import enforce_site_origin
 
 limiter = Limiter(key_func=get_client_ip)
 
@@ -44,6 +45,8 @@ async def capture_lead(request: Request, body: LeadCreate):
         return {"success": True, "lead_id": "blocked", "message": "Lead captured successfully"}
 
     mongodb = await get_mongodb()
+
+    await enforce_site_origin(body.site_id, request, mongodb)
 
     if not body.email and not body.name:
         raise HTTPException(

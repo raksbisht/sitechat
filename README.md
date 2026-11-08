@@ -447,6 +447,19 @@ ollama serve
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+### Quick Start with Docker
+
+No local Python/MongoDB needed — MongoDB runs in a container; [Ollama](https://ollama.com) is expected on the host (or set `OLLAMA_BASE_URL` to a remote instance):
+
+```bash
+cp backend/.env.example backend/.env   # then edit JWT_SECRET etc.
+docker compose up -d --build           # builds backend image + starts mongo + api
+```
+
+App is available at http://localhost:8000 (see Access Points below). Data persists in named volumes (`mongo_data`, `sitechat_data`). Stop with `docker compose down`.
+
+Files: [`backend/Dockerfile`](backend/Dockerfile) (multi-stage, non-root), [`docker-compose.yml`](docker-compose.yml).
+
 ### Access Points
 
 | URL | Description |
