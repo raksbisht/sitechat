@@ -1,6 +1,7 @@
 """
 Site access helpers: admin, site owner, and support agents (handoff).
 """
+
 from typing import Any, Dict, List, Optional
 
 from app.services.auth import UserRole

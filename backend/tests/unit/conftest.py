@@ -4,6 +4,7 @@ Fixtures specific to unit tests.
 Unit tests focus on isolated business logic without external dependencies.
 Global fixtures from the parent conftest.py are automatically available.
 """
+
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 
@@ -22,9 +23,5 @@ def sample_document():
     """Sample document for document processing tests."""
     return {
         "content": "This is sample content for testing.",
-        "metadata": {
-            "source": "https://example.com/page",
-            "title": "Test Page",
-            "site_id": "test_site_123"
-        }
+        "metadata": {"source": "https://example.com/page", "title": "Test Page", "site_id": "test_site_123"},
     }

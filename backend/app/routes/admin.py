@@ -1,6 +1,7 @@
 """
 Admin API routes.
 """
+
 from fastapi import APIRouter, HTTPException
 from loguru import logger
 
@@ -20,7 +21,7 @@ async def health_check():
     mongodb_status = "unknown"
     vector_store_status = "unknown"
     ollama_status = "unknown"
-    
+
     try:
         # Check MongoDB
         try:
@@ -29,7 +30,7 @@ async def health_check():
             mongodb_status = "healthy"
         except Exception as e:
             mongodb_status = f"unhealthy: {str(e)}"
-        
+
         # Check Vector Store
         try:
             vector_store = get_vector_store()
@@ -37,7 +38,7 @@ async def health_check():
             vector_store_status = f"healthy ({stats['count']} documents)"
         except Exception as e:
             vector_store_status = f"unhealthy: {str(e)}"
-        
+
         # Check Ollama
         try:
             ollama = get_ollama_service()
@@ -48,26 +49,21 @@ async def health_check():
                 ollama_status = "unhealthy: not responding"
         except Exception as e:
             ollama_status = f"unhealthy: {str(e)}"
-        
-        overall = "healthy" if all(
-            s.startswith("healthy")
-            for s in [mongodb_status, vector_store_status, ollama_status]
-        ) else "degraded"
-        
-        return HealthCheck(
-            status=overall,
-            mongodb=mongodb_status,
-            vector_store=vector_store_status,
-            ollama=ollama_status
+
+        overall = (
+            "healthy"
+            if all(s.startswith("healthy") for s in [mongodb_status, vector_store_status, ollama_status])
+            else "degraded"
         )
-        
+
+        return HealthCheck(
+            status=overall, mongodb=mongodb_status, vector_store=vector_store_status, ollama=ollama_status
+        )
+
     except Exception as e:
         logger.error(f"Health check error: {e}")
         return HealthCheck(
-            status="unhealthy",
-            mongodb=mongodb_status,
-            vector_store=vector_store_status,
-            ollama=ollama_status
+            status="unhealthy", mongodb=mongodb_status, vector_store=vector_store_status, ollama=ollama_status
         )
 
 
@@ -79,27 +75,27 @@ async def get_stats():
     try:
         mongodb = await get_mongodb()
         vector_store = get_vector_store()
-        
+
         # Get counts
         page_count = await mongodb.get_page_count()
         vector_stats = vector_store.get_collection_stats()
-        
+
         # Get conversation stats
         conversations = await mongodb.get_all_sessions(limit=1000)
         total_conversations = len(conversations)
-        
+
         # Get latest crawl
         latest_job = await mongodb.get_latest_crawl_job()
         last_crawl = latest_job.get("created_at") if latest_job else None
-        
+
         return SystemStats(
             total_pages=page_count,
             total_chunks=vector_stats.get("count", 0),
             total_conversations=total_conversations,
             total_messages=0,  # Would need to aggregate
-            last_crawl=last_crawl
+            last_crawl=last_crawl,
         )
-        
+
     except Exception as e:
         logger.error(f"Stats error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -117,7 +113,7 @@ async def get_config():
         "chunk_overlap": settings.CHUNK_OVERLAP,
         "retrieval_k": settings.RETRIEVAL_K,
         "conversation_window": settings.CONVERSATION_WINDOW_SIZE,
-        "rate_limit": f"{settings.RATE_LIMIT_REQUESTS}/{settings.RATE_LIMIT_WINDOW}s"
+        "rate_limit": f"{settings.RATE_LIMIT_REQUESTS}/{settings.RATE_LIMIT_WINDOW}s",
     }
 
 
@@ -129,18 +125,18 @@ async def clear_cache():
     try:
         import shutil
         import os
-        
+
         # Clear LLM cache
         if os.path.exists(settings.LLM_CACHE_DIR):
             os.remove(settings.LLM_CACHE_DIR)
-        
+
         # Clear embedding cache
         if os.path.exists(settings.EMBEDDING_CACHE_DIR):
             shutil.rmtree(settings.EMBEDDING_CACHE_DIR)
             os.makedirs(settings.EMBEDDING_CACHE_DIR)
-        
+
         return {"success": True, "message": "Caches cleared"}
-        
+
     except Exception as e:
         logger.error(f"Clear cache error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -150,24 +146,24 @@ async def clear_cache():
 async def clear_all_data():
     """
     Clear all data (conversations, pages, vectors).
-    
+
     WARNING: This is destructive and cannot be undone!
     """
     try:
         mongodb = await get_mongodb()
         vector_store = get_vector_store()
-        
+
         # Clear collections
         await mongodb.db.conversations.delete_many({})
         await mongodb.db.pages.delete_many({})
         await mongodb.db.crawl_jobs.delete_many({})
         await mongodb.db.long_term_memory.delete_many({})
-        
+
         # Clear vector store
         vector_store.clear_collection()
-        
+
         return {"success": True, "message": "All data cleared"}
-        
+
     except Exception as e:
         logger.error(f"Clear all error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

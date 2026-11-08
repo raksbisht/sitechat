@@ -1,6 +1,7 @@
 """
 Ollama LLM service for generating responses.
 """
+
 import httpx
 from typing import AsyncGenerator, Optional, Dict, Any
 from loguru import logger
@@ -35,7 +36,7 @@ def _ollama_options(temperature: float, max_tokens: int) -> Dict[str, Any]:
 
 class OllamaService:
     """Service for interacting with Ollama LLM."""
-    
+
     def __init__(self):
         self.base_url = (settings.OLLAMA_BASE_URL or "").rstrip("/")
         self.model = settings.OLLAMA_MODEL
@@ -57,33 +58,29 @@ class OllamaService:
         else:
             hint = f"Request: POST {self.base_url}{endpoint}. "
         return f"Ollama returned status {code}. {hint}Response: {body or '(empty)'}"
-    
+
     async def generate(
-        self,
-        prompt: str,
-        system_prompt: str = None,
-        temperature: float = 0.7,
-        max_tokens: int = 2000
+        self, prompt: str, system_prompt: str = None, temperature: float = 0.7, max_tokens: int = 2000
     ) -> str:
         """
         Generate a response from the LLM.
-        
+
         Args:
             prompt: The user prompt
             system_prompt: Optional system prompt
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
-        
+
         Returns:
             The generated response text
         """
         messages = []
-        
+
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-        
+
         messages.append({"role": "user", "content": prompt})
-        
+
         try:
             client = _get_http_client()
             response = await client.post(
@@ -110,27 +107,23 @@ class OllamaService:
         except Exception as e:
             logger.error(f"Ollama error: {e}")
             raise
-    
+
     async def generate_stream(
-        self,
-        prompt: str,
-        system_prompt: str = None,
-        temperature: float = 0.7,
-        max_tokens: int = 2000
+        self, prompt: str, system_prompt: str = None, temperature: float = 0.7, max_tokens: int = 2000
     ) -> AsyncGenerator[str, None]:
         """
         Stream a response from the LLM.
-        
+
         Yields:
             Chunks of the generated response
         """
         messages = []
-        
+
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
-        
+
         messages.append({"role": "user", "content": prompt})
-        
+
         try:
             client = _get_http_client()
             async with client.stream(
@@ -151,6 +144,7 @@ class OllamaService:
                 async for line in response.aiter_lines():
                     if line:
                         import json
+
                         try:
                             data = json.loads(line)
                             content = data.get("message", {}).get("content", "")
@@ -162,7 +156,7 @@ class OllamaService:
         except Exception as e:
             logger.error(f"Ollama streaming error: {e}")
             raise
-    
+
     async def check_health(self) -> bool:
         """Check if Ollama is available."""
         try:
@@ -171,7 +165,7 @@ class OllamaService:
             return response.status_code == 200
         except Exception:
             return False
-    
+
     async def list_models(self) -> list:
         """List available models."""
         try:

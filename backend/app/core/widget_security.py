@@ -11,6 +11,7 @@ Behaviour:
 - Enforcement disabled or no allowed domains configured -> request allowed.
 - Origin/Referer does not match the whitelist -> 403.
 """
+
 from typing import List, Optional
 
 from fastapi import HTTPException, Request
@@ -26,11 +27,7 @@ def _origin_matches(request_origin: str, allowed_domains: List[str]) -> bool:
         candidates.add(request_origin.split("://", 1)[1].lower())
     else:
         candidates.add(f"//{request_origin}".split("//", 1)[1].lower())
-    return any(
-        match_domain_pattern(origin, pattern)
-        for origin in candidates
-        for pattern in allowed_domains
-    )
+    return any(match_domain_pattern(origin, pattern) for origin in candidates for pattern in allowed_domains)
 
 
 async def enforce_site_origin(site_id: Optional[str], request: Request, mongodb) -> None:
@@ -58,7 +55,5 @@ async def enforce_site_origin(site_id: Optional[str], request: Request, mongodb)
         return
 
     if not _origin_matches(request_domain, allowed_domains):
-        logger.warning(
-            f"Blocked widget request for site {site_id} from unauthorized domain: {request_domain}"
-        )
+        logger.warning(f"Blocked widget request for site {site_id} from unauthorized domain: {request_domain}")
         raise HTTPException(status_code=403, detail="Origin not allowed for this site")

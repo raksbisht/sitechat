@@ -2,6 +2,7 @@
 Conversation Management API Routes.
 Handles listing, searching, viewing, exporting, and deleting conversations.
 """
+
 from datetime import datetime
 from typing import List, Optional, Tuple
 
@@ -164,19 +165,16 @@ async def list_conversations(
     """
     if sort_by not in VALID_SORT_FIELDS:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid sort_by value. Must be one of: {', '.join(sorted(VALID_SORT_FIELDS))}"
+            status_code=400, detail=f"Invalid sort_by value. Must be one of: {', '.join(sorted(VALID_SORT_FIELDS))}"
         )
 
     if status and status not in VALID_STATUSES:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}"
+            status_code=400, detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}"
         )
     if priority and priority not in VALID_PRIORITIES:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid priority. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}"
+            status_code=400, detail=f"Invalid priority. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}"
         )
 
     mongodb = await get_mongodb()
@@ -219,13 +217,7 @@ async def list_conversations(
     items = [ConversationListItem(**conv) for conv in conversations]
     total_pages = (total + limit - 1) // limit
 
-    return ConversationListResponse(
-        conversations=items,
-        total=total,
-        page=page,
-        limit=limit,
-        total_pages=total_pages
-    )
+    return ConversationListResponse(conversations=items, total=total, page=page, limit=limit, total_pages=total_pages)
 
 
 @router.get("/search", response_model=ConversationSearchResponse)
@@ -234,7 +226,7 @@ async def search_conversations(
     q: str = Query(..., min_length=1, description="Search query"),
     site_id: Optional[str] = Query(None, description="Filter by site ID"),
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(20, ge=1, le=100, description="Items per page")
+    limit: int = Query(20, ge=1, le=100, description="Items per page"),
 ):
     """
     Search conversations by message content.
@@ -244,28 +236,17 @@ async def search_conversations(
     sid, sids = await _resolve_conversation_site_scope(user, mongodb, site_id)
 
     if sid:
-        conversations, total = await mongodb.search_conversations(
-            query=q, site_id=sid, page=page, limit=limit
-        )
+        conversations, total = await mongodb.search_conversations(query=q, site_id=sid, page=page, limit=limit)
     elif sids is not None:
-        conversations, total = await mongodb.search_conversations(
-            query=q, site_ids=sids, page=page, limit=limit
-        )
+        conversations, total = await mongodb.search_conversations(query=q, site_ids=sids, page=page, limit=limit)
     else:
-        conversations, total = await mongodb.search_conversations(
-            query=q, page=page, limit=limit
-        )
+        conversations, total = await mongodb.search_conversations(query=q, page=page, limit=limit)
 
     items = [ConversationSearchItem(**conv) for conv in conversations]
     total_pages = (total + limit - 1) // limit
 
     return ConversationSearchResponse(
-        conversations=items,
-        total=total,
-        page=page,
-        limit=limit,
-        total_pages=total_pages,
-        query=q
+        conversations=items, total=total, page=page, limit=limit, total_pages=total_pages, query=q
     )
 
 
@@ -279,7 +260,7 @@ async def auto_close_conversations(
     closed_count = await mongodb.auto_close_inactive_conversations(body.days_inactive)
     return AutoCloseResponse(
         closed_count=closed_count,
-        message=f"Closed {closed_count} inactive conversation(s) (inactive for {body.days_inactive}+ days)"
+        message=f"Closed {closed_count} inactive conversation(s) (inactive for {body.days_inactive}+ days)",
     )
 
 
@@ -292,8 +273,7 @@ async def update_conversation_status(
     """Update conversation status."""
     if request.status not in VALID_STATUSES:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}"
+            status_code=400, detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}"
         )
     mongodb = await get_mongodb()
     await _ensure_conversation_access(user, mongodb, session_id)
@@ -312,8 +292,7 @@ async def update_conversation_priority(
     """Update conversation priority."""
     if request.priority not in VALID_PRIORITIES:
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid priority. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}"
+            status_code=400, detail=f"Invalid priority. Must be one of: {', '.join(sorted(VALID_PRIORITIES))}"
         )
     mongodb = await get_mongodb()
     await _ensure_conversation_access(user, mongodb, session_id)
@@ -392,9 +371,7 @@ async def update_conversation_visitor(
     mongodb = await get_mongodb()
     await _ensure_conversation_access(user, mongodb, session_id)
     updated = await mongodb.update_conversation_visitor(
-        session_id,
-        visitor_name=request.visitor_name,
-        visitor_email=request.visitor_email
+        session_id, visitor_name=request.visitor_name, visitor_email=request.visitor_email
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -442,7 +419,7 @@ async def get_conversation(session_id: str, user: dict = Depends(require_auth)):
             timestamp=msg.get("timestamp", datetime.utcnow()),
             feedback=msg.get("feedback"),
             feedback_at=msg.get("feedback_at"),
-            response_time_ms=msg.get("response_time_ms")
+            response_time_ms=msg.get("response_time_ms"),
         )
         for msg in conv.get("messages", [])
     ]
@@ -455,7 +432,7 @@ async def get_conversation(session_id: str, user: dict = Depends(require_auth)):
             note_id=n.get("note_id", ""),
             content=n.get("content", ""),
             created_at=n.get("created_at", datetime.utcnow()),
-            updated_at=n.get("updated_at", datetime.utcnow())
+            updated_at=n.get("updated_at", datetime.utcnow()),
         )
         for n in conv.get("notes", [])
     ]
@@ -478,7 +455,7 @@ async def get_conversation(session_id: str, user: dict = Depends(require_auth)):
         first_response_at=conv.get("first_response_at"),
         resolved_at=conv.get("resolved_at"),
         satisfaction_rating=conv.get("satisfaction_rating"),
-        sentiment=conv.get("sentiment")
+        sentiment=conv.get("sentiment"),
     )
 
 
@@ -515,8 +492,7 @@ async def bulk_delete_conversations(
     deleted_count = await mongodb.delete_conversations_bulk(request.session_ids)
 
     return BulkDeleteResponse(
-        deleted_count=deleted_count,
-        message=f"Successfully deleted {deleted_count} conversation(s)"
+        deleted_count=deleted_count, message=f"Successfully deleted {deleted_count} conversation(s)"
     )
 
 
@@ -531,15 +507,13 @@ async def export_conversations(
     mongodb = await get_mongodb()
     await _validate_export_access(user, mongodb, request)
 
-    conversations = await mongodb.get_conversations_for_export(
-        session_ids=request.session_ids,
-        site_id=request.site_id
-    )
+    conversations = await mongodb.get_conversations_for_export(session_ids=request.session_ids, site_id=request.site_id)
 
     if not conversations:
         raise HTTPException(status_code=404, detail="No conversations found")
 
     if request.format == "json":
+
         def serialize_datetime(obj):
             if isinstance(obj, datetime):
                 return obj.isoformat()
@@ -552,23 +526,25 @@ async def export_conversations(
             media_type="application/json",
             headers={
                 "Content-Disposition": f"attachment; filename=conversations_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-            }
+            },
         )
 
     elif request.format == "csv":
         output = io.StringIO()
         writer = csv.writer(output)
 
-        writer.writerow([
-            "session_id",
-            "site_id",
-            "created_at",
-            "updated_at",
-            "message_role",
-            "message_content",
-            "message_timestamp",
-            "feedback"
-        ])
+        writer.writerow(
+            [
+                "session_id",
+                "site_id",
+                "created_at",
+                "updated_at",
+                "message_role",
+                "message_content",
+                "message_timestamp",
+                "feedback",
+            ]
+        )
 
         for conv in conversations:
             session_id = conv.get("session_id", "")
@@ -579,16 +555,18 @@ async def export_conversations(
             messages = conv.get("messages", [])
             if messages:
                 for msg in messages:
-                    writer.writerow([
-                        session_id,
-                        site_id,
-                        created_at,
-                        updated_at,
-                        msg.get("role", ""),
-                        msg.get("content", ""),
-                        msg.get("timestamp", ""),
-                        msg.get("feedback", "")
-                    ])
+                    writer.writerow(
+                        [
+                            session_id,
+                            site_id,
+                            created_at,
+                            updated_at,
+                            msg.get("role", ""),
+                            msg.get("content", ""),
+                            msg.get("timestamp", ""),
+                            msg.get("feedback", ""),
+                        ]
+                    )
             else:
                 writer.writerow([session_id, site_id, created_at, updated_at, "", "", "", ""])
 
@@ -599,7 +577,7 @@ async def export_conversations(
             media_type="text/csv",
             headers={
                 "Content-Disposition": f"attachment; filename=conversations_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
-            }
+            },
         )
 
     else:

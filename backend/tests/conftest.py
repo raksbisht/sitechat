@@ -4,6 +4,7 @@ Pytest configuration and fixtures for SiteChat tests.
 This module provides database-agnostic fixtures using the Provider Pattern.
 Tests mock at the provider interface level, not the database implementation.
 """
+
 import os
 import sys
 import asyncio
@@ -21,8 +22,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.config import Settings
 from app.providers.database import BaseDatabaseProvider, MockDatabaseProvider
 
-
 # ==================== Fixtures ====================
+
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator:
@@ -52,7 +53,7 @@ def test_settings() -> Settings:
 def mock_database() -> MockDatabaseProvider:
     """
     Provider-based mock database for testing.
-    
+
     Uses MockDatabaseProvider which implements BaseDatabaseProvider interface.
     Tests against the abstract interface, not MongoDB-specific methods.
     """
@@ -80,25 +81,29 @@ def mock_vector_store():
 @pytest.fixture
 async def app(mock_database: MockDatabaseProvider, mock_vector_store) -> AsyncGenerator[FastAPI, None]:
     """Create a test FastAPI application with mocked dependencies."""
+
     # Create async function that returns mock_database
     async def get_mock_db():
         return mock_database
-    
+
     # Patch database at all import sites including routes
-    with patch("app.database.get_mongodb", get_mock_db), \
-         patch("app.database.mongodb.get_mongodb", get_mock_db), \
-         patch("app.routes.sites.get_mongodb", get_mock_db), \
-         patch("app.routes.auth.get_mongodb", get_mock_db), \
-         patch("app.routes.embed.get_mongodb", get_mock_db), \
-         patch("app.routes.chat.get_mongodb", get_mock_db), \
-         patch("app.routes.conversations.get_mongodb", get_mock_db), \
-         patch("app.routes.handoff.get_mongodb", get_mock_db), \
-         patch("app.routes.triggers.get_mongodb", get_mock_db), \
-         patch("app.routes.crawl.get_mongodb", get_mock_db), \
-         patch("app.routes.analytics.get_mongodb", get_mock_db), \
-         patch("app.routes.leads.get_mongodb", get_mock_db), \
-         patch("app.database.vector_store.get_vector_store", AsyncMock(return_value=mock_vector_store)):
+    with (
+        patch("app.database.get_mongodb", get_mock_db),
+        patch("app.database.mongodb.get_mongodb", get_mock_db),
+        patch("app.routes.sites.get_mongodb", get_mock_db),
+        patch("app.routes.auth.get_mongodb", get_mock_db),
+        patch("app.routes.embed.get_mongodb", get_mock_db),
+        patch("app.routes.chat.get_mongodb", get_mock_db),
+        patch("app.routes.conversations.get_mongodb", get_mock_db),
+        patch("app.routes.handoff.get_mongodb", get_mock_db),
+        patch("app.routes.triggers.get_mongodb", get_mock_db),
+        patch("app.routes.crawl.get_mongodb", get_mock_db),
+        patch("app.routes.analytics.get_mongodb", get_mock_db),
+        patch("app.routes.leads.get_mongodb", get_mock_db),
+        patch("app.database.vector_store.get_vector_store", AsyncMock(return_value=mock_vector_store)),
+    ):
         from app.main import app as fastapi_app
+
         yield fastapi_app
 
 
@@ -112,6 +117,7 @@ async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 
 # ==================== Sample Data Fixtures ====================
 
+
 @pytest.fixture
 def sample_user() -> dict:
     """Sample user data for testing."""
@@ -123,7 +129,7 @@ def sample_user() -> dict:
         "role": "user",
         "password_hash": "$2b$12$test_hash",
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
     }
 
 
@@ -138,7 +144,7 @@ def sample_admin() -> dict:
         "role": "admin",
         "password_hash": "$2b$12$test_hash",
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
     }
 
 
@@ -152,18 +158,13 @@ def sample_site() -> dict:
         "status": "active",
         "user_id": "test_user_id_123",
         "config": {
-            "appearance": {
-                "theme_color": "#007bff",
-                "position": "bottom-right"
-            },
-            "behavior": {
-                "welcome_message": "Hello! How can I help you?"
-            }
+            "appearance": {"theme_color": "#007bff", "position": "bottom-right"},
+            "behavior": {"welcome_message": "Hello! How can I help you?"},
         },
         "triggers": [],
         "global_cooldown_ms": 30000,
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
     }
 
 
@@ -174,21 +175,16 @@ def sample_conversation() -> dict:
         "session_id": "test_session_123",
         "site_id": "test_site_123",
         "messages": [
-            {
-                "role": "user",
-                "content": "Hello, I need help",
-                "timestamp": datetime.utcnow(),
-                "message_id": "msg_1"
-            },
+            {"role": "user", "content": "Hello, I need help", "timestamp": datetime.utcnow(), "message_id": "msg_1"},
             {
                 "role": "assistant",
                 "content": "Hi! How can I assist you today?",
                 "timestamp": datetime.utcnow(),
-                "message_id": "msg_2"
-            }
+                "message_id": "msg_2",
+            },
         ],
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
     }
 
 
@@ -202,12 +198,9 @@ def sample_trigger() -> dict:
         "enabled": True,
         "priority": 10,
         "message": "Welcome! Need any help?",
-        "conditions": {
-            "delay_seconds": 30,
-            "page_match": "*"
-        },
+        "conditions": {"delay_seconds": 30, "page_match": "*"},
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
     }
 
 
@@ -229,16 +222,18 @@ def sample_handoff() -> dict:
         "assigned_agent_name": None,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
-        "resolved_at": None
+        "resolved_at": None,
     }
 
 
 # ==================== Auth Fixtures ====================
 
+
 @pytest.fixture
 def auth_headers(sample_user: dict) -> dict:
     """Generate auth headers with a test JWT token."""
     from app.services.auth import create_access_token
+
     token = create_access_token({"sub": sample_user["email"]})
     return {"Authorization": f"Bearer {token}"}
 
@@ -247,17 +242,21 @@ def auth_headers(sample_user: dict) -> dict:
 def admin_auth_headers(sample_admin: dict) -> dict:
     """Generate admin auth headers with a test JWT token."""
     from app.services.auth import create_access_token
+
     token = create_access_token({"sub": sample_admin["email"]})
     return {"Authorization": f"Bearer {token}"}
 
 
 # ==================== Seeded Database Fixtures ====================
 
+
 @pytest.fixture
-def seeded_database(mock_database: MockDatabaseProvider, sample_user, sample_admin, sample_site) -> MockDatabaseProvider:
+def seeded_database(
+    mock_database: MockDatabaseProvider, sample_user, sample_admin, sample_site
+) -> MockDatabaseProvider:
     """
     Database pre-seeded with test data.
-    
+
     Includes:
     - A regular user
     - An admin user

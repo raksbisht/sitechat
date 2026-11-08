@@ -2,6 +2,7 @@
 Inject deployment settings into static HTML placeholders.
 Templates use __SITE_URL__, __SITE_HOST__, __ADMIN_EMAIL__, __WIDGET_SRI_JS__ (landing only).
 """
+
 from __future__ import annotations
 
 from typing import Optional
