@@ -44,18 +44,21 @@
 ## 3. Короткосрочно (2–4 недели)
 
 ### 3.1 Контейнеризация и простой запуск
-- [ ] `Dockerfile` для бэкенда (multi-stage)
-- [ ] `docker-compose.yml`: `api` (FastAPI/uvicorn) + `mongo` (+ том данных)
-- [ ] Инструкции быстрого старта в README (`docker compose up`)
-- [ ] `.env.example` с полным списком конфигурации (секреты не коммитить)
+- [x] `.env.example` с полным списком конфигурации (секреты не коммитить) — очищен от реальных кредов, добавлены блоки LLM/embeddings/vector-store/PostgreSQL/S3/Redis; ⚠️ **пароль MongoDB Atlas, ранее присутствовавший в истории git (`backend/.env.example`, коммиты c58ef22…5c3e605), требует ротации вручную**
+- [x] `Dockerfile` для бэкенда (`backend/Dockerfile`: multi-stage python:3.12-slim, non-root user, HEALTHCHECK, тома `/app/data`, `/app/logs`)
+- [x] `docker-compose.yml`: `api` (FastAPI/uvicorn, порт 8000) + `mongo:7` (+ тома данных, healthcheck, `MONGODB_URL=mongodb://mongo:27017`, Ollama через host.docker.internal)
+- [x] Инструкции быстрого старта в README (`docker compose up -d --build`)
+- Примечание: сборка образа локально не проверялась (в песочнице нет Docker); YAML валиден, пути контекста/файлов верифицированы
 
 ### 3.2 Качество кода
-- [ ] Линтеры/форматтеры в pre-commit: `ruff`, `black`, конфиг в репозитории
+- [ ] Линтеры/форматтеры в pre-commit: `ruff`, `black`, конфиг в репозитории (CI-гейты ruff/black уже настроены в п. 2.3)
 - [ ] Мипинг/проверка типов критичных модулей (`pydantic`-схемы уже есть; опционально `mypy`)
 - [ ] `pip-audit` / Dependabot (или Renovate) для аудита зависимостей
 
 ### 3.3 Безопасность
+- [ ] Ротация секретов, попавших в историю git: пароль MongoDB Atlas в `backend/.env.example` (выполнить в Atlas → Database Access), затем проверить JWT_SECRET/ADMIN_PASSWORD в боевом `.env`
 - [ ] Ротация/проверка секретов: JWT-ключ, ключи шифрования API-токенов OpenAI
+- [ ] Настроить GitHub Secret Scanning push protection (на уровне организации/репозитория)
 - [ ] Rate limiting на публичный эндпоинт чата виджета
 - [ ] Проверка CORS-настроек по сайтам
 
