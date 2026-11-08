@@ -30,7 +30,7 @@
 ### 2.2 Чистка git
 - [x] Выявить бинарные артефакты в истории (`git ls-files`): найдены `backend/data/chroma_db/faiss_index/index.faiss`, `index.pkl`
 - [x] Дополнить `.gitignore` (`backend/data/`, `*.faiss`, `*.pkl`; остальное — `__pycache__/`, `.venv/`, `node_modules/` — уже было) и удалить артефакты из HEAD (`git rm --cached`)
-- [ ] Оценить необходимость Git LFS для остающихся медиафайлов (`docs/images/*`)
+- [x] Оценить необходимость Git LFS для остающихся медиафайлов (`docs/images/*`) — **LFS не требуется**: 6 файлов, суммарно 1.6 МБ, ни один не превышает 1 МБ
 
 ### 2.3 Настроить CI (GitHub Actions)
 - [x] Workflow `.github/workflows/backend-tests.yml`: `pip install -r requirements-dev.txt` → `pytest --cov=app` (+ junit-отчёт, артефакт покрытия). Локально верифицировано: **481 passed, 13 skipped, покрытие app/ — 54%**
