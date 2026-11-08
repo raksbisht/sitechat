@@ -117,6 +117,33 @@ def validate_email(email: str) -> bool:
     return bool(re.match(pattern, email))
 
 
+COMMON_WEAK_PASSWORDS = {
+    "password",
+    "password1",
+    "password123",
+    "passw0rd",
+    "qwerty",
+    "qwerty123",
+    "letmein",
+    "welcome",
+    "welcome1",
+    "iloveyou",
+    "admin",
+    "admin123",
+    "abc123",
+    "monkey",
+    "dragon",
+    "sunshine",
+    "princess",
+    "football",
+    "baseball",
+    "trustno1",
+    "12345678",
+    "123456789",
+    "changeme",
+}
+
+
 def validate_password(password: str) -> tuple[bool, str]:
     """
     Validate password meets security requirements.
@@ -124,6 +151,18 @@ def validate_password(password: str) -> tuple[bool, str]:
     """
     if len(password) < settings.MIN_PASSWORD_LENGTH:
         return False, f"Password must be at least {settings.MIN_PASSWORD_LENGTH} characters"
+
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter"
+
+    if not any(c.islower() for c in password):
+        return False, "Password must contain at least one lowercase letter"
+
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one digit (number)"
+
+    if password.lower() in COMMON_WEAK_PASSWORDS:
+        return False, "Password is too common. Please choose a stronger password"
 
     return True, ""
 
