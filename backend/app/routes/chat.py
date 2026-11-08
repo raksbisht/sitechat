@@ -12,6 +12,7 @@ from app.services.rag_engine import get_rag_engine
 from app.database import get_mongodb
 from app.config import settings
 from app.core.security import get_client_ip
+from app.core.widget_security import enforce_site_origin
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
@@ -59,6 +60,9 @@ async def chat(request: Request, body: ChatRequest):
     - **stream**: Whether to stream the response (use /stream endpoint instead)
     """
     try:
+        mongodb = await get_mongodb()
+        await enforce_site_origin(body.site_id, request, mongodb)
+
         rag_engine = get_rag_engine()
 
         response = await rag_engine.chat(
@@ -93,6 +97,9 @@ async def chat_stream(request: Request, body: ChatRequest):
     Returns Server-Sent Events (SSE) with the response chunks.
     """
     try:
+        mongodb = await get_mongodb()
+        await enforce_site_origin(body.site_id, request, mongodb)
+
         rag_engine = get_rag_engine()
 
         async def event_generator():
