@@ -51,16 +51,16 @@
 - Примечание: сборка образа локально не проверялась (в песочнице нет Docker); YAML валиден, пути контекста/файлов верифицированы
 
 ### 3.2 Качество кода
-- [ ] Линтеры/форматтеры в pre-commit: `ruff`, `black`, конфиг в репозитории (CI-гейты ruff/black уже настроены в п. 2.3)
+- [x] Линтеры/форматтеры в pre-commit: `.pre-commit-config.yaml` (ruff --fix, black --check, детектор секретов/приватных ключей); `black` прогнан по всему backend (65 файлов отформатировано), CI lint-джоб теперь зелёный — **484 passed, 13 skipped**
 - [ ] Мипинг/проверка типов критичных модулей (`pydantic`-схемы уже есть; опционально `mypy`)
-- [ ] `pip-audit` / Dependabot (или Renovate) для аудита зависимостей
+- [x] Dependabot настроен (`.github/dependabot.yml`: pip /backend + github-actions, weekly). `pip-audit` как локальный скрипт — опционально
 
 ### 3.3 Безопасность
-- [ ] Ротация секретов, попавших в историю git: пароль MongoDB Atlas в `backend/.env.example` (выполнить в Atlas → Database Access), затем проверить JWT_SECRET/ADMIN_PASSWORD в боевом `.env`
-- [ ] Ротация/проверка секретов: JWT-ключ, ключи шифрования API-токенов OpenAI
-- [ ] Настроить GitHub Secret Scanning push protection (на уровне организации/репозитория)
-- [ ] Rate limiting на публичный эндпоинт чата виджета
-- [ ] Проверка CORS-настроек по сайтам
+- [ ] Ротация секретов, попавших в историю git: пароль MongoDB Atlas в `backend/.env.example` (выполнить в Atlas → Database Access), затем проверить JWT_SECRET/ADMIN_PASSWORD в боевом `.env` — ⚠️ только вручную
+- [ ] Ротация/проверка секретов: JWT-ключ, ключи шифрования API-токенов OpenAI — ⚠️ только вручную
+- [ ] Настроить GitHub Secret Scanning push protection (на уровне организации/репозитория) — ⚠️ настройка на GitHub
+- [x] Rate limiting на публичные эндпоинты виджета: чат POST /api/chat и /api/chat/stream (20/мин, slowapi), POST /api/leads (5/мин), GET /api/leads/check (30/мин, добавлено), POST /widget/{site}/triggers/event (60/мин, добавлено); плюс Origin-whitelist (`app/core/widget_security.py`) на чате и лидах
+- [x] Проверка CORS-настроек по сайтам: глобальный CORS берётся из `settings.cors_origins_list`; для публичных widget-эндпоинтов добавлена пер-сайтовая проверка Origin/Referer по `allowed_domains` сайта (enforce_site_origin)
 
 ---
 

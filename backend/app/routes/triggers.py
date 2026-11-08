@@ -4,10 +4,12 @@ API routes for proactive chat triggers management.
 
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from loguru import logger
+from slowapi import Limiter
 
 from app.database import get_mongodb
+from app.core.security import get_client_ip
 from app.models.schemas import (
     ChatTrigger,
     ChatTriggerCreate,
@@ -21,6 +23,8 @@ from app.models.schemas import (
 from app.routes.auth import require_auth
 
 router = APIRouter(prefix="/api", tags=["triggers"])
+
+limiter = Limiter(key_func=get_client_ip)
 
 
 @router.get("/sites/{site_id}/triggers", response_model=SiteTriggers)
@@ -120,7 +124,9 @@ async def get_widget_triggers(site_id: str):
 
 
 @router.post("/widget/{site_id}/triggers/event")
+@limiter.limit("60/minute")
 async def log_trigger_event(
+    request: Request,
     site_id: str,
     trigger_id: str = Query(...),
     session_id: str = Query(...),

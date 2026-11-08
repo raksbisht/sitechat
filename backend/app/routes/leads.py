@@ -71,7 +71,8 @@ async def capture_lead(request: Request, body: LeadCreate):
 
 
 @router.get("/api/leads/check/{site_id}/{session_id}")
-async def check_lead_exists(site_id: str, session_id: str):
+@limiter.limit("30/minute")
+async def check_lead_exists(request: Request, site_id: str, session_id: str):
     """Check if a lead exists for a session (for widget to avoid re-prompting)."""
     mongodb = await get_mongodb()
 
