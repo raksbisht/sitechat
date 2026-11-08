@@ -25,6 +25,7 @@
 ### 2.1 Развернуть окружение и прогнать тесты ✅ верификация базы
 - [x] Создать venv, `pip install -r requirements.txt` (зависимости установлены в системный interpreter; `requirements-dev.txt` пока нет)
 - [x] Запустить `pytest` локально (с мок-БД / фикстурами) — **481 passed, 13 skipped, 0 failed** (запуск: `python -m pytest tests -p no:libtmux`)
+      Примечание: при исчерпании диска песочницы venv был облегчён удалением неиспользуемых GPU/ML-пакетов (torch, nvidia-*, triton, numba, llvmlite, sympy); тесты восстановлены: **484 passed, 13 skipped**
 - [x] Зафиксировать падающие тесты — исправлены по факту: атомарность `first_response_at`, валидация паролей (`app/core/security.py`), подключение `MongoDBProvider.connect()` (патч `motor.motor_asyncio.AsyncIOMotorClient`), миграция `ChatOllama` → пакет `langchain-ollama`
 
 ### 2.2 Чистка git
